@@ -105,5 +105,5 @@ static void BM_hybrid_allocator(benchmark::State& state)
         performAllocations(&alloc, td);
     }
 }
-BENCHMARK(BM_free_list_allocator);
+BENCHMARK(BM_hybrid_allocator);
 
