@@ -247,12 +247,9 @@ protected:
 
 TEST_F(Stats_allocator_test, stats_are_empty_when_initialized)
 {
-    const Allocator::Record* rs = allocator_->stats();
-
-    for (std::size_t i = 0; i < number_of_records_; ++i) {
-        EXPECT_EQ(nullptr, rs[i].address);
-        EXPECT_EQ(0, rs[i].amount);
-    }
+    EXPECT_EQ(nullptr, allocator_->stats_list());
+    EXPECT_EQ(0, allocator_->stats_list_size());
+    EXPECT_EQ(0, allocator_->total_allocated());
 }
 
 TEST_F(Stats_allocator_test, records_allocation_stats_in_cyclic_buffer)
@@ -265,12 +262,31 @@ TEST_F(Stats_allocator_test, records_allocation_stats_in_cyclic_buffer)
     Block b2 = allocator_->allocate(2);
     allocator_->deallocate(&b2);
 
-    const Allocator::Record* rs = allocator_->stats();
+    const Allocator::Record* s = allocator_->stats_list();
 
-    EXPECT_NE(nullptr, rs[0].address);
-    EXPECT_EQ(2, rs[0].amount);
+    EXPECT_EQ(2, allocator_->stats_list_size());
 
-    EXPECT_EQ(rs[0].address, rs[1].address);
-    EXPECT_EQ(-2, rs[1].amount);
+    EXPECT_NE(nullptr, s);
+
+    EXPECT_NE(nullptr, s->record_address);
+    EXPECT_NE(nullptr, s->request_address);
+    EXPECT_EQ(sizeof(Allocator::Record) + 2, s->amount);
+
+    auto start = s->time;
+
+    EXPECT_NE(nullptr, s->next);
+    s = s->next;
+
+    EXPECT_NE(nullptr, s->record_address);
+    EXPECT_NE(nullptr, s->request_address);
+    EXPECT_EQ(sizeof(Allocator::Record) - 2, s->amount);
+
+    auto end = s->time;
+
+    EXPECT_EQ(nullptr, s->next);
+
+    EXPECT_GT(end.time_since_epoch().count(), start.time_since_epoch().count());
+
+    EXPECT_EQ(sizeof(Allocator::Record) * 4, allocator_->total_allocated());
 }
 
