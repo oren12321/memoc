@@ -176,8 +176,7 @@ TEST_F(Free_list_allocator_test, reuses_the_same_memory_if_deallocating_in_memor
 
     std::array<Block, max_list_size_> saved_blocks{};
 
-    for (int i = 0; i < max_list_size_; ++i)
-    {
+    for (int i = 0; i < max_list_size_; ++i) {
         Block b = allocator_->allocate(size_in_range);
         EXPECT_NE(nullptr, b.p);
         EXPECT_EQ(size_in_range, b.s);
@@ -186,15 +185,13 @@ TEST_F(Free_list_allocator_test, reuses_the_same_memory_if_deallocating_in_memor
         saved_blocks[i] = b;
     }
 
-    for (std::array<Block, max_list_size_>::const_reverse_iterator it = saved_blocks.rbegin(); it != saved_blocks.rend(); ++it)
-    {
+    for (std::array<Block, max_list_size_>::const_reverse_iterator it = saved_blocks.rbegin(); it != saved_blocks.rend(); ++it) {
         Block b_copy{ *it };
         allocator_->deallocate(&b_copy);
         EXPECT_TRUE(b_copy.empty());
     }
 
-    for (const auto& saved_block : saved_blocks)
-    {
+    for (const auto& saved_block : saved_blocks) {
         Block b = allocator_->allocate(size_in_range);
         EXPECT_NE(nullptr, b.p);
         EXPECT_EQ(size_in_range, b.s);
@@ -205,8 +202,7 @@ TEST_F(Free_list_allocator_test, reuses_the_same_memory_if_deallocating_in_memor
 
     // Test cleanup since free list does not actually release memory
     Parent p{};
-    for (auto& saved_block : saved_blocks)
-    {
+    for (auto& saved_block : saved_blocks) {
         p.deallocate(&saved_block);
         EXPECT_TRUE(saved_block.empty());
     }
