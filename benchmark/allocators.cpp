@@ -104,17 +104,22 @@ static void BM_hybrid_allocator(benchmark::State& state)
 }
 BENCHMARK(BM_hybrid_allocator);
 
+template <class Allocator, typename T, std::size_t Number_of_allocations>
+void perform_vector_allocations() {
+    std::vector<T, Allocator> v{};
+    for (std::size_t i = 0; i < Number_of_allocations; ++i) {
+        v.push_back(static_cast<T>(i));
+    }
+}
+
 static void BM_stl_default_allocator(benchmark::State& state)
 {
     using namespace math::core::allocators;
 
     using Allocator = std::allocator<int>;
-    std::vector<int, Allocator> v;
 
     for (auto _ : state) {
-        for (std::size_t i = 0; i < 1024; ++i) {
-            v.push_back(static_cast<int>(i));
-        }
+        perform_vector_allocations<Allocator, int, 1024>();
     }
 }
 BENCHMARK(BM_stl_default_allocator);
@@ -126,12 +131,9 @@ static void BM_stl_adapter_allocator(benchmark::State& state)
     using Allocator = Stl_adapter_allocator<int, Fallback_allocator<
         Stack_allocator<16 * 16>,
         Free_list_allocator<Malloc_allocator, 16, 64, 16>>>;
-    std::vector<int, Allocator> v;
 
     for (auto _ : state) {
-        for (std::size_t i = 0; i < 1024; ++i) {
-            v.push_back(static_cast<int>(i));
-        }
+        perform_vector_allocations<Allocator, int, 1024>();
     }
 }
 BENCHMARK(BM_stl_adapter_allocator);

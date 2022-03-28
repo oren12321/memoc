@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <memory>
 #include <array>
+#include <vector>
 
 #include <math/core/allocators.h>
 
@@ -206,5 +207,30 @@ TEST_F(Free_list_allocator_test, reuses_the_same_memory_if_deallocating_in_memor
         p.deallocate(&saved_block);
         EXPECT_TRUE(saved_block.empty());
     }
+}
+
+// Stl_adapter_allocator tests
+
+class Stl_adapter_allocator_test : public ::testing::Test {
+protected:
+    using Parent = math::core::allocators::Malloc_allocator;
+
+    template <typename T>
+    using Allocator = math::core::allocators::Stl_adapter_allocator<T, Parent>;
+};
+
+TEST_F(Stl_adapter_allocator_test, able_to_use_custom_allocator)
+{
+    std::vector<int, Allocator<int>> v{};
+
+    const std::size_t number_of_allocations = 512;
+
+    for (std::size_t i = 0; i < number_of_allocations; ++i) {
+        v.push_back(static_cast<int>(i));
+        EXPECT_EQ(static_cast<int>(i), v[i]);
+    }
+
+    v.clear();
+    EXPECT_TRUE(v.empty());
 }
 
