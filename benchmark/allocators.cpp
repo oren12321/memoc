@@ -3,6 +3,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <vector>
+#include <memory>
 
 #include <math/core/allocators.h>
 
@@ -106,4 +107,38 @@ static void BM_hybrid_allocator(benchmark::State& state)
     }
 }
 BENCHMARK(BM_hybrid_allocator);
+
+static void BM_stl_default_allocator(benchmark::State& state)
+{
+    using namespace math::core::allocators;
+
+    using Allocator = std::allocator<int>;
+    std::vector<int, Allocator> v;
+
+    for (auto _ : state)
+    {
+        for (std::size_t i = 0; i < 1024; ++i) {
+            v.push_back(static_cast<int>(i));
+        }
+    }
+}
+BENCHMARK(BM_stl_default_allocator);
+
+static void BM_stl_adapter_allocator(benchmark::State& state)
+{
+    using namespace math::core::allocators;
+
+    using Allocator = Stl_adapter_allocator<int, Fallback_allocator<
+        Stack_allocator<16 * 16>,
+        Free_list_allocator<Malloc_allocator, 16, 64, 16>>>;
+    std::vector<int, Allocator> v;
+
+    for (auto _ : state)
+    {
+        for (std::size_t i = 0; i < 1024; ++i) {
+            v.push_back(static_cast<int>(i));
+        }
+    }
+}
+BENCHMARK(BM_stl_adapter_allocator);
 
