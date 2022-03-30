@@ -234,3 +234,43 @@ TEST_F(Stl_adapter_allocator_test, able_to_use_custom_allocator)
     EXPECT_TRUE(v.empty());
 }
 
+// Stats_allocator tests
+
+class Stats_allocator_test : public ::testing::Test {
+protected:
+    static constexpr std::size_t number_of_records_ = 2;
+    using Parent = math::core::allocators::Malloc_allocator;
+
+    using Allocator = math::core::allocators::Stats_allocator<Parent, number_of_records_>;
+    std::unique_ptr<Allocator> allocator_ = std::make_unique<Allocator>();
+};
+
+TEST_F(Stats_allocator_test, stats_are_empty_when_initialized)
+{
+    const Allocator::Record* rs = allocator_->stats();
+
+    for (std::size_t i = 0; i < number_of_records_; ++i) {
+        EXPECT_EQ(nullptr, rs[i].address);
+        EXPECT_EQ(0, rs[i].amount);
+    }
+}
+
+TEST_F(Stats_allocator_test, records_allocation_stats_in_cyclic_buffer)
+{
+    using namespace math::core::allocators;
+
+    Block b1 = allocator_->allocate(1);
+    allocator_->deallocate(&b1);
+
+    Block b2 = allocator_->allocate(2);
+    allocator_->deallocate(&b2);
+
+    const Allocator::Record* rs = allocator_->stats();
+
+    EXPECT_NE(nullptr, rs[0].address);
+    EXPECT_EQ(2, rs[0].amount);
+
+    EXPECT_EQ(rs[0].address, rs[1].address);
+    EXPECT_EQ(-2, rs[1].amount);
+}
+
