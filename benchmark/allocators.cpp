@@ -77,6 +77,18 @@ static void BM_malloc_allocator_with_stats(benchmark::State& state)
 }
 BENCHMARK(BM_malloc_allocator_with_stats);
 
+static void BM_malloc_allocator_shared(benchmark::State& state)
+{
+    using namespace math::core::allocators;
+    Shared_allocator<Malloc_allocator> alloc{};
+    auto td = test_data<16, 64, 64>();
+
+    for (auto _ : state) {
+        perform_allocations(&alloc, td);
+    }
+}
+BENCHMARK(BM_malloc_allocator_shared);
+
 static void BM_stack_allocator(benchmark::State& state)
 {
     math::core::allocators::Stack_allocator<64 * 64> alloc{};

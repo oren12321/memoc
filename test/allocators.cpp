@@ -290,3 +290,28 @@ TEST_F(Stats_allocator_test, records_allocation_stats_in_cyclic_buffer)
     EXPECT_EQ(sizeof(Allocator::Record) * 4, allocator_->total_allocated());
 }
 
+// Shared_allocator tests
+
+class Shared_allocator_test : public ::testing::Test {
+protected:
+    static constexpr std::size_t size_ = 16;
+    using Parent = math::core::allocators::Stack_allocator<size_>;
+
+    using Allocator = math::core::allocators::Shared_allocator<Parent>;
+};
+
+TEST_F(Shared_allocator_test, saves_state_between_instances)
+{
+    using namespace math::core::allocators;
+
+    const std::size_t aligned_size = 2;
+
+    Allocator a1{};
+    Block b1 = a1.allocate(aligned_size);
+
+    Allocator a2{};
+    Block b2 = a2.allocate(aligned_size);
+
+    EXPECT_EQ(reinterpret_cast<std::uint8_t*>(b1.p) + aligned_size, b2.p);
+}
+
