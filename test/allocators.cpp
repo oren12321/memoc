@@ -5,20 +5,8 @@
 #include <array>
 #include <vector>
 
+#include <math/core/memory.h>
 #include <math/core/allocators.h>
-
-// Block tests
-
-TEST(Block_test, is_empty_when_deafult_initalized)
-{
-    using namespace math::core::allocators;
-
-    Block b{};
-
-    EXPECT_EQ(nullptr, b.p);
-    EXPECT_EQ(0, b.s);
-    EXPECT_TRUE(b.empty());
-}
 
 // Malloc_allocator tests
 
@@ -31,6 +19,7 @@ protected:
 TEST_F(Malloc_allocator_test, not_owns_an_empty_block)
 {
     using namespace math::core::allocators;
+    using namespace math::core::memory;
 
     EXPECT_FALSE(allocator_->owns(Block{}));
 }
@@ -38,6 +27,7 @@ TEST_F(Malloc_allocator_test, not_owns_an_empty_block)
 TEST_F(Malloc_allocator_test, allocates_and_deallocates_memory_successfully)
 {
     using namespace math::core::allocators;
+    using namespace math::core::memory;
 
     const Block::Size_type s{ 1 };
 
@@ -64,6 +54,7 @@ protected:
 TEST_F(Stack_allocator_test, not_owns_an_empty_block)
 {
     using namespace math::core::allocators;
+    using namespace math::core::memory;
 
     EXPECT_FALSE(allocator_->owns(Block{}));
 }
@@ -71,6 +62,7 @@ TEST_F(Stack_allocator_test, not_owns_an_empty_block)
 TEST_F(Stack_allocator_test, allocates_and_deallocates_an_arbitrary_in_range_memory_successfully)
 {
     using namespace math::core::allocators;
+    using namespace math::core::memory;
 
     const Block::Size_type size_in_range{ size_ / 2 };
 
@@ -87,6 +79,7 @@ TEST_F(Stack_allocator_test, allocates_and_deallocates_an_arbitrary_in_range_mem
 TEST_F(Stack_allocator_test, allocates_and_deallocates_all_available_memory_successfully)
 {
     using namespace math::core::allocators;
+    using namespace math::core::memory;
 
     Block b = allocator_->allocate(size_);
     EXPECT_NE(nullptr, b.p);
@@ -101,6 +94,7 @@ TEST_F(Stack_allocator_test, allocates_and_deallocates_all_available_memory_succ
 TEST_F(Stack_allocator_test, reuses_the_same_memory_if_deallocating_between_two_allocations)
 {
     using namespace math::core::allocators;
+    using namespace math::core::memory;
 
     const Block::Size_type size_in_range{ size_ / 2 };
 
@@ -128,6 +122,7 @@ TEST_F(Stack_allocator_test, reuses_the_same_memory_if_deallocating_between_two_
 TEST_F(Stack_allocator_test, fails_to_allocate_memory_bigger_than_memory_size)
 {
     using namespace math::core::allocators;
+    using namespace math::core::memory;
 
     Block b = allocator_->allocate(size_ + 1);
     EXPECT_TRUE(b.empty());
@@ -149,6 +144,7 @@ protected:
 TEST_F(Free_list_allocator_test, not_owns_an_empty_block)
 {
     using namespace math::core::allocators;
+    using namespace math::core::memory;
 
     EXPECT_FALSE(allocator_->owns(Block{}));
 }
@@ -156,6 +152,7 @@ TEST_F(Free_list_allocator_test, not_owns_an_empty_block)
 TEST_F(Free_list_allocator_test, allocates_and_deallocates_an_arbitrary_not_in_range_memory_successfully_using_parent_allocator)
 {
     using namespace math::core::allocators;
+    using namespace math::core::memory;
 
     const Block::Size_type size_out_of_range{ max_size_ + 1 };
 
@@ -172,6 +169,7 @@ TEST_F(Free_list_allocator_test, allocates_and_deallocates_an_arbitrary_not_in_r
 TEST_F(Free_list_allocator_test, reuses_the_same_memory_if_deallocating_in_memory_range)
 {
     using namespace math::core::allocators;
+    using namespace math::core::memory;
 
     const Block::Size_type size_in_range{ min_size_ + (max_size_ - min_size_) / 2 };
 
@@ -266,6 +264,7 @@ TEST_F(Stats_allocator_test, stats_are_empty_when_initialized)
 TEST_F(Stats_allocator_test, records_allocation_stats_in_cyclic_buffer)
 {
     using namespace math::core::allocators;
+    using namespace math::core::memory;
 
     Block b1 = allocator_->allocate(1);
     allocator_->deallocate(&b1);
@@ -314,6 +313,7 @@ protected:
 TEST_F(Shared_allocator_test, saves_state_between_instances)
 {
     using namespace math::core::allocators;
+    using namespace math::core::memory;
 
     const std::size_t aligned_size = 2;
 
