@@ -221,17 +221,28 @@ protected:
 
 TEST_F(Stl_adapter_allocator_test, able_to_use_custom_allocator)
 {
-    std::vector<int, Allocator<int>> v{};
+    std::vector<int, Allocator<int>> v1{};
 
     const std::size_t number_of_allocations = 512;
 
     for (std::size_t i = 0; i < number_of_allocations; ++i) {
-        v.push_back(static_cast<int>(i));
-        EXPECT_EQ(static_cast<int>(i), v[i]);
+        v1.push_back(static_cast<int>(i));
+        EXPECT_EQ(static_cast<int>(i), v1[i]);
     }
 
-    v.clear();
-    EXPECT_TRUE(v.empty());
+    std::vector<int, Allocator<int>> v2{ v1 };
+
+    for (std::size_t i = 0; i < number_of_allocations; ++i) {
+        v2.push_back(static_cast<int>(i));
+        EXPECT_EQ(static_cast<int>(i), v2[i]);
+    }
+
+    v1.clear();
+    EXPECT_TRUE(v1.empty());
+    EXPECT_EQ(number_of_allocations * 2, v2.size());
+
+    v2.clear();
+    EXPECT_TRUE(v2.empty());
 }
 
 // Stats_allocator tests
