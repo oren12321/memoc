@@ -455,7 +455,7 @@ TEST_F(Stats_allocator_test, records_allocation_stats_in_cyclic_buffer)
 
     EXPECT_EQ(nullptr, s->next);
 
-    EXPECT_GT(end.time_since_epoch().count(), start.time_since_epoch().count());
+    EXPECT_GE(end.time_since_epoch().count(), start.time_since_epoch().count());
 
     EXPECT_EQ(sizeof(Allocator::Record) * 4, allocator_.total_allocated());
 }
