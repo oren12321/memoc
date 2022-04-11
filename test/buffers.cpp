@@ -340,7 +340,7 @@ TEST(Fallback_buffer_test, can_be_initalized_with_data)
     using namespace math::core::buffers;
     using namespace math::core::allocators;
 
-    const int data[2] = {1, 2};
+    const int data[2] = { 1, 2 };
 
     Fallback_buffer<Stack_buffer<2 * sizeof(int)>, Allocated_buffer<Malloc_allocator, true>> buff1{ 2 * sizeof(int), data };
 
@@ -353,6 +353,31 @@ TEST(Fallback_buffer_test, can_be_initalized_with_data)
     EXPECT_EQ(data[0], data1[0]);
     EXPECT_EQ(data[1], data1[1]);
 
+    Fallback_buffer<Stack_buffer<2 * sizeof(int)>, Allocated_buffer<Malloc_allocator, true>> copy1{ buff1 };
+
+    EXPECT_TRUE(copy1.usable());
+    EXPECT_FALSE(copy1.data().empty());
+    EXPECT_NE(nullptr, copy1.data().p);
+    EXPECT_EQ(2 * sizeof(int), copy1.data().s);
+
+    int* copy_data1 = reinterpret_cast<int*>(copy1.data().p);
+    EXPECT_EQ(data[0], copy_data1[0]);
+    EXPECT_EQ(data[1], copy_data1[1]);
+
+    Fallback_buffer<Stack_buffer<2 * sizeof(int)>, Allocated_buffer<Malloc_allocator, true>> moved1{ std::move(buff1) };
+
+    EXPECT_FALSE(buff1.usable());
+    EXPECT_TRUE(buff1.data().empty());
+
+    EXPECT_TRUE(moved1.usable());
+    EXPECT_FALSE(moved1.data().empty());
+    EXPECT_NE(nullptr, moved1.data().p);
+    EXPECT_EQ(2 * sizeof(int), moved1.data().s);
+
+    int* moved_data1 = reinterpret_cast<int*>(moved1.data().p);
+    EXPECT_EQ(data[0], moved_data1[0]);
+    EXPECT_EQ(data[1], moved_data1[1]);
+
     Fallback_buffer<Stack_buffer<2>, Allocated_buffer<Malloc_allocator, true>> buff2{ 2 * sizeof(int), data };
 
     EXPECT_TRUE(buff2.usable());
@@ -363,6 +388,31 @@ TEST(Fallback_buffer_test, can_be_initalized_with_data)
     int* data2 = reinterpret_cast<int*>(buff2.data().p);
     EXPECT_EQ(data[0], data2[0]);
     EXPECT_EQ(data[1], data2[1]);
+
+    Fallback_buffer<Stack_buffer<2>, Allocated_buffer<Malloc_allocator, true>> copy2{ buff2 };
+
+    EXPECT_TRUE(copy2.usable());
+    EXPECT_FALSE(copy2.data().empty());
+    EXPECT_NE(nullptr, copy2.data().p);
+    EXPECT_EQ(2 * sizeof(int), copy2.data().s);
+
+    int* copy_data2 = reinterpret_cast<int*>(copy2.data().p);
+    EXPECT_EQ(data[0], copy_data2[0]);
+    EXPECT_EQ(data[1], copy_data2[1]);
+
+    Fallback_buffer<Stack_buffer<2>, Allocated_buffer<Malloc_allocator, true>> moved2{ std::move(buff2) };
+
+    EXPECT_FALSE(buff2.usable());
+    EXPECT_TRUE(buff2.data().empty());
+
+    EXPECT_TRUE(moved2.usable());
+    EXPECT_FALSE(moved2.data().empty());
+    EXPECT_NE(nullptr, moved2.data().p);
+    EXPECT_EQ(2 * sizeof(int), moved2.data().s);
+
+    int* moved_data2 = reinterpret_cast<int*>(moved2.data().p);
+    EXPECT_EQ(data[0], moved_data2[0]);
+    EXPECT_EQ(data[1], moved_data2[1]);
 }
 
 // Typed_buffer tests
