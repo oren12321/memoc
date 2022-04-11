@@ -4,6 +4,7 @@
 
 #include <math/core/buffers.h>
 #include <math/core/allocators.h>
+#include <math/core/memory.h>
 
 // Stack_buffer tests
 
@@ -362,5 +363,29 @@ TEST(Fallback_buffer_test, can_be_initalized_with_data)
     int* data2 = reinterpret_cast<int*>(buff2.data().p);
     EXPECT_EQ(data[0], data2[0]);
     EXPECT_EQ(data[1], data2[1]);
+}
+
+// Typed_buffer tests
+
+TEST(TYped_buffer_test, can_be_initialized_with_specific_data_type)
+{
+    using namespace math::core::buffers;
+    using namespace math::core::memory;
+    using namespace math::core::allocators;
+
+    const int data[2] = {1, 2};
+
+    Typed_buffer<int, Allocated_buffer<Malloc_allocator>> buff{2, data};
+
+    EXPECT_TRUE(buff.usable());
+
+    Typed_block b = buff.data();
+
+    EXPECT_FALSE(b.empty());
+    EXPECT_NE(nullptr, b.p);
+    EXPECT_EQ(2, b.s);
+
+    EXPECT_EQ(data[0], b.p[0]);
+    EXPECT_EQ(data[1], b.p[1]);
 }
 
