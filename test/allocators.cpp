@@ -5,7 +5,6 @@
 #include <array>
 #include <vector>
 #include <chrono>
-#include <iostream>
 #include <utility>
 
 #include <math/core/allocators.h>
@@ -286,6 +285,11 @@ TEST_F(Free_list_allocator_test, is_copyable)
     EXPECT_EQ(b2_copy.s, b4.s);
     EXPECT_EQ(b2_copy.p, b4.p);
 
+    allocator_.deallocate(&b3);
+    copy1.deallocate(&b4);
+    EXPECT_TRUE(b3.empty());
+    EXPECT_TRUE(b4.empty());
+
     Allocator copy2{};
     copy2 = allocator_;
 
@@ -309,6 +313,11 @@ TEST_F(Free_list_allocator_test, is_copyable)
     EXPECT_EQ(b5_copy.p, b7.p);
     EXPECT_EQ(b6_copy.s, b8.s);
     EXPECT_EQ(b6_copy.p, b8.p);
+
+    allocator_.deallocate(&b7);
+    copy2.deallocate(&b8);
+    EXPECT_TRUE(b7.empty());
+    EXPECT_TRUE(b8.empty());
 }
 
 TEST_F(Free_list_allocator_test, is_movealbe)
@@ -337,6 +346,11 @@ TEST_F(Free_list_allocator_test, is_movealbe)
     EXPECT_EQ(size_in_range, b3.s);
     EXPECT_NE(nullptr, b3.p);
 
+    allocator_.deallocate(&b2);
+    allocator_.deallocate(&b3);
+    EXPECT_TRUE(b2.empty());
+    EXPECT_TRUE(b3.empty());
+
     Allocator moved2{};
 
     Block b4 = moved1.allocate(size_in_range);
@@ -358,6 +372,11 @@ TEST_F(Free_list_allocator_test, is_movealbe)
     EXPECT_FALSE(b6.empty());
     EXPECT_EQ(size_in_range, b6.s);
     EXPECT_NE(nullptr, b6.p);
+
+    allocator_.deallocate(&b5);
+    allocator_.deallocate(&b6);
+    EXPECT_TRUE(b5.empty());
+    EXPECT_TRUE(b6.empty());
 }
 
 // Stl_adapter_allocator tests
