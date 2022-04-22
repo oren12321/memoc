@@ -220,7 +220,7 @@ TEST_F(Free_list_allocator_test, reuses_the_same_memory_if_deallocating_in_memor
 
     std::array<Block, max_list_size_> saved_blocks{};
 
-    for (int i = 0; i < max_list_size_; ++i)
+    for (std::size_t i = 0; i < max_list_size_; ++i)
     {
         Block b = allocator_.allocate(size_in_range);
         EXPECT_NE(nullptr, b.p);
