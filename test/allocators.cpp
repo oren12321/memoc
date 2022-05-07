@@ -558,7 +558,10 @@ protected:
     static constexpr std::size_t size_ = 16;
     using Parent = math::core::allocators::Stack_allocator<size_>;
 
-    using Allocator = math::core::allocators::Shared_allocator<Parent>;
+    using Allocator_default = math::core::allocators::Shared_allocator<Parent>;
+
+    using Allocator_0 = math::core::allocators::Shared_allocator<Parent, 0>;
+    using Allocator_1 = math::core::allocators::Shared_allocator<Parent, 1>;
 };
 
 TEST_F(Shared_allocator_test, saves_state_between_instances)
@@ -567,13 +570,28 @@ TEST_F(Shared_allocator_test, saves_state_between_instances)
 
     const std::size_t aligned_size = 2;
 
-    Allocator a1{};
+    Allocator_default a1{};
     Block b1 = a1.allocate(aligned_size);
 
-    Allocator a2{};
+    Allocator_default a2{};
     Block b2 = a2.allocate(aligned_size);
     
     EXPECT_EQ(reinterpret_cast<std::uint8_t*>(b1.p) + aligned_size, b2.p);
+}
+
+TEST_F(Shared_allocator_test, not_saves_state_between_instances_when_id_is_different)
+{
+    using namespace math::core::memory;
+
+    const std::size_t aligned_size = 2;
+
+    Allocator_0 a1{};
+    Block b1 = a1.allocate(aligned_size);
+
+    Allocator_1 a2{};
+    Block b2 = a2.allocate(aligned_size);
+
+    EXPECT_NE(reinterpret_cast<std::uint8_t*>(b1.p) + aligned_size, b2.p);
 }
 
 // Fallback_allocator tests
