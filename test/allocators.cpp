@@ -628,3 +628,55 @@ TEST_F(Fallback_allocator_test, is_moveable)
     EXPECT_NE(nullptr, b2.p);
 }
 
+TEST(Unique_ptr_test, can_be_created_with_custom_allocator)
+{
+    using namespace math::core::allocators;
+
+    {
+        std::unique_ptr<int, aux::Custom_deleter<Malloc_allocator, int>> p =
+            aux::make_unique<Malloc_allocator, int>(1);
+        EXPECT_EQ(1, *p);
+    }
+
+    Malloc_allocator allocator{};
+    math::core::memory::Block b = allocator.allocate(sizeof(int));
+    int* r = math::core::memory::aux::construct_at<int>(reinterpret_cast<int*>(b.p), 1);
+    {
+        std::unique_ptr<int, aux::Custom_deleter<Malloc_allocator, int>> p = aux::make_unique<Malloc_allocator, int>(r);
+        EXPECT_EQ(1, *p);
+    }
+}
+
+TEST(Shared_ptr_test, can_be_created_with_custom_allocator)
+{
+    using namespace math::core::allocators;
+
+    std::shared_ptr<int> p1 = nullptr;
+    {
+        std::shared_ptr<int> p2 =
+            aux::make_shared<Malloc_allocator, int>(1);
+        EXPECT_EQ(1, *p2);
+        p1 = p2;
+        EXPECT_EQ(1, *p1);
+        EXPECT_EQ(2, p1.use_count());
+        EXPECT_EQ(2, p2.use_count());
+    }
+    EXPECT_EQ(1, *p1);
+    EXPECT_EQ(1, p1.use_count());
+
+    Malloc_allocator allocator{};
+    math::core::memory::Block b = allocator.allocate(sizeof(int));
+    int* r = math::core::memory::aux::construct_at<int>(reinterpret_cast<int*>(b.p), 1);
+    std::shared_ptr<int> p3 = nullptr;
+    {
+        std::shared_ptr<int> p4 =
+            aux::make_shared<Malloc_allocator, int>(r);
+        EXPECT_EQ(1, *p4);
+        p3 = p4;
+        EXPECT_EQ(1, *p4);
+        EXPECT_EQ(2, p3.use_count());
+        EXPECT_EQ(2, p4.use_count());
+    }
+    EXPECT_EQ(1, *p3);
+    EXPECT_EQ(1, p3.use_count());
+}
