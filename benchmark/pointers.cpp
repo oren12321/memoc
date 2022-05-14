@@ -15,7 +15,9 @@ static void BM_std_shared_ptr(benchmark::State& state)
         }
         for (auto& ptr : ptrs) {
             auto n = ptr.use_count();
+            benchmark::DoNotOptimize(n);
             auto& x = *ptr;
+            benchmark::DoNotOptimize(x);
         }
         for (auto& ptr : ptrs) {
             ptr.reset();
@@ -36,7 +38,9 @@ static void BM_LW_shared_ptr(benchmark::State& state)
         }
         for (auto& ptr : ptrs) {
             auto n = ptr.use_count();
+            benchmark::DoNotOptimize(n);
             auto& x = *ptr;
+            benchmark::DoNotOptimize(x);
         }
         for (auto& ptr : ptrs) {
             ptr.reset();
