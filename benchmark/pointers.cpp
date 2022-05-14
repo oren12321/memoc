@@ -8,20 +8,19 @@
 static void BM_std_shared_ptr(benchmark::State& state)
 {
     for (auto _ : state) {
-        std::array<std::shared_ptr<int>, 256> ptrs;
-        std::shared_ptr<int> p = std::make_shared<int>(0);
-        for (auto& ptr : ptrs) {
-            ptr = p;
+        std::shared_ptr<int> sp1 = std::make_shared<int>(1998);
+        benchmark::DoNotOptimize(*sp1);
+        benchmark::DoNotOptimize(sp1.use_count());
+        {
+            std::shared_ptr<int> sp2{ sp1 };
+            benchmark::DoNotOptimize(sp2.use_count());
         }
-        for (auto& ptr : ptrs) {
-            auto n = ptr.use_count();
-            benchmark::DoNotOptimize(n);
-            auto& x = *ptr;
-            benchmark::DoNotOptimize(x);
-        }
-        for (auto& ptr : ptrs) {
-            ptr.reset();
-        }
+        benchmark::DoNotOptimize(sp1.use_count());
+        std::shared_ptr<int> sp3 = sp1;
+        benchmark::DoNotOptimize(sp1.use_count());
+        sp3.reset();
+        benchmark::DoNotOptimize(sp1.use_count());
+        sp1 = std::make_shared<int>(2011);
     }
 }
 BENCHMARK(BM_std_shared_ptr);
@@ -31,20 +30,19 @@ static void BM_LW_shared_ptr(benchmark::State& state)
     using namespace math::core::pointers;
 
     for (auto _ : state) {
-        std::array<Shared_ptr<int>, 256> ptrs;
-        Shared_ptr<int> p = Shared_ptr<int>::make_shared(0);
-        for (auto& ptr : ptrs) {
-            ptr = p;
+        Shared_ptr<int> sp1 = Shared_ptr<int>::make_shared(1998);
+        benchmark::DoNotOptimize(*sp1);
+        benchmark::DoNotOptimize(sp1.use_count());
+        {
+            Shared_ptr<int> sp2{ sp1 };
+            benchmark::DoNotOptimize(sp2.use_count());
         }
-        for (auto& ptr : ptrs) {
-            auto n = ptr.use_count();
-            benchmark::DoNotOptimize(n);
-            auto& x = *ptr;
-            benchmark::DoNotOptimize(x);
-        }
-        for (auto& ptr : ptrs) {
-            ptr.reset();
-        }
+        benchmark::DoNotOptimize(sp1.use_count());
+        Shared_ptr<int> sp3 = sp1;
+        benchmark::DoNotOptimize(sp1.use_count());
+        sp3.reset();
+        benchmark::DoNotOptimize(sp1.use_count());
+        sp1 = Shared_ptr<int>::make_shared(2011);
     }
 }
 BENCHMARK(BM_LW_shared_ptr);
