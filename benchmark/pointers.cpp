@@ -30,7 +30,7 @@ static void BM_LW_shared_ptr(benchmark::State& state)
     using namespace math::core::pointers;
 
     for (auto _ : state) {
-        Shared_ptr<int> sp1 = Shared_ptr<int>::make_shared(1998);
+        Shared_ptr<int> sp1 = make_shared<int>(1998);
         benchmark::DoNotOptimize(*sp1);
         benchmark::DoNotOptimize(sp1.use_count());
         {
@@ -42,7 +42,7 @@ static void BM_LW_shared_ptr(benchmark::State& state)
         benchmark::DoNotOptimize(sp1.use_count());
         sp3.reset();
         benchmark::DoNotOptimize(sp1.use_count());
-        sp1 = Shared_ptr<int>::make_shared(2011);
+        sp1 = make_shared<int>(2011);
     }
 }
 BENCHMARK(BM_LW_shared_ptr);

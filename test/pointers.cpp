@@ -39,7 +39,7 @@ TEST(LW_Shared_ptr, construction_and_accessors)
 
     {
         // using auxiliary function
-        Shared_ptr<Foo> sp3 = Shared_ptr<Foo>::make_shared(5);
+        Shared_ptr<Foo> sp3 = make_shared<Foo>(5);
         EXPECT_TRUE(sp3);
         EXPECT_NE(nullptr, sp3.get());
         EXPECT_EQ(1, sp3.use_count());
@@ -52,8 +52,8 @@ TEST(LW_Shared_ptr, comparison)
 {
     using namespace math::core::pointers;
 
-    Shared_ptr<int> p1 = Shared_ptr<int>::make_shared(42);
-    Shared_ptr<int> p2 = Shared_ptr<int>::make_shared(42);
+    Shared_ptr<int> p1 = make_shared<int>(42);
+    Shared_ptr<int> p2 = make_shared<int>(42);
 
     EXPECT_TRUE(p1 == p1);
     EXPECT_TRUE(p1 <=> p1 == 0);
@@ -87,7 +87,7 @@ TEST(LW_Shared_ptr_test, inheritance_and_sharing)
 
     bool destructed = false;
     {
-        Shared_ptr<B> sp1 = Shared_ptr<B>::make_shared(1, 2);
+        Shared_ptr<B> sp1 = make_shared<B>(1, 2);
         EXPECT_TRUE(sp1);
         EXPECT_NE(nullptr, sp1.get());
         EXPECT_EQ(1, (*sp1).a_);
@@ -130,7 +130,7 @@ TEST(LW_Shared_ptr, reset)
 
     {
         // unique ownership
-        Shared_ptr<Foo> sp1 = Shared_ptr<Foo>::make_shared(100);
+        Shared_ptr<Foo> sp1 = make_shared<Foo>(100);
         EXPECT_EQ(1, sp1.use_count());
         EXPECT_TRUE(sp1);
         sp1.reset();
@@ -140,7 +140,7 @@ TEST(LW_Shared_ptr, reset)
 
     {
         // multiple ownership
-        Shared_ptr<Foo> sp1 = Shared_ptr<Foo>::make_shared(300);
+        Shared_ptr<Foo> sp1 = make_shared<Foo>(300);
         Shared_ptr<Foo> sp2 = sp1;
         Shared_ptr<Foo> sp3 = sp2;
         EXPECT_EQ(3, sp1.use_count());
@@ -163,7 +163,7 @@ TEST(LW_Shared_ptr, move)
 
     {
         // unique ownership - constructor
-        Shared_ptr<int> sp1 = Shared_ptr<int>::make_shared(100);
+        Shared_ptr<int> sp1 = make_shared<int>(100);
         EXPECT_EQ(1, sp1.use_count());
         EXPECT_TRUE(sp1);
         Shared_ptr<int> sp2{ std::move(sp1) };
@@ -175,7 +175,7 @@ TEST(LW_Shared_ptr, move)
 
     {
         // unique ownership - assignment
-        Shared_ptr<int> sp1 = Shared_ptr<int>::make_shared(100);
+        Shared_ptr<int> sp1 = make_shared<int>(100);
         EXPECT_EQ(1, sp1.use_count());
         EXPECT_TRUE(sp1);
         Shared_ptr<int> sp2{};
@@ -188,7 +188,7 @@ TEST(LW_Shared_ptr, move)
 
     {
         // multiple ownership - constructor
-        Shared_ptr<int> sp1 = Shared_ptr<int>::make_shared(100);
+        Shared_ptr<int> sp1 = make_shared<int>(100);
         EXPECT_EQ(1, sp1.use_count());
         EXPECT_TRUE(sp1);
         Shared_ptr<int> sp2 = sp1;
@@ -207,7 +207,7 @@ TEST(LW_Shared_ptr, move)
 
     {
         // multiple ownership - constructor
-        Shared_ptr<int> sp1 = Shared_ptr<int>::make_shared(100);
+        Shared_ptr<int> sp1 = make_shared<int>(100);
         EXPECT_EQ(1, sp1.use_count());
         EXPECT_TRUE(sp1);
         Shared_ptr<int> sp2 = sp1;
