@@ -157,6 +157,97 @@ TEST(LW_Shared_ptr, reset)
     }
 }
 
+TEST(LW_Shared_ptr, copy)
+{
+    using namespace math::core::pointers;
+
+    {
+        // unique ownership - constructor
+        Shared_ptr<int> sp1 = make_shared<int>(100);
+        EXPECT_EQ(1, sp1.use_count());
+        EXPECT_TRUE(sp1);
+        Shared_ptr<int> sp2{ sp1 };
+        EXPECT_EQ(2, sp1.use_count());
+        EXPECT_TRUE(sp1);
+        EXPECT_EQ(2, sp2.use_count());
+        EXPECT_TRUE(sp2);
+    }
+
+    {
+        // unique ownership - assignment
+        Shared_ptr<int> sp1 = make_shared<int>(100);
+        EXPECT_EQ(1, sp1.use_count());
+        EXPECT_TRUE(sp1);
+        Shared_ptr<int> sp2{};
+        sp2 = sp1;
+        EXPECT_EQ(2, sp1.use_count());
+        EXPECT_TRUE(sp1);
+        EXPECT_EQ(2, sp2.use_count());
+        EXPECT_TRUE(sp2);
+    }
+
+    {
+        // multiple ownership - constructor
+        Shared_ptr<int> sp1 = make_shared<int>(100);
+        EXPECT_EQ(1, sp1.use_count());
+        EXPECT_TRUE(sp1);
+        Shared_ptr<int> sp2 = sp1;
+        EXPECT_EQ(2, sp1.use_count());
+        EXPECT_TRUE(sp1);
+        EXPECT_EQ(2, sp2.use_count());
+        EXPECT_TRUE(sp2);
+        Shared_ptr<int> sp3{ sp2 };
+        EXPECT_EQ(3, sp1.use_count());
+        EXPECT_TRUE(sp1);
+        EXPECT_EQ(3, sp2.use_count());
+        EXPECT_TRUE(sp2);
+        EXPECT_EQ(3, sp3.use_count());
+        EXPECT_TRUE(sp3);
+    }
+
+    {
+        // multiple ownership - assignment
+        Shared_ptr<int> sp1 = make_shared<int>(100);
+        EXPECT_EQ(1, sp1.use_count());
+        EXPECT_TRUE(sp1);
+        Shared_ptr<int> sp2 = sp1;
+        EXPECT_EQ(2, sp1.use_count());
+        EXPECT_TRUE(sp1);
+        EXPECT_EQ(2, sp2.use_count());
+        EXPECT_TRUE(sp2);
+        Shared_ptr<int> sp3{};
+        sp3 = sp2;
+        EXPECT_EQ(3, sp1.use_count());
+        EXPECT_TRUE(sp1);
+        EXPECT_EQ(3, sp2.use_count());
+        EXPECT_TRUE(sp2);
+        EXPECT_EQ(3, sp3.use_count());
+        EXPECT_TRUE(sp3);
+    }
+
+    {
+        // aliasing
+        Shared_ptr<int> sp1 = make_shared<int>(100);
+        EXPECT_EQ(1, sp1.use_count());
+        EXPECT_TRUE(sp1);
+        Shared_ptr<int> sp2 = sp1;
+        EXPECT_EQ(2, sp1.use_count());
+        EXPECT_TRUE(sp1);
+        EXPECT_EQ(2, sp2.use_count());
+        EXPECT_TRUE(sp2);
+        Shared_ptr<int> sp3{ sp2, new int{200} };
+        EXPECT_EQ(3, sp1.use_count());
+        EXPECT_TRUE(sp1);
+        EXPECT_EQ(100, *sp1);
+        EXPECT_EQ(3, sp2.use_count());
+        EXPECT_TRUE(sp2);
+        EXPECT_EQ(100, *sp2);
+        EXPECT_EQ(3, sp3.use_count());
+        EXPECT_TRUE(sp3);
+        EXPECT_EQ(200, *sp3);
+    }
+}
+
 TEST(LW_Shared_ptr, move)
 {
     using namespace math::core::pointers;
@@ -206,7 +297,7 @@ TEST(LW_Shared_ptr, move)
     }
 
     {
-        // multiple ownership - constructor
+        // multiple ownership - assignment
         Shared_ptr<int> sp1 = make_shared<int>(100);
         EXPECT_EQ(1, sp1.use_count());
         EXPECT_TRUE(sp1);
@@ -223,5 +314,149 @@ TEST(LW_Shared_ptr, move)
         EXPECT_FALSE(sp2);
         EXPECT_EQ(2, sp3.use_count());
         EXPECT_TRUE(sp3);
+    }
+
+    {
+        // aliasing
+        Shared_ptr<int> sp1 = make_shared<int>(100);
+        EXPECT_EQ(1, sp1.use_count());
+        EXPECT_TRUE(sp1);
+        Shared_ptr<int> sp2 = sp1;
+        EXPECT_EQ(2, sp1.use_count());
+        EXPECT_TRUE(sp1);
+        EXPECT_EQ(2, sp2.use_count());
+        EXPECT_TRUE(sp2);
+        Shared_ptr<int> sp3{ std::move(sp2), new int{200} };
+        EXPECT_EQ(2, sp1.use_count());
+        EXPECT_TRUE(sp1);
+        EXPECT_EQ(100, *sp1);
+        EXPECT_EQ(0, sp2.use_count());
+        EXPECT_FALSE(sp2);
+        EXPECT_EQ(2, sp3.use_count());
+        EXPECT_TRUE(sp3);
+        EXPECT_EQ(200, *sp3);
+    }
+}
+
+TEST(LW_Shared_ptr, casting)
+{
+    using namespace math::core::pointers;
+    struct A {
+        A(int a)
+            : a_(a) {}
+        virtual ~A() {}
+        int a_{ 0 };
+    };
+
+    struct B : public A {
+        B(int a, int b)
+            : A(a), b_(b) {}
+        virtual ~B() {}
+        int b_{ 0 };
+    };
+
+    struct C : public A {
+        C(int a, int c)
+            : A(a), c_(c) {}
+        virtual ~C() {}
+        int c_{ 0 };
+    };
+
+    struct D {};
+
+    // static cast
+    {
+        Shared_ptr<B> b1 = make_shared<B>(1, 2);
+        EXPECT_EQ(1, b1.use_count());
+        EXPECT_TRUE(b1);
+        EXPECT_EQ(1, b1->a_);
+        EXPECT_EQ(2, b1->b_);
+
+        Shared_ptr<A> a1 = static_pointer_cast<A>(b1);
+        EXPECT_EQ(2, b1.use_count());
+        EXPECT_TRUE(b1);
+        EXPECT_EQ(2, a1.use_count());
+        EXPECT_EQ(1, a1->a_);
+
+        Shared_ptr<B> b2 = static_pointer_cast<B>(a1);
+        EXPECT_EQ(3, b2.use_count());
+        EXPECT_TRUE(b2);
+
+        Shared_ptr<A> a2 = static_pointer_cast<A>(std::move(b1));
+        EXPECT_EQ(0, b1.use_count());
+        EXPECT_FALSE(b1);
+        EXPECT_EQ(3, a2.use_count());
+        EXPECT_EQ(1, a2->a_);
+    }
+
+    // dynamic cast
+    {
+        Shared_ptr<B> b1 = make_shared<B>(1, 2);
+        EXPECT_EQ(1, b1.use_count());
+        EXPECT_TRUE(b1);
+        EXPECT_EQ(1, b1->a_);
+        EXPECT_EQ(2, b1->b_);
+
+        Shared_ptr<A> a1 = dynamic_pointer_cast<A>(b1);
+        EXPECT_EQ(2, b1.use_count());
+        EXPECT_TRUE(b1);
+        EXPECT_EQ(2, a1.use_count());
+        EXPECT_EQ(1, a1->a_);
+
+        Shared_ptr<A> c = make_shared<C>(1, 2);
+        Shared_ptr<B> a2 = dynamic_pointer_cast<B>(c);
+        EXPECT_EQ(0, a2.use_count());
+        EXPECT_FALSE(a2);
+
+        Shared_ptr<A> a3 = dynamic_pointer_cast<A>(std::move(b1));
+        EXPECT_EQ(0, b1.use_count());
+        EXPECT_FALSE(b1);
+        EXPECT_EQ(2, a3.use_count());
+        EXPECT_EQ(1, a3->a_);
+    }
+
+    // const cast
+    {
+        Shared_ptr<int> a1 = make_shared<int>(1);
+        EXPECT_EQ(1, a1.use_count());
+        EXPECT_TRUE(a1);
+        EXPECT_EQ(1, *a1);
+
+        Shared_ptr<const int> a2 = const_pointer_cast<const int>(a1);
+        *a1 = 2;
+        EXPECT_EQ(2, a1.use_count());
+        EXPECT_TRUE(a1);
+        EXPECT_EQ(2, *a1);
+        EXPECT_EQ(2, a2.use_count());
+        EXPECT_TRUE(a2);
+        EXPECT_EQ(2, *a2);
+
+        Shared_ptr<const int> a3 = const_pointer_cast<const int>(std::move(a1));
+        EXPECT_EQ(0, a1.use_count());
+        EXPECT_FALSE(a1);
+        EXPECT_EQ(2, a3.use_count());
+        EXPECT_TRUE(a3);
+        EXPECT_EQ(2, *a3);
+    }
+
+    // reinterpret cast
+    {
+        Shared_ptr<int> a1 = make_shared<int>(1);
+        EXPECT_EQ(1, a1.use_count());
+        EXPECT_TRUE(a1);
+        EXPECT_EQ(1, *a1);
+
+        Shared_ptr<D> a2 = reinterpret_pointer_cast<D>(a1);
+        EXPECT_EQ(2, a1.use_count());
+        EXPECT_TRUE(a1);
+        EXPECT_EQ(1, *a1);
+        EXPECT_EQ(2, a2.use_count());
+        EXPECT_TRUE(a2);
+
+        Shared_ptr<D> a3 = reinterpret_pointer_cast<D>(std::move(a1));
+        EXPECT_EQ(0, a1.use_count());
+        EXPECT_FALSE(a1);
+        EXPECT_EQ(2, a3.use_count());
+        EXPECT_TRUE(a3);
     }
 }
