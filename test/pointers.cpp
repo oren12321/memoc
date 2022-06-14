@@ -6,6 +6,148 @@
 #include <math/core/allocators.h>
 #include <math/core/memory.h>
 
+TEST(LW_Unique_ptr, construction_and_accessors)
+{
+    using namespace math::core::pointers;
+
+    struct Foo {
+        Foo(int i = 0)
+            : id_{ i } {}
+        int id_{ 0 };
+    };
+
+    {
+        // no managed object
+        Unique_ptr<Foo> sp1{};
+        EXPECT_FALSE(sp1);
+        EXPECT_EQ(nullptr, sp1.get());
+    }
+
+    {
+        // constructor with object
+        math::core::allocators::Malloc_allocator allocator{};
+        math::core::memory::Block b = allocator.allocate(sizeof(Foo));
+        Foo* ptr = math::core::memory::aux::construct_at<Foo>(reinterpret_cast<Foo*>(b.p), 10);
+        Unique_ptr<Foo> sp2(ptr);
+        EXPECT_TRUE(sp2);
+        EXPECT_NE(nullptr, sp2.get());
+        EXPECT_EQ(10, (*sp2).id_);
+        EXPECT_EQ(10, sp2->id_);
+    }
+
+    {
+        // using auxiliary function
+        Unique_ptr<Foo> sp3 = make_unique<Foo>(5);
+        EXPECT_TRUE(sp3);
+        EXPECT_NE(nullptr, sp3.get());
+        EXPECT_EQ(5, (*sp3).id_);
+        EXPECT_EQ(5, sp3->id_);
+    }
+}
+
+TEST(LW_Unique_ptr, comparison)
+{
+    using namespace math::core::pointers;
+
+    Unique_ptr<int> p1 = make_unique<int>(42);
+    Unique_ptr<int> p2 = make_unique<int>(42);
+
+    EXPECT_TRUE(p1 == p1);
+    EXPECT_TRUE(p1 <=> p1 == 0);
+    EXPECT_FALSE(p1 == p2);
+    EXPECT_TRUE(p1 < p2 || p1 > p2);
+    EXPECT_FALSE(p1 <=> p2 == 0);
+}
+
+TEST(LW_Unique_ptr_test, inheritance_and_sharing)
+{
+    using namespace math::core::pointers;
+
+    struct A {
+        A(int a)
+            : a_(a) {}
+        virtual ~A()
+        {
+            if (destructed_) {
+                *destructed_ = true;
+            }
+        }
+        int a_{ 0 };
+        bool* destructed_{ nullptr };
+    };
+
+    struct B : public A {
+        B(int a, int b)
+            : A(a), b_(b) {}
+        int b_{ 0 };
+    };
+
+    bool destructed = false;
+    {
+        Unique_ptr<B> sp1 = make_unique<B>(1, 2);
+        sp1->destructed_ = &destructed;
+        EXPECT_TRUE(sp1);
+        EXPECT_NE(nullptr, sp1.get());
+        EXPECT_EQ(1, (*sp1).a_);
+        EXPECT_EQ(1, sp1->a_);
+        EXPECT_EQ(2, (*sp1).b_);
+        EXPECT_EQ(2, sp1->b_);
+    }
+    EXPECT_TRUE(destructed);
+}
+
+TEST(LW_Unique_ptr, reset)
+{
+    using namespace math::core::pointers;
+
+    struct Foo {
+        Foo(int i = 0)
+            : id_{ i } {}
+        int id_{ 0 };
+    };
+
+    {
+        Unique_ptr<Foo> sp1 = make_unique<Foo>(100);
+        EXPECT_TRUE(sp1);
+        sp1.reset();
+        EXPECT_FALSE(sp1);
+    }
+
+    {
+        Unique_ptr<Foo> sp1 = make_unique<Foo>(100);
+        EXPECT_TRUE(sp1);
+        math::core::allocators::Malloc_allocator allocator{};
+        math::core::memory::Block b = allocator.allocate(sizeof(Foo));
+        Foo* ptr = math::core::memory::aux::construct_at<Foo>(reinterpret_cast<Foo*>(b.p), 10);
+        sp1.reset(ptr);
+        EXPECT_TRUE(sp1);
+    }
+}
+
+TEST(LW_Unique_ptr, move)
+{
+    using namespace math::core::pointers;
+
+    {
+        // unique ownership - constructor
+        Unique_ptr<int> sp1 = make_unique<int>(100);
+        EXPECT_TRUE(sp1);
+        Unique_ptr<int> sp2{ std::move(sp1) };
+        EXPECT_FALSE(sp1);
+        EXPECT_TRUE(sp2);
+    }
+
+    {
+        // unique ownership - assignment
+        Unique_ptr<int> sp1 = make_unique<int>(100);
+        EXPECT_TRUE(sp1);
+        Unique_ptr<int> sp2{};
+        sp2 = std::move(sp1);
+        EXPECT_FALSE(sp1);
+        EXPECT_TRUE(sp2);
+    }
+}
+
 TEST(LW_Shared_ptr, construction_and_accessors)
 {
     using namespace math::core::pointers;
