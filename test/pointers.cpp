@@ -377,7 +377,8 @@ TEST(LW_Shared_ptr, copy)
         EXPECT_TRUE(sp1);
         EXPECT_EQ(2, sp2.use_count());
         EXPECT_TRUE(sp2);
-        Shared_ptr<int> sp3{ sp2, new int{200} };
+        int* p = new int{ 200 };
+        Shared_ptr<int> sp3{ sp2, p };
         EXPECT_EQ(3, sp1.use_count());
         EXPECT_TRUE(sp1);
         EXPECT_EQ(100, *sp1);
@@ -387,6 +388,7 @@ TEST(LW_Shared_ptr, copy)
         EXPECT_EQ(3, sp3.use_count());
         EXPECT_TRUE(sp3);
         EXPECT_EQ(200, *sp3);
+        delete p;
     }
 }
 
@@ -468,7 +470,8 @@ TEST(LW_Shared_ptr, move)
         EXPECT_TRUE(sp1);
         EXPECT_EQ(2, sp2.use_count());
         EXPECT_TRUE(sp2);
-        Shared_ptr<int> sp3{ std::move(sp2), new int{200} };
+        int* p = new int{ 200 };
+        Shared_ptr<int> sp3{ std::move(sp2), p };
         EXPECT_EQ(2, sp1.use_count());
         EXPECT_TRUE(sp1);
         EXPECT_EQ(100, *sp1);
@@ -477,6 +480,7 @@ TEST(LW_Shared_ptr, move)
         EXPECT_EQ(2, sp3.use_count());
         EXPECT_TRUE(sp3);
         EXPECT_EQ(200, *sp3);
+        delete p;
     }
 }
 
