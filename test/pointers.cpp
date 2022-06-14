@@ -606,3 +606,50 @@ TEST(LW_Shared_ptr, casting)
         EXPECT_TRUE(a3);
     }
 }
+
+TEST(LW_Shared_ptr, from_Unique_ptr)
+{
+    using namespace math::core::pointers;
+
+    {
+        // unique ownership - constructor
+        Unique_ptr<int> sp1 = make_unique<int>(100);
+        EXPECT_TRUE(sp1);
+        Shared_ptr<int> sp2{ std::move(sp1) };
+        EXPECT_FALSE(sp1);
+        EXPECT_EQ(1, sp2.use_count());
+        EXPECT_TRUE(sp2);
+    }
+
+    {
+        // unique ownership - assignment
+        Unique_ptr<int> sp1 = make_unique<int>(100);
+        EXPECT_TRUE(sp1);
+        Shared_ptr<int> sp2{};
+        sp2 = std::move(sp1);
+        EXPECT_FALSE(sp1);
+        EXPECT_EQ(1, sp2.use_count());
+        EXPECT_TRUE(sp2);
+    }
+
+    {
+        // multiple ownership
+        Unique_ptr<int> sp1 = make_unique<int>(200);
+        EXPECT_TRUE(sp1);
+        Shared_ptr<int> sp2 = make_shared<int>(100);;
+        EXPECT_EQ(1, sp2.use_count());
+        EXPECT_TRUE(sp2);
+        Shared_ptr<int> sp3{ sp2 };
+        EXPECT_EQ(2, sp2.use_count());
+        EXPECT_TRUE(sp1);
+        EXPECT_EQ(2, sp3.use_count());
+        EXPECT_TRUE(sp3);
+        sp3 = std::move(sp1);
+        EXPECT_FALSE(sp1);
+        EXPECT_EQ(1, sp2.use_count());
+        EXPECT_EQ(100, *sp2);
+        EXPECT_EQ(1, sp3.use_count());
+        EXPECT_TRUE(sp3);
+        EXPECT_EQ(200, *sp3);
+    }
+}
