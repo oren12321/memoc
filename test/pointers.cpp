@@ -653,3 +653,235 @@ TEST(LW_Shared_ptr, from_Unique_ptr)
         EXPECT_EQ(200, *sp3);
     }
 }
+
+
+
+
+TEST(LW_Weak_ptr, construction)
+{
+    using namespace math::core::pointers;
+
+    // empty weak ptr
+    {
+        Weak_ptr<int> wp{};
+        EXPECT_TRUE(wp.expired());
+        EXPECT_EQ(0, wp.use_count());
+    }
+
+    // from shared ptr
+    {
+        Shared_ptr<int> sp = make_shared<int>(100);
+        Weak_ptr<int> wp{ sp };
+        EXPECT_FALSE(wp.expired());
+        EXPECT_EQ(1, wp.use_count());
+    }
+}
+
+TEST(LW_Weak_ptr, locking_and_resetting)
+{
+    using namespace math::core::pointers;
+
+    // empty weak ptr
+    {
+        Weak_ptr<int> wp{};
+        EXPECT_TRUE(wp.expired());
+        EXPECT_EQ(0, wp.use_count());
+
+        Shared_ptr<int> sp{ wp.lock() };
+        EXPECT_FALSE(sp);
+        EXPECT_EQ(0, sp.use_count());
+    }
+
+    // non empty weak ptr
+    {
+        Shared_ptr<int> sp1 = make_shared<int>(100);
+        Weak_ptr<int> wp{ sp1 };
+        EXPECT_FALSE(wp.expired());
+        EXPECT_EQ(1, wp.use_count());
+
+        Shared_ptr<int> sp2{ wp.lock() };
+        EXPECT_TRUE(sp1);
+        EXPECT_EQ(100, *sp1);
+        EXPECT_EQ(2, sp1.use_count());
+        EXPECT_TRUE(sp2);
+        EXPECT_EQ(100, *sp2);
+        EXPECT_EQ(2, sp2.use_count());
+        EXPECT_FALSE(wp.expired());
+        EXPECT_EQ(2, wp.use_count());
+
+        wp.reset();
+        EXPECT_TRUE(sp1);
+        EXPECT_EQ(100, *sp1);
+        EXPECT_EQ(2, sp1.use_count());
+        EXPECT_TRUE(sp2);
+        EXPECT_EQ(100, *sp2);
+        EXPECT_EQ(2, sp2.use_count());
+        EXPECT_TRUE(wp.expired());
+        EXPECT_EQ(0, wp.use_count());
+    }
+}
+
+TEST(LW_Weak_ptr, multiple_instances)
+{
+    using namespace math::core::pointers;
+
+    // empty weak ptr
+    {
+        Shared_ptr<int> sp{};
+
+        Weak_ptr<int> wp1{ sp };
+        Weak_ptr<int> wp2{ sp };
+
+        EXPECT_TRUE(wp1.expired());
+        EXPECT_EQ(0, wp1.use_count());
+        EXPECT_TRUE(wp2.expired());
+        EXPECT_EQ(0, wp2.use_count());
+    }
+
+    // non empty weak ptr
+    {
+        Shared_ptr<int> sp = make_shared<int>(100);
+
+        Weak_ptr<int> wp1{ sp };
+        Weak_ptr<int> wp2{ sp };
+
+        EXPECT_FALSE(wp1.expired());
+        EXPECT_EQ(1, wp1.use_count());
+        EXPECT_FALSE(wp2.expired());
+        EXPECT_EQ(1, wp2.use_count());
+    }
+}
+
+TEST(LW_Weak_ptr, copy)
+{
+    using namespace math::core::pointers;
+
+    // empty weak ptr - copying - constructor
+    {
+        Shared_ptr<int> sp{};
+
+        Weak_ptr<int> wp1{ sp };
+        Weak_ptr<int> wp2{ wp1 };
+
+        EXPECT_TRUE(wp1.expired());
+        EXPECT_EQ(0, wp1.use_count());
+        EXPECT_TRUE(wp2.expired());
+        EXPECT_EQ(0, wp2.use_count());
+    }
+
+    // empty weak ptr - copying - constructor
+    {
+        Shared_ptr<int> sp{};
+
+        Weak_ptr<int> wp1{ sp };
+        Weak_ptr<int> wp2 = wp1;
+
+        EXPECT_TRUE(wp1.expired());
+        EXPECT_EQ(0, wp1.use_count());
+        EXPECT_TRUE(wp2.expired());
+        EXPECT_EQ(0, wp2.use_count());
+    }
+
+    // non empty weak ptr - copying - constructor
+    {
+        Shared_ptr<int> sp = make_shared<int>(100);
+
+        Weak_ptr<int> wp1{ sp };
+        Weak_ptr<int> wp2{ wp1 };
+
+        EXPECT_FALSE(wp1.expired());
+        EXPECT_EQ(1, wp1.use_count());
+        EXPECT_FALSE(wp2.expired());
+        EXPECT_EQ(1, wp2.use_count());
+    }
+
+    // non empty weak ptr - copying - assignment
+    {
+        Shared_ptr<int> sp = make_shared<int>(100);
+
+        Weak_ptr<int> wp1{ sp };
+        Weak_ptr<int> wp2 = wp1;
+
+        EXPECT_FALSE(wp1.expired());
+        EXPECT_EQ(1, wp1.use_count());
+        EXPECT_FALSE(wp2.expired());
+        EXPECT_EQ(1, wp2.use_count());
+    }
+}
+
+TEST(LW_Weak_ptr, move)
+{
+    using namespace math::core::pointers;
+
+    // empty weak ptr - copying - constructor
+    {
+        Shared_ptr<int> sp{};
+
+        Weak_ptr<int> wp1{ sp };
+        Weak_ptr<int> wp2{ std::move(wp1) };
+
+        EXPECT_TRUE(wp1.expired());
+        EXPECT_EQ(0, wp1.use_count());
+        EXPECT_TRUE(wp2.expired());
+        EXPECT_EQ(0, wp2.use_count());
+    }
+
+    // empty weak ptr - copying - constructor
+    {
+        Shared_ptr<int> sp{};
+
+        Weak_ptr<int> wp1{ sp };
+        Weak_ptr<int> wp2 = std::move(wp1);
+
+        EXPECT_TRUE(wp1.expired());
+        EXPECT_EQ(0, wp1.use_count());
+        EXPECT_TRUE(wp2.expired());
+        EXPECT_EQ(0, wp2.use_count());
+    }
+
+    // non empty weak ptr - copying - constructor
+    {
+        Shared_ptr<int> sp = make_shared<int>(100);
+
+        Weak_ptr<int> wp1{ sp };
+        Weak_ptr<int> wp2{ std::move(wp1) };
+
+        EXPECT_TRUE(wp1.expired());
+        EXPECT_EQ(0, wp1.use_count());
+        EXPECT_FALSE(wp2.expired());
+        EXPECT_EQ(1, wp2.use_count());
+    }
+
+    // non empty weak ptr - copying - assignment
+    {
+        Shared_ptr<int> sp = make_shared<int>(100);
+
+        Weak_ptr<int> wp1{ sp };
+        Weak_ptr<int> wp2 = std::move(wp1);
+
+        EXPECT_TRUE(wp1.expired());
+        EXPECT_EQ(0, wp1.use_count());
+        EXPECT_FALSE(wp2.expired());
+        EXPECT_EQ(1, wp2.use_count());
+    }
+}
+
+TEST(LW_Weak_ptr, tracked_by_shared_ptr_state)
+{
+    using namespace math::core::pointers;
+
+    Weak_ptr<int> wp{};
+    EXPECT_TRUE(wp.expired());
+    EXPECT_EQ(0, wp.use_count());
+    {
+        Shared_ptr<int> sp = make_shared<int>(100);
+        wp = sp;
+        EXPECT_TRUE(sp);
+        EXPECT_EQ(100, *sp);
+        EXPECT_EQ(1, sp.use_count());
+        EXPECT_FALSE(wp.expired());
+        EXPECT_EQ(1, wp.use_count());
+    }
+    EXPECT_TRUE(wp.expired());
+    EXPECT_EQ(0, wp.use_count());
+}
