@@ -727,9 +727,10 @@ TEST(LW_Weak_ptr, multiple_instances)
 
     // empty weak ptr
     {
+        Weak_ptr<int> wp1{};
         Shared_ptr<int> sp{};
 
-        Weak_ptr<int> wp1{ sp };
+        wp1 = sp;
         Weak_ptr<int> wp2{ sp };
 
         EXPECT_TRUE(wp1.expired());
