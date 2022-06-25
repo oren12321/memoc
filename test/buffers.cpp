@@ -2,9 +2,9 @@
 
 #include <utility>
 
-#include <math/core/buffers.h>
-#include <math/core/allocators.h>
-#include <math/core/memory.h>
+#include <computoc/buffers.h>
+#include <computoc/allocators.h>
+#include <computoc/memory.h>
 
 // Stack_buffer tests
 

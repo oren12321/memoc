@@ -3,7 +3,7 @@
 #include <memory>
 #include <array>
 
-#include <math/core/pointers.h>
+#include <computoc/pointers.h>
 
 static void BM_std_shared_ptr(benchmark::State& state)
 {

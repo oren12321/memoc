@@ -7,8 +7,8 @@
 #include <chrono>
 #include <utility>
 
-#include <math/core/allocators.h>
-#include <math/core/memory.h>
+#include <computoc/allocators.h>
+#include <computoc/memory.h>
 
 // Malloc_allocator tests
 

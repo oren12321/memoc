@@ -5,7 +5,7 @@
 #include <vector>
 #include <memory>
 
-#include <math/core/allocators.h>
+#include <computoc/allocators.h>
 
 struct Test_data {
     std::vector<std::size_t> allocation_sizes{};

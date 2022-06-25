@@ -2,9 +2,9 @@
 
 #include <utility>
 
-#include <math/core/pointers.h>
-#include <math/core/allocators.h>
-#include <math/core/memory.h>
+#include <computoc/pointers.h>
+#include <computoc/allocators.h>
+#include <computoc/memory.h>
 
 TEST(LW_Unique_ptr, construction_and_accessors)
 {
