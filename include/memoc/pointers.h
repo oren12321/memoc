@@ -214,7 +214,7 @@ namespace memoc::pointers {
 			Shared_ptr(T* ptr = nullptr)
 				: cb_(ptr ? reinterpret_cast<Control_block*>(allocator_.allocate(sizeof(Control_block)).p) : nullptr), ptr_(ptr)
 			{
-				THROW_IF_FALSE((ptr && cb_) || (!ptr && !cb_), std::runtime_error, "internal memory allocation failed");
+				MEMOC_THROW_IF_FALSE((ptr && cb_) || (!ptr && !cb_), std::runtime_error, "internal memory allocation failed");
 				if (cb_) {
 					construct_at<Control_block>(cb_);
 					cb_->use_count = ptr_ ? 1 : 0;
@@ -384,7 +384,7 @@ namespace memoc::pointers {
 				remove_reference();
 				if (ptr) {
 					cb_ = reinterpret_cast<Control_block*>(allocator_.allocate(sizeof(Control_block)).p);
-					THROW_IF_FALSE(cb_, std::runtime_error, "internal memory allocation failed");
+					MEMOC_THROW_IF_FALSE(cb_, std::runtime_error, "internal memory allocation failed");
 					construct_at<Control_block>(cb_);
 					cb_->use_count = 1;
 					cb_->weak_count = 0;
