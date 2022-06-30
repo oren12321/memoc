@@ -32,7 +32,7 @@ namespace memoc::buffers {
             {t.init(data)} noexcept -> std::same_as<void>;
         };
         template <class T>
-        concept Buffer = Rule_of_five<T> && T_buffer<T, void>;
+        concept Buffer = T_buffer<T, void>;
 
         template <std::size_t Stack_size = 2, bool Lazy_init = false>
         class Stack_buffer {
