@@ -15,9 +15,6 @@
 
 namespace memoc::allocators {
     namespace details {
-        template <typename T>
-        concept Not_pointer_or_reference = (!std::is_pointer_v<T> && !std::is_reference_v<T>);
-
         template <class T>
         concept Rule_of_five = requires
         {
@@ -273,7 +270,8 @@ namespace memoc::allocators {
                 std::size_t list_size_{ 0 };
         };
 
-        template <Not_pointer_or_reference T, Allocator Internal_allocator>
+        template <typename T, Allocator Internal_allocator>
+            requires (!std::is_reference_v<T>)
         class Stl_adapter_allocator
             : private Internal_allocator {
         public:
@@ -302,7 +300,8 @@ namespace memoc::allocators {
             }
             virtual ~Stl_adapter_allocator() = default;
 
-            template <Not_pointer_or_reference U>
+            template <typename U>
+                requires (!std::is_reference_v<U>)
             constexpr Stl_adapter_allocator(const Stl_adapter_allocator<U, Internal_allocator>&) noexcept {}
 
             [[nodiscard]] T* allocate(std::size_t n)

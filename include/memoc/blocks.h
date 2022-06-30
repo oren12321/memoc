@@ -8,9 +8,7 @@
 namespace memoc::blocks {
     namespace details {
         template <typename T>
-        concept Base_type = !std::is_pointer_v<T> && !std::is_reference_v<T>;
-
-        template <Base_type T>
+            requires (!std::is_reference_v<T>)
         struct Typed_block {
             using Pointer = T*;
             using Size_type = std::size_t;

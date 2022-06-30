@@ -13,9 +13,6 @@
 
 namespace memoc::buffers {
     namespace details {
-        template <typename T>
-        concept Not_pointer_or_reference = (!std::is_pointer_v<T> && !std::is_reference_v<T>);
-
         template <class T>
         concept Rule_of_five = requires
         {
@@ -308,7 +305,8 @@ namespace memoc::buffers {
             }
         };
 
-        template <Not_pointer_or_reference T, Buffer Internal_buffer>
+        template <typename T, Buffer Internal_buffer>
+            requires (!std::is_reference_v<T>)
         class Typed_buffer : private Internal_buffer {
             // If required or internal type is void then sizeof is invalid - replace it with byte size
             template <typename U_src, typename U_dst>
