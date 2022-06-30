@@ -485,6 +485,7 @@ namespace memoc::allocators {
         };
     }
 
+    using details::Allocator;
     using details::Fallback_allocator;
     using details::Free_list_allocator;
     using details::Malloc_allocator;

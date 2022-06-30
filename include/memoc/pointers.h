@@ -26,7 +26,7 @@ namespace memoc::pointers {
 
 		// These class are not thread safe
 		// The behaviour for array, pointer or reference is undefined
-		template <typename T, allocators::details::Allocator Internal_allocator = allocators::Malloc_allocator>
+		template <typename T, allocators::Allocator Internal_allocator = allocators::Malloc_allocator>
 		class Unique_ptr {
 		public:
 			// Not recommended - ptr should be allocated using Internal_allocator
@@ -131,19 +131,19 @@ namespace memoc::pointers {
 				ptr_ = ptr;
 			}
 
-			template <typename T_o, allocators::details::Allocator Internal_allocator_o>
+			template <typename T_o, allocators::Allocator Internal_allocator_o>
 			friend class Unique_ptr;
 
-			template <typename T_o, allocators::details::Allocator Internal_allocator_o>
+			template <typename T_o, allocators::Allocator Internal_allocator_o>
 			friend bool operator==(const Unique_ptr<T_o, Internal_allocator_o>& lhs, const Unique_ptr<T_o, Internal_allocator_o>& rhs);
 
-			template <typename T_o, allocators::details::Allocator Internal_allocator_o>
+			template <typename T_o, allocators::Allocator Internal_allocator_o>
 			friend std::strong_ordering operator<=>(const Unique_ptr<T_o, Internal_allocator_o>& lhs, const Unique_ptr<T_o, Internal_allocator_o>& rhs);
 
-			template <typename T_o, allocators::details::Allocator Internal_allocator_o>
+			template <typename T_o, allocators::Allocator Internal_allocator_o>
 			friend bool operator==(const Unique_ptr<T_o, Internal_allocator_o>& lhs, std::nullptr_t);
 
-			template <typename T_o, allocators::details::Allocator Internal_allocator_o>
+			template <typename T_o, allocators::Allocator Internal_allocator_o>
 			friend std::strong_ordering operator<=>(const Unique_ptr<T_o, Internal_allocator_o>& lhs, std::nullptr_t);
 
 		private:
@@ -162,32 +162,32 @@ namespace memoc::pointers {
 			T* ptr_{ nullptr };
 		};
 
-		template <typename T, allocators::details::Allocator Internal_allocator>
+		template <typename T, allocators::Allocator Internal_allocator>
 		inline bool operator==(const Unique_ptr<T, Internal_allocator>& lhs, const Unique_ptr<T, Internal_allocator>& rhs)
 		{
 			return lhs.ptr_ == rhs.ptr_;
 		}
 
-		template <typename T, allocators::details::Allocator Internal_allocator>
+		template <typename T, allocators::Allocator Internal_allocator>
 		inline std::strong_ordering operator<=>(const Unique_ptr<T, Internal_allocator>& lhs, const Unique_ptr<T, Internal_allocator>& rhs)
 		{
 			return std::compare_three_way{}(lhs.ptr_, rhs.ptr_);
 		}
 
-		template <typename T, allocators::details::Allocator Internal_allocator>
+		template <typename T, allocators::Allocator Internal_allocator>
 		inline bool operator==(const Unique_ptr<T, Internal_allocator>& lhs, std::nullptr_t)
 		{
 			return !lhs;
 		}
 
-		template <typename T, allocators::details::Allocator Internal_allocator>
+		template <typename T, allocators::Allocator Internal_allocator>
 		inline std::strong_ordering operator<=>(const Unique_ptr<T, Internal_allocator>& lhs, std::nullptr_t)
 		{
 			return std::compare_three_way{}(lhs.ptr_, nullptr);
 		}
 
 
-		template <typename T, allocators::details::Allocator Internal_allocator = allocators::details::Malloc_allocator, typename ...Args>
+		template <typename T, allocators::Allocator Internal_allocator = allocators::details::Malloc_allocator, typename ...Args>
 		inline Unique_ptr<T, Internal_allocator> make_unique(Args&&... args)
 		{
 			Internal_allocator allocator_{};
@@ -201,13 +201,13 @@ namespace memoc::pointers {
 			std::size_t weak_count{ 0 };
 		};
 
-		template <typename T, allocators::details::Allocator Internal_allocator>
+		template <typename T, allocators::Allocator Internal_allocator>
 		class Weak_ptr;
 
-		template <typename T, allocators::details::Allocator Internal_allocator = allocators::details::Malloc_allocator>
+		template <typename T, allocators::Allocator Internal_allocator = allocators::details::Malloc_allocator>
 		class Shared_ptr {
 		public:
-			template <typename T_o, allocators::details::Allocator Internal_allocator_o>
+			template <typename T_o, allocators::Allocator Internal_allocator_o>
 			friend class Weak_ptr;
 
 			// Not recommended - ptr should be allocated using Internal_allocator
@@ -406,19 +406,19 @@ namespace memoc::pointers {
 				return *this;
 			}
 
-			template <typename T_o, allocators::details::Allocator Internal_allocator_o>
+			template <typename T_o, allocators::Allocator Internal_allocator_o>
 			friend class Shared_ptr;
 
-			template <typename T_o, allocators::details::Allocator Internal_allocator_o>
+			template <typename T_o, allocators::Allocator Internal_allocator_o>
 			friend bool operator==(const Shared_ptr<T_o, Internal_allocator_o>& lhs, const Shared_ptr<T_o, Internal_allocator_o>& rhs);
 
-			template <typename T_o, allocators::details::Allocator Internal_allocator_o>
+			template <typename T_o, allocators::Allocator Internal_allocator_o>
 			friend std::strong_ordering operator<=>(const Shared_ptr<T_o, Internal_allocator_o>& lhs, const Shared_ptr<T_o, Internal_allocator_o>& rhs);
 
-			template <typename T_o, allocators::details::Allocator Internal_allocator_o>
+			template <typename T_o, allocators::Allocator Internal_allocator_o>
 			friend bool operator==(const Shared_ptr<T_o, Internal_allocator_o>& lhs, std::nullptr_t);
 
-			template <typename T_o, allocators::details::Allocator Internal_allocator_o>
+			template <typename T_o, allocators::Allocator Internal_allocator_o>
 			friend std::strong_ordering operator<=>(const Shared_ptr<T_o, Internal_allocator_o>& lhs, std::nullptr_t);
 
 		private:
@@ -449,32 +449,32 @@ namespace memoc::pointers {
 			T* ptr_{ nullptr };
 		};
 
-		template <typename T, allocators::details::Allocator Internal_allocator>
+		template <typename T, allocators::Allocator Internal_allocator>
 		inline bool operator==(const Shared_ptr<T, Internal_allocator>& lhs, const Shared_ptr<T, Internal_allocator>& rhs)
 		{
 			return lhs.ptr_ == rhs.ptr_;
 		}
 
-		template <typename T, allocators::details::Allocator Internal_allocator>
+		template <typename T, allocators::Allocator Internal_allocator>
 		inline std::strong_ordering operator<=>(const Shared_ptr<T, Internal_allocator>& lhs, const Shared_ptr<T, Internal_allocator>& rhs)
 		{
 			return std::compare_three_way{}(lhs.ptr_, rhs.ptr_);
 		}
 
-		template <typename T, allocators::details::Allocator Internal_allocator>
+		template <typename T, allocators::Allocator Internal_allocator>
 		inline bool operator==(const Shared_ptr<T, Internal_allocator>& lhs, std::nullptr_t)
 		{
 			return !lhs;
 		}
 
-		template <typename T, allocators::details::Allocator Internal_allocator>
+		template <typename T, allocators::Allocator Internal_allocator>
 		inline std::strong_ordering operator<=>(const Shared_ptr<T, Internal_allocator>& lhs, std::nullptr_t)
 		{
 			return std::compare_three_way{}(lhs.ptr_, nullptr);
 		}
 
 
-		template <typename T, allocators::details::Allocator Internal_allocator = allocators::details::Malloc_allocator, typename ...Args>
+		template <typename T, allocators::Allocator Internal_allocator = allocators::details::Malloc_allocator, typename ...Args>
 		inline Shared_ptr<T, Internal_allocator> make_shared(Args&&... args)
 		{
 			Internal_allocator allocator_{};
@@ -483,21 +483,21 @@ namespace memoc::pointers {
 			return Shared_ptr<T, Internal_allocator>(ptr);
 		}
 
-		template <typename T, typename U, allocators::details::Allocator Internal_allocator = allocators::details::Malloc_allocator>
+		template <typename T, typename U, allocators::Allocator Internal_allocator = allocators::details::Malloc_allocator>
 		inline Shared_ptr<T, Internal_allocator> static_pointer_cast(const Shared_ptr<U, Internal_allocator>& other) noexcept
 		{
 			T* p = static_cast<T*>(other.get());
 			return Shared_ptr<T, Internal_allocator>(other, p);
 		}
 
-		template <typename T, typename U, allocators::details::Allocator Internal_allocator = allocators::details::Malloc_allocator>
+		template <typename T, typename U, allocators::Allocator Internal_allocator = allocators::details::Malloc_allocator>
 		inline Shared_ptr<T, Internal_allocator> static_pointer_cast(Shared_ptr<U, Internal_allocator>&& other) noexcept
 		{
 			T* p = static_cast<T*>(other.get());
 			return Shared_ptr<T, Internal_allocator>(std::move(other), p);
 		}
 
-		template <typename T, typename U, allocators::details::Allocator Internal_allocator = allocators::details::Malloc_allocator>
+		template <typename T, typename U, allocators::Allocator Internal_allocator = allocators::details::Malloc_allocator>
 		inline Shared_ptr<T, Internal_allocator> dynamic_pointer_cast(const Shared_ptr<U, Internal_allocator>& other) noexcept
 		{
 			if (T* p = dynamic_cast<T*>(other.get())) {
@@ -506,7 +506,7 @@ namespace memoc::pointers {
 			return Shared_ptr<T, Internal_allocator>{};
 		}
 
-		template <typename T, typename U, allocators::details::Allocator Internal_allocator = allocators::details::Malloc_allocator>
+		template <typename T, typename U, allocators::Allocator Internal_allocator = allocators::details::Malloc_allocator>
 		inline Shared_ptr<T, Internal_allocator> dynamic_pointer_cast(Shared_ptr<U, Internal_allocator>&& other) noexcept
 		{
 			if (T* p = dynamic_cast<T*>(other.get())) {
@@ -515,28 +515,28 @@ namespace memoc::pointers {
 			return Shared_ptr<T, Internal_allocator>{};
 		}
 
-		template <typename T, typename U, allocators::details::Allocator Internal_allocator = allocators::details::Malloc_allocator>
+		template <typename T, typename U, allocators::Allocator Internal_allocator = allocators::details::Malloc_allocator>
 		inline Shared_ptr<T, Internal_allocator> const_pointer_cast(const Shared_ptr<U, Internal_allocator>& other) noexcept
 		{
 			T* p = const_cast<T*>(other.get());
 			return Shared_ptr<T, Internal_allocator>(other, p);
 		}
 
-		template <typename T, typename U, allocators::details::Allocator Internal_allocator = allocators::details::Malloc_allocator>
+		template <typename T, typename U, allocators::Allocator Internal_allocator = allocators::details::Malloc_allocator>
 		inline Shared_ptr<T, Internal_allocator> const_pointer_cast(Shared_ptr<U, Internal_allocator>&& other) noexcept
 		{
 			T* p = const_cast<T*>(other.get());
 			return Shared_ptr<T, Internal_allocator>(std::move(other), p);
 		}
 
-		template <typename T, typename U, allocators::details::Allocator Internal_allocator = allocators::details::Malloc_allocator>
+		template <typename T, typename U, allocators::Allocator Internal_allocator = allocators::details::Malloc_allocator>
 		inline Shared_ptr<T, Internal_allocator> reinterpret_pointer_cast(const Shared_ptr<U, Internal_allocator>& other) noexcept
 		{
 			T* p = reinterpret_cast<T*>(other.get());
 			return Shared_ptr<T, Internal_allocator>(other, p);
 		}
 
-		template <typename T, typename U, allocators::details::Allocator Internal_allocator = allocators::details::Malloc_allocator>
+		template <typename T, typename U, allocators::Allocator Internal_allocator = allocators::details::Malloc_allocator>
 		inline Shared_ptr<T, Internal_allocator> reinterpret_pointer_cast(Shared_ptr<U, Internal_allocator>&& other) noexcept
 		{
 			T* p = reinterpret_cast<T*>(other.get());
@@ -544,7 +544,7 @@ namespace memoc::pointers {
 		}
 
 
-		template <typename T, allocators::details::Allocator Internal_allocator = allocators::details::Malloc_allocator>
+		template <typename T, allocators::Allocator Internal_allocator = allocators::details::Malloc_allocator>
 		class Weak_ptr {
 		public:
 			Weak_ptr() = default;
@@ -718,7 +718,7 @@ namespace memoc::pointers {
 				ptr_ = nullptr;
 			}
 
-			template <typename T_o, allocators::details::Allocator Internal_allocator_o>
+			template <typename T_o, allocators::Allocator Internal_allocator_o>
 			friend class Shared_ptr;
 
 			Shared_ptr<T, Internal_allocator> lock()

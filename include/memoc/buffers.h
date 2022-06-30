@@ -23,7 +23,7 @@ namespace memoc::buffers {
             std::is_destructible_v<T>;
         };
         template <class T, typename U>
-        concept T_buffer = Rule_of_five<T> &&
+        concept Buffer = Rule_of_five<T> &&
             requires (T t, std::size_t size, const U * data)
         {
             {T(size, data)} noexcept;
@@ -31,8 +31,6 @@ namespace memoc::buffers {
             {t.data()} noexcept -> std::same_as<blocks::Typed_block<U>>;
             {t.init(data)} noexcept -> std::same_as<void>;
         };
-        template <class T>
-        concept Buffer = T_buffer<T, void>;
 
         template <std::size_t Stack_size = 2, bool Lazy_init = false>
         class Stack_buffer {
@@ -123,7 +121,7 @@ namespace memoc::buffers {
             blocks::Block data_{};
         };
 
-        template <allocators::details::Allocator Allocator, bool Lazy_init = false>
+        template <allocators::Allocator Internal_allocator, bool Lazy_init = false>
         class Allocated_buffer {
         public:
             Allocated_buffer(std::size_t size, const void* data = nullptr) noexcept
@@ -243,11 +241,11 @@ namespace memoc::buffers {
 
         private:
             std::size_t size_{ 0 };
-            Allocator allocator_{};
+            Internal_allocator allocator_{};
             blocks::Block data_{};
         };
 
-        template <Buffer Primary, Buffer Fallback>
+        template <Buffer<void> Primary, Buffer<void> Fallback>
         class Fallback_buffer
             : private Primary
             // For efficiency should be buffer with lazy initialization
@@ -305,7 +303,7 @@ namespace memoc::buffers {
             }
         };
 
-        template <typename T, Buffer Internal_buffer>
+        template <typename T, Buffer<void> Internal_buffer>
             requires (!std::is_reference_v<T>)
         class Typed_buffer : private Internal_buffer {
             // If required or internal type is void then sizeof is invalid - replace it with byte size
@@ -358,6 +356,7 @@ namespace memoc::buffers {
         };
     }
 
+    using details::Buffer;
     using details::Allocated_buffer;
     using details::Fallback_buffer;
     using details::Stack_buffer;
