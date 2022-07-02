@@ -3,7 +3,7 @@
 #include <memory>
 #include <array>
 
-#include <computoc/pointers.h>
+#include <memoc/pointers.h>
 
 static void BM_std_shared_ptr(benchmark::State& state)
 {
@@ -27,7 +27,7 @@ BENCHMARK(BM_std_shared_ptr);
 
 static void BM_LW_shared_ptr(benchmark::State& state)
 {
-    using namespace math::core::pointers;
+    using namespace memoc::pointers;
 
     for (auto _ : state) {
         Shared_ptr<int> sp1 = make_shared<int>(1998);

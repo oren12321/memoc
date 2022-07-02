@@ -5,7 +5,7 @@
 #include <vector>
 #include <memory>
 
-#include <computoc/allocators.h>
+#include <memoc/allocators.h>
 
 struct Test_data {
     std::vector<std::size_t> allocation_sizes{};
@@ -56,7 +56,7 @@ void perform_allocations(Allocator* alloc, const Test_data& td) {
 
 static void BM_malloc_allocator(benchmark::State& state)
 {
-    math::core::allocators::Malloc_allocator alloc{};
+    memoc::allocators::Malloc_allocator alloc{};
     auto td = test_data<16, 64, 64>();
 
     for (auto _ : state) {
@@ -67,7 +67,7 @@ BENCHMARK(BM_malloc_allocator);
 
 static void BM_malloc_allocator_with_stats(benchmark::State& state)
 {
-    using namespace math::core::allocators;
+    using namespace memoc::allocators;
     Stats_allocator<Malloc_allocator, 32> alloc{};
     auto td = test_data<16, 64, 64>();
 
@@ -79,7 +79,7 @@ BENCHMARK(BM_malloc_allocator_with_stats);
 
 static void BM_malloc_allocator_shared(benchmark::State& state)
 {
-    using namespace math::core::allocators;
+    using namespace memoc::allocators;
     Shared_allocator<Malloc_allocator> alloc{};
     auto td = test_data<16, 64, 64>();
 
@@ -91,7 +91,7 @@ BENCHMARK(BM_malloc_allocator_shared);
 
 static void BM_stack_allocator(benchmark::State& state)
 {
-    math::core::allocators::Stack_allocator<64 * 64> alloc{};
+    memoc::allocators::Stack_allocator<64 * 64> alloc{};
     auto td = test_data<16, 64, 64>();
 
     for (auto _ : state) {
@@ -102,7 +102,7 @@ BENCHMARK(BM_stack_allocator);
 
 static void BM_free_list_allocator(benchmark::State& state)
 {
-    using namespace math::core::allocators;
+    using namespace memoc::allocators;
 
     Free_list_allocator<Malloc_allocator, 16, 64, 64> alloc{};
     auto td = test_data<16, 64, 64>();
@@ -115,7 +115,7 @@ BENCHMARK(BM_free_list_allocator);
 
 static void BM_hybrid_allocator(benchmark::State& state)
 {
-    using namespace math::core::allocators;
+    using namespace memoc::allocators;
 
     Fallback_allocator<
         Stack_allocator<16 * 16>,
@@ -138,7 +138,7 @@ void perform_vector_allocations() {
 
 static void BM_stl_default_allocator(benchmark::State& state)
 {
-    using namespace math::core::allocators;
+    using namespace memoc::allocators;
 
     using Allocator = std::allocator<int>;
 
@@ -150,7 +150,7 @@ BENCHMARK(BM_stl_default_allocator);
 
 static void BM_stl_adapter_allocator(benchmark::State& state)
 {
-    using namespace math::core::allocators;
+    using namespace memoc::allocators;
 
     using Allocator = Stl_adapter_allocator<int, Fallback_allocator<
         Stack_allocator<16 * 16>,
