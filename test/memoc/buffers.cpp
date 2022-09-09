@@ -10,7 +10,7 @@
 
 TEST(Stack_buffer_test, usable_when_initialized_with_valid_size)
 {
-    using namespace memoc::buffers;
+    using namespace memoc;
 
     Stack_buffer buff{ 2 };
 
@@ -22,7 +22,7 @@ TEST(Stack_buffer_test, usable_when_initialized_with_valid_size)
 
 TEST(Stack_buffer_test, not_usable_when_initialized_with_invalid_size)
 {
-    using namespace memoc::buffers;
+    using namespace memoc;
 
     Stack_buffer buff{ 4 };
 
@@ -32,7 +32,7 @@ TEST(Stack_buffer_test, not_usable_when_initialized_with_invalid_size)
 
 TEST(Stack_buffer_test, is_copyable)
 {
-    using namespace memoc::buffers;
+    using namespace memoc;
 
     Stack_buffer buff1{ 2 };
     Stack_buffer buff2{ buff1 };
@@ -64,7 +64,7 @@ TEST(Stack_buffer_test, is_copyable)
 
 TEST(Stack_buffer_test, is_moveable)
 {
-    using namespace memoc::buffers;
+    using namespace memoc;
 
     Stack_buffer buff1{ 2 };
     Stack_buffer buff2{ std::move(buff1) };
@@ -92,7 +92,7 @@ TEST(Stack_buffer_test, is_moveable)
 
 TEST(Stack_buffer_test, can_be_initalized_with_data)
 {
-    using namespace memoc::buffers;
+    using namespace memoc;
 
     const int data[2] = {1, 2};
 
@@ -140,7 +140,6 @@ TEST(Stack_buffer_test, can_be_initalized_with_data)
 
 TEST(Allocated_buffer_test, usable_when_initialized_with_valid_size)
 {
-    using namespace memoc::buffers;
     using namespace memoc;
 
     Allocated_buffer<Malloc_allocator> buff{ 2 };
@@ -153,7 +152,6 @@ TEST(Allocated_buffer_test, usable_when_initialized_with_valid_size)
 
 TEST(Allocated_buffer_test, not_usable_when_initialized_with_invalid_size)
 {
-    using namespace memoc::buffers;
     using namespace memoc;
 
     Allocated_buffer<Stack_allocator<2>> buff{ 4 };
@@ -164,7 +162,6 @@ TEST(Allocated_buffer_test, not_usable_when_initialized_with_invalid_size)
 
 TEST(Allocated_buffer_test, is_copyable)
 {
-    using namespace memoc::buffers;
     using namespace memoc;
 
     Allocated_buffer<Malloc_allocator> buff1{ 2 };
@@ -197,7 +194,6 @@ TEST(Allocated_buffer_test, is_copyable)
 
 TEST(Allocated_buffer_test, is_moveable)
 {
-    using namespace memoc::buffers;
     using namespace memoc;
 
     Allocated_buffer<Malloc_allocator> buff1{ 2 };
@@ -226,7 +222,6 @@ TEST(Allocated_buffer_test, is_moveable)
 
 TEST(Allocated_buffer_test, can_be_initalized_with_data)
 {
-    using namespace memoc::buffers;
     using namespace memoc;
 
     const int data[2] = {1, 2};
@@ -275,7 +270,6 @@ TEST(Allocated_buffer_test, can_be_initalized_with_data)
 
 TEST(Fallback_buffer_test, uses_the_first_buffer_when_usable)
 {
-    using namespace memoc::buffers;
     using namespace memoc;
 
     Fallback_buffer<Stack_buffer<2>, Allocated_buffer<Malloc_allocator, true>> buff{ 2 };
@@ -288,7 +282,6 @@ TEST(Fallback_buffer_test, uses_the_first_buffer_when_usable)
 
 TEST(Fallback_buffer_test, uses_the_second_buffer_when_usable)
 {
-    using namespace memoc::buffers;
     using namespace memoc;
 
     // Required size invalid for first allocator
@@ -302,7 +295,6 @@ TEST(Fallback_buffer_test, uses_the_second_buffer_when_usable)
 
 TEST(Fallback_buffer_test, not_usable_when_initialized_with_invalid_size_for_both_buffers)
 {
-    using namespace memoc::buffers;
     using namespace memoc;
 
     Fallback_buffer<Stack_buffer<2>, Allocated_buffer<Stack_allocator<2>, true>> buff{ 4 };
@@ -314,7 +306,6 @@ TEST(Fallback_buffer_test, not_usable_when_initialized_with_invalid_size_for_bot
 // Just for compilation check
 TEST(Fallback_buffer_test, is_copyable)
 {
-    using namespace memoc::buffers;
     using namespace memoc;
 
     Fallback_buffer<Stack_buffer<2>, Allocated_buffer<Stack_allocator<2>, true>> buff1{ 4 };
@@ -326,7 +317,6 @@ TEST(Fallback_buffer_test, is_copyable)
 // Just for compilation check
 TEST(Fallback_buffer_test, is_moveable)
 {
-    using namespace memoc::buffers;
     using namespace memoc;
 
     Fallback_buffer<Stack_buffer<2>, Allocated_buffer<Stack_allocator<2>, true>> buff1{ 4 };
@@ -337,7 +327,6 @@ TEST(Fallback_buffer_test, is_moveable)
 
 TEST(Fallback_buffer_test, can_be_initalized_with_data)
 {
-    using namespace memoc::buffers;
     using namespace memoc;
 
     const int data[2] = { 1, 2 };
@@ -419,7 +408,6 @@ TEST(Fallback_buffer_test, can_be_initalized_with_data)
 
 TEST(TYped_buffer_test, can_be_initialized_with_specific_data_type)
 {
-    using namespace memoc::buffers;
     using namespace memoc;
 
     const int data[2] = {1, 2};

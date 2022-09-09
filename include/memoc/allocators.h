@@ -16,7 +16,8 @@
 namespace memoc {
     namespace details {
         template <class T>
-        concept Rule_of_five = requires
+        concept Allocator = 
+            requires
         {
             std::is_default_constructible_v<T>;
             std::is_copy_constructible_v<T>;
@@ -24,9 +25,7 @@ namespace memoc {
             std::is_move_constructible_v<T>;
             std::is_move_assignable_v<T>;
             std::is_destructible_v<T>;
-        };
-        template <class T>
-        concept Allocator = Rule_of_five<T> &&
+        }&&
             requires (T t, std::size_t s, Block b)
         {
             {t.allocate(s)} noexcept -> std::same_as<decltype(b)>;

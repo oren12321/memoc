@@ -11,20 +11,19 @@
 #include <memoc/blocks.h>
 #include <memoc/allocators.h>
 
-namespace memoc::buffers {
-    namespace details {
-        template <class T>
-        concept Rule_of_five = requires
+namespace memoc {
+    namespace details { 
+        template <class T, typename U>
+        concept Buffer = 
+            requires
         {
             std::is_copy_constructible_v<T>;
             std::is_copy_assignable_v<T>;
             std::is_move_constructible_v<T>;
             std::is_move_assignable_v<T>;
             std::is_destructible_v<T>;
-        };
-        template <class T, typename U>
-        concept Buffer = Rule_of_five<T> &&
-            requires (T t, std::size_t size, const U * data)
+        }&&
+            requires (T t, std::size_t size, const U* data)
         {
             {T(size, data)} noexcept;
             {t.usable()} noexcept -> std::same_as<bool>;
