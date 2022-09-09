@@ -7,7 +7,6 @@ TEST(Memoc_test, use_all_namespaces)
     using namespace memoc::allocators;
     using namespace memoc;
     using namespace memoc::buffers;
-    using namespace memoc::errors;
     using namespace memoc::pointers;
     SUCCEED();
 }
