@@ -27,7 +27,7 @@ namespace memoc::allocators {
         };
         template <class T>
         concept Allocator = Rule_of_five<T> &&
-            requires (T t, std::size_t s, blocks::Block b)
+            requires (T t, std::size_t s, Block b)
         {
             {t.allocate(s)} noexcept -> std::same_as<decltype(b)>;
             {t.deallocate(&b)} noexcept -> std::same_as<void>;
@@ -65,16 +65,16 @@ namespace memoc::allocators {
             }
             virtual ~Fallback_allocator() = default;
 
-            [[nodiscard]] blocks::Block allocate(blocks::Block::Size_type s) noexcept
+            [[nodiscard]] Block allocate(Block::Size_type s) noexcept
             {
-                blocks::Block b = Primary::allocate(s);
+                Block b = Primary::allocate(s);
                 if (b.empty()) {
                     b = Fallback::allocate(s);
                 }
                 return b;
             }
 
-            void deallocate(blocks::Block* b) noexcept
+            void deallocate(Block* b) noexcept
             {
                 if (Primary::owns(*b)) {
                     return Primary::deallocate(b);
@@ -82,7 +82,7 @@ namespace memoc::allocators {
                 Fallback::deallocate(b);
             }
 
-            [[nodiscard]] bool owns(blocks::Block b) const noexcept
+            [[nodiscard]] bool owns(Block b) const noexcept
             {
                 return Primary::owns(b) || Fallback::owns(b);
             }
@@ -90,7 +90,7 @@ namespace memoc::allocators {
 
         class Malloc_allocator {
         public:
-            [[nodiscard]] blocks::Block allocate(blocks::Block::Size_type s) noexcept
+            [[nodiscard]] Block allocate(Block::Size_type s) noexcept
             {
                 if (s == 0) {
                     return { nullptr, s };
@@ -98,13 +98,13 @@ namespace memoc::allocators {
                 return { std::malloc(s), s };
             }
 
-            void deallocate(blocks::Block* b) noexcept
+            void deallocate(Block* b) noexcept
             {
                 std::free(b->p);
                 b->clear();
             }
 
-            [[nodiscard]] bool owns(blocks::Block b) const noexcept
+            [[nodiscard]] bool owns(Block b) const noexcept
             {
                 return b.p;
             }
@@ -143,18 +143,18 @@ namespace memoc::allocators {
             }
             virtual ~Stack_allocator() = default;
 
-            [[nodiscard]] blocks::Block allocate(blocks::Block::Size_type s) noexcept
+            [[nodiscard]] Block allocate(Block::Size_type s) noexcept
             {
                 auto s1 = align(s);
                 if (p_ + s1 > d_ + Size || !p_ || s == 0) {
                     return { nullptr, 0 };
                 }
-                blocks::Block b = { p_, s };
+                Block b = { p_, s };
                 p_ += s1;
                 return b;
             }
 
-            void deallocate(blocks::Block* b) noexcept
+            void deallocate(Block* b) noexcept
             {
                 if (b->p == p_ - align(b->s)) {
                     p_ = reinterpret_cast<std::uint8_t*>(b->p);
@@ -162,7 +162,7 @@ namespace memoc::allocators {
                 b->clear();
             }
 
-            [[nodiscard]] bool owns(blocks::Block b) const noexcept
+            [[nodiscard]] bool owns(Block b) const noexcept
             {
                 return b.p >= d_ && b.p < d_ + Size;
             }
@@ -225,28 +225,28 @@ namespace memoc::allocators {
                     for (std::size_t i = 0; i < list_size_; ++i) {
                         Node* n = root_;
                         root_ = root_->next;
-                        blocks::Block b{ n, Max_size };
+                        Block b{ n, Max_size };
                         Internal_allocator::deallocate(&b);
                     }
                 }
 
-                [[nodiscard]] blocks::Block allocate(blocks::Block::Size_type s) noexcept
+                [[nodiscard]] Block allocate(Block::Size_type s) noexcept
                 {
                     if (s >= Min_size && s <= Max_size && list_size_ > 0) {
-                        blocks::Block b = { root_, s };
+                        Block b = { root_, s };
                         root_ = root_->next;
                         --list_size_;
                         return b;
                     }
-                    blocks::Block b = Internal_allocator::allocate((s < Min_size || s > Max_size) ? s : Max_size);
+                    Block b = Internal_allocator::allocate((s < Min_size || s > Max_size) ? s : Max_size);
                     b.s = s;
                     return b;
                 }
 
-                void deallocate(blocks::Block* b) noexcept
+                void deallocate(Block* b) noexcept
                 {
                     if (b->s < Min_size || b->s > Max_size || list_size_ > Max_list_size) {
-                        blocks::Block nb{ b->p, Max_size };
+                        Block nb{ b->p, Max_size };
                         b->clear();
                         return Internal_allocator::deallocate(&nb);
                     }
@@ -257,7 +257,7 @@ namespace memoc::allocators {
                     b->clear();
                 }
 
-                [[nodiscard]] bool owns(blocks::Block b) const noexcept
+                [[nodiscard]] bool owns(Block b) const noexcept
                 {
                     return (b.s >= Min_size && b.s <= Max_size) || Internal_allocator::owns(b);
                 }
@@ -306,7 +306,7 @@ namespace memoc::allocators {
 
             [[nodiscard]] T* allocate(std::size_t n)
             {
-                blocks::Block b = Internal_allocator::allocate(n * sizeof(T));
+                Block b = Internal_allocator::allocate(n * sizeof(T));
                 if (b.empty()) {
                     throw std::bad_alloc{};
                 }
@@ -315,7 +315,7 @@ namespace memoc::allocators {
 
             void deallocate(T* p, std::size_t n) noexcept
             {
-                blocks::Block b = { reinterpret_cast<void*>(p), n * sizeof(T) };
+                Block b = { reinterpret_cast<void*>(p), n * sizeof(T) };
                 Internal_allocator::deallocate(&b);
             }
         };
@@ -376,31 +376,31 @@ namespace memoc::allocators {
                 Record* c = root_;
                 while (c) {
                     Record* n = c->next;
-                    blocks::Block b{ c->record_address, sizeof(Record) };
+                    Block b{ c->record_address, sizeof(Record) };
                     Internal_allocator::deallocate(&b);
                     c = n;
                 }
             }
 
-            [[nodiscard]] blocks::Block allocate(blocks::Block::Size_type s) noexcept
+            [[nodiscard]] Block allocate(Block::Size_type s) noexcept
             {
-                blocks::Block b = Internal_allocator::allocate(s);
+                Block b = Internal_allocator::allocate(s);
                 if (!b.empty()) {
                     add_record(b.p, static_cast<std::int64_t>(b.s));
                 }
                 return b;
             }
 
-            void deallocate(blocks::Block* b) noexcept
+            void deallocate(Block* b) noexcept
             {
-                blocks::Block bc{ *b };
+                Block bc{ *b };
                 Internal_allocator::deallocate(b);
                 if (b->empty()) {
                     add_record(bc.p, -static_cast<std::int64_t>(bc.s));
                 }
             }
 
-            [[nodiscard]] bool owns(blocks::Block b) const noexcept
+            [[nodiscard]] bool owns(Block b) const noexcept
             {
                 return Internal_allocator::owns(b);
             }
@@ -433,7 +433,7 @@ namespace memoc::allocators {
                     return;
                 }
 
-                blocks::Block b1 = Internal_allocator::allocate(sizeof(Record));
+                Block b1 = Internal_allocator::allocate(sizeof(Record));
                 if (b1.empty()) {
                     return;
                 }
@@ -466,17 +466,17 @@ namespace memoc::allocators {
         template <Allocator Internal_allocator, int id = -1>
         class Shared_allocator {
         public:
-            [[nodiscard]] blocks::Block allocate(blocks::Block::Size_type s) noexcept
+            [[nodiscard]] Block allocate(Block::Size_type s) noexcept
             {
                 return allocator_.allocate(s);
             }
 
-            void deallocate(blocks::Block* b) noexcept
+            void deallocate(Block* b) noexcept
             {
                 allocator_.deallocate(b);
             }
 
-            [[nodiscard]] bool owns(blocks::Block b) const noexcept
+            [[nodiscard]] bool owns(Block b) const noexcept
             {
                 return allocator_.owns(b);
             }

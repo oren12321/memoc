@@ -420,7 +420,7 @@ TEST(Fallback_buffer_test, can_be_initalized_with_data)
 TEST(TYped_buffer_test, can_be_initialized_with_specific_data_type)
 {
     using namespace memoc::buffers;
-    using namespace memoc::blocks;
+    using namespace memoc;
     using namespace memoc::allocators;
 
     const int data[2] = {1, 2};

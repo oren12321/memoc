@@ -5,7 +5,7 @@
 #include <type_traits>
 #include <utility>
 
-namespace memoc::blocks {
+namespace memoc {
     namespace details {
         template <typename T>
             requires (!std::is_reference_v<T>)

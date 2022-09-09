@@ -28,7 +28,7 @@ namespace memoc::buffers {
         {
             {T(size, data)} noexcept;
             {t.usable()} noexcept -> std::same_as<bool>;
-            {t.data()} noexcept -> std::same_as<blocks::Typed_block<U>>;
+            {t.data()} noexcept -> std::same_as<Typed_block<U>>;
             {t.init(data)} noexcept -> std::same_as<void>;
         };
 
@@ -91,7 +91,7 @@ namespace memoc::buffers {
             }
             virtual ~Stack_buffer() = default;
 
-            [[nodiscard]] blocks::Block data() const noexcept
+            [[nodiscard]] Block data() const noexcept
             {
                 return data_;
             }
@@ -118,7 +118,7 @@ namespace memoc::buffers {
         private:
             std::size_t size_{ 0 };
             std::uint8_t memory_[Stack_size] = { 0 };
-            blocks::Block data_{};
+            Block data_{};
         };
 
         template <allocators::Allocator Internal_allocator, bool Lazy_init = false>
@@ -216,7 +216,7 @@ namespace memoc::buffers {
                 }
             }
 
-            [[nodiscard]] blocks::Block data() const noexcept
+            [[nodiscard]] Block data() const noexcept
             {
                 return data_;
             }
@@ -242,7 +242,7 @@ namespace memoc::buffers {
         private:
             std::size_t size_{ 0 };
             Internal_allocator allocator_{};
-            blocks::Block data_{};
+            Block data_{};
         };
 
         template <Buffer<void> Primary, Buffer<void> Fallback>
@@ -282,7 +282,7 @@ namespace memoc::buffers {
             }
             virtual ~Fallback_buffer() = default;
 
-            [[nodiscard]] blocks::Block data() const noexcept
+            [[nodiscard]] Block data() const noexcept
             {
                 if (Primary::usable()) {
                     return Primary::data();
@@ -339,9 +339,9 @@ namespace memoc::buffers {
             }
             virtual ~Typed_buffer() = default;
 
-            [[nodiscard]] blocks::Typed_block<T> data() const noexcept
+            [[nodiscard]] Typed_block<T> data() const noexcept
             {
-                return blocks::Typed_block<T>{
+                return Typed_block<T>{
                     reinterpret_cast<T*>(Internal_buffer::data().p),
                         (Internal_buffer::data().s * sizeof(Replace_void<Remove_internal_pointer<decltype(Internal_buffer::data().p)>, std::uint8_t>)) / sizeof(Replace_void<T, std::uint8_t>)
                 };

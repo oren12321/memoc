@@ -4,7 +4,7 @@
 
 TEST(Block_test, is_empty_when_deafult_initalized)
 {
-    using namespace memoc::blocks;
+    using namespace memoc;
 
     Block b{};
 
@@ -15,7 +15,7 @@ TEST(Block_test, is_empty_when_deafult_initalized)
 
 TEST(Block_test, can_be_of_specific_type)
 {
-    using namespace memoc::blocks;
+    using namespace memoc;
 
     Typed_block<int> b{};
 

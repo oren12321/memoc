@@ -152,7 +152,7 @@ namespace memoc::pointers {
 				// Check if there's an object in use
 				if (ptr_) {
 					destruct_at<T>(ptr_);
-					blocks::Block ptr_b = { const_cast<std::remove_const_t<T>*>(ptr_), sizeof(T) };
+					Block ptr_b = { const_cast<std::remove_const_t<T>*>(ptr_), sizeof(T) };
 					allocator_.deallocate(&ptr_b);
 					ptr_ = nullptr;
 				}
@@ -191,7 +191,7 @@ namespace memoc::pointers {
 		inline Unique_ptr<T, Internal_allocator> make_unique(Args&&... args)
 		{
 			Internal_allocator allocator_{};
-			blocks::Block b = allocator_.allocate(sizeof(T));
+			Block b = allocator_.allocate(sizeof(T));
 			T* ptr = construct_at<T>(reinterpret_cast<T*>(b.p), std::forward<Args>(args)...);
 			return Unique_ptr<T, Internal_allocator>(ptr);
 		}
@@ -432,13 +432,13 @@ namespace memoc::pointers {
 				}
 				if (cb_->use_count == 0 && ptr_) {
 					destruct_at<T>(ptr_);
-					blocks::Block ptr_b = { const_cast<std::remove_const_t<T>*>(ptr_), sizeof(T) };
+					Block ptr_b = { const_cast<std::remove_const_t<T>*>(ptr_), sizeof(T) };
 					allocator_.deallocate(&ptr_b);
 					ptr_ = nullptr;
 				}
 				if (cb_->use_count == 0 && cb_->weak_count == 0) {
 					destruct_at<Control_block>(cb_);
-					blocks::Block cb_b = { cb_, sizeof(Control_block) };
+					Block cb_b = { cb_, sizeof(Control_block) };
 					allocator_.deallocate(&cb_b);
 					cb_ = nullptr;
 				}
@@ -478,7 +478,7 @@ namespace memoc::pointers {
 		inline Shared_ptr<T, Internal_allocator> make_shared(Args&&... args)
 		{
 			Internal_allocator allocator_{};
-			blocks::Block b = allocator_.allocate(sizeof(T));
+			Block b = allocator_.allocate(sizeof(T));
 			T* ptr = construct_at<T>(reinterpret_cast<T*>(b.p), std::forward<Args>(args)...);
 			return Shared_ptr<T, Internal_allocator>(ptr);
 		}
@@ -749,7 +749,7 @@ namespace memoc::pointers {
 				}
 				if (cb_->use_count == 0 && cb_->weak_count == 0) {
 					destruct_at<Control_block>(cb_);
-					blocks::Block cb_b = { cb_, sizeof(Control_block) };
+					Block cb_b = { cb_, sizeof(Control_block) };
 					allocator_.deallocate(&cb_b);
 					cb_ = nullptr;
 				}

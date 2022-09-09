@@ -20,14 +20,14 @@ protected:
 
 TEST_F(Malloc_allocator_test, not_owns_an_empty_block)
 {
-    using namespace memoc::blocks;
+    using namespace memoc;
 
     EXPECT_FALSE(allocator_.owns(Block{}));
 }
 
 TEST_F(Malloc_allocator_test, allocates_and_deallocates_memory_successfully)
 {
-    using namespace memoc::blocks;
+    using namespace memoc;
 
     const Block::Size_type s{ 1 };
 
@@ -53,14 +53,14 @@ protected:
 
 TEST_F(Stack_allocator_test, not_owns_an_empty_block)
 {
-    using namespace memoc::blocks;
+    using namespace memoc;
 
     EXPECT_FALSE(allocator_.owns(Block{}));
 }
 
 TEST_F(Stack_allocator_test, allocates_and_deallocates_an_arbitrary_in_range_memory_successfully)
 {
-    using namespace memoc::blocks;
+    using namespace memoc;
 
     const Block::Size_type size_in_range{ size_ / 2 };
 
@@ -76,7 +76,7 @@ TEST_F(Stack_allocator_test, allocates_and_deallocates_an_arbitrary_in_range_mem
 
 TEST_F(Stack_allocator_test, allocates_and_deallocates_all_available_memory_successfully)
 {
-    using namespace memoc::blocks;
+    using namespace memoc;
 
     Block b = allocator_.allocate(size_);
     EXPECT_NE(nullptr, b.p);
@@ -90,7 +90,7 @@ TEST_F(Stack_allocator_test, allocates_and_deallocates_all_available_memory_succ
 
 TEST_F(Stack_allocator_test, reuses_the_same_memory_if_deallocating_between_two_allocations)
 {
-    using namespace memoc::blocks;
+    using namespace memoc;
 
     const Block::Size_type size_in_range{ size_ / 2 };
 
@@ -117,7 +117,7 @@ TEST_F(Stack_allocator_test, reuses_the_same_memory_if_deallocating_between_two_
 
 TEST_F(Stack_allocator_test, fails_to_allocate_memory_bigger_than_memory_size)
 {
-    using namespace memoc::blocks;
+    using namespace memoc;
 
     Block b = allocator_.allocate(size_ + 1);
     EXPECT_TRUE(b.empty());
@@ -125,7 +125,7 @@ TEST_F(Stack_allocator_test, fails_to_allocate_memory_bigger_than_memory_size)
 
 TEST_F(Stack_allocator_test, is_copyable)
 {
-    using namespace memoc::blocks;
+    using namespace memoc;
 
     Allocator copy1{ allocator_ };
 
@@ -152,7 +152,7 @@ TEST_F(Stack_allocator_test, is_copyable)
 
 TEST_F(Stack_allocator_test, is_movealbe)
 {
-    using namespace memoc::blocks;
+    using namespace memoc;
 
     Allocator moved1{ std::move(allocator_) };
 
@@ -191,14 +191,14 @@ protected:
 
 TEST_F(Free_list_allocator_test, not_owns_an_empty_block)
 {
-    using namespace memoc::blocks;
+    using namespace memoc;
 
     EXPECT_FALSE(allocator_.owns(Block{}));
 }
 
 TEST_F(Free_list_allocator_test, allocates_and_deallocates_an_arbitrary_not_in_range_memory_successfully_using_parent_allocator)
 {
-    using namespace memoc::blocks;
+    using namespace memoc;
 
     const Block::Size_type size_out_of_range{ max_size_ + 1 };
 
@@ -214,7 +214,7 @@ TEST_F(Free_list_allocator_test, allocates_and_deallocates_an_arbitrary_not_in_r
 
 TEST_F(Free_list_allocator_test, reuses_the_same_memory_if_deallocating_in_memory_range)
 {
-    using namespace memoc::blocks;
+    using namespace memoc;
 
     const Block::Size_type size_in_range{ min_size_ + (max_size_ - min_size_) / 2 };
 
@@ -258,7 +258,7 @@ TEST_F(Free_list_allocator_test, reuses_the_same_memory_if_deallocating_in_memor
 
 TEST_F(Free_list_allocator_test, is_copyable)
 {
-    using namespace memoc::blocks;
+    using namespace memoc;
 
     const Block::Size_type size_in_range{ min_size_ + (max_size_ - min_size_) / 2 };
 
@@ -322,7 +322,7 @@ TEST_F(Free_list_allocator_test, is_copyable)
 
 TEST_F(Free_list_allocator_test, is_movealbe)
 {
-    using namespace memoc::blocks;
+    using namespace memoc;
 
     const Block::Size_type size_in_range{ min_size_ + (max_size_ - min_size_) / 2 };
 
@@ -443,7 +443,7 @@ TEST_F(Stats_allocator_test, stats_are_empty_when_initialized)
 
 TEST_F(Stats_allocator_test, records_allocation_stats_in_cyclic_buffer)
 {
-    using namespace memoc::blocks;
+    using namespace memoc;
 
     Block b1 = allocator_.allocate(1);
     allocator_.deallocate(&b1);
@@ -481,7 +481,7 @@ TEST_F(Stats_allocator_test, records_allocation_stats_in_cyclic_buffer)
 
 TEST_F(Stats_allocator_test, is_copyable)
 {
-    using namespace memoc::blocks;
+    using namespace memoc;
 
     Block b1 = allocator_.allocate(1);
     allocator_.deallocate(&b1);
@@ -524,7 +524,7 @@ TEST_F(Stats_allocator_test, is_copyable)
 
 TEST_F(Stats_allocator_test, is_moveable)
 {
-    using namespace memoc::blocks;
+    using namespace memoc;
 
     Block b1 = allocator_.allocate(1);
     allocator_.deallocate(&b1);
@@ -566,7 +566,7 @@ protected:
 
 TEST_F(Shared_allocator_test, saves_state_between_instances)
 {
-    using namespace memoc::blocks;
+    using namespace memoc;
 
     const std::size_t aligned_size = 2;
 
@@ -581,7 +581,7 @@ TEST_F(Shared_allocator_test, saves_state_between_instances)
 
 TEST_F(Shared_allocator_test, not_saves_state_between_instances_when_id_is_different)
 {
-    using namespace memoc::blocks;
+    using namespace memoc;
 
     const std::size_t aligned_size = 2;
 
@@ -608,7 +608,7 @@ protected:
 
 TEST_F(Fallback_allocator_test, is_copyable)
 {
-    using namespace memoc::blocks;
+    using namespace memoc;
 
     Allocator copy1{ allocator_ };
     Block b1 = copy1.allocate(size_);
@@ -628,7 +628,7 @@ TEST_F(Fallback_allocator_test, is_copyable)
 
 TEST_F(Fallback_allocator_test, is_moveable)
 {
-    using namespace memoc::blocks;
+    using namespace memoc;
 
     Allocator moved1{ std::move(allocator_) };
     Block b1 = moved1.allocate(size_);
