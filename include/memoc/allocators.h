@@ -13,7 +13,7 @@
 
 #include <memoc/blocks.h>
 
-namespace memoc::allocators {
+namespace memoc {
     namespace details {
         template <class T>
         concept Rule_of_five = requires

@@ -25,7 +25,7 @@ TEST(LW_Unique_ptr, construction_and_accessors)
 
     {
         // constructor with object
-        memoc::allocators::Malloc_allocator allocator{};
+        memoc::Malloc_allocator allocator{};
         memoc::Block b = allocator.allocate(sizeof(Foo));
         Foo* ptr = memoc::pointers::details::construct_at<Foo>(reinterpret_cast<Foo*>(b.p), 10);
         Unique_ptr<Foo> sp2(ptr);
@@ -116,7 +116,7 @@ TEST(LW_Unique_ptr, reset)
     {
         Unique_ptr<Foo> sp1 = make_unique<Foo>(100);
         EXPECT_TRUE(sp1);
-        memoc::allocators::Malloc_allocator allocator{};
+        memoc::Malloc_allocator allocator{};
         memoc::Block b = allocator.allocate(sizeof(Foo));
         Foo* ptr = memoc::pointers::details::construct_at<Foo>(reinterpret_cast<Foo*>(b.p), 10);
         sp1.reset(ptr);
@@ -168,7 +168,7 @@ TEST(LW_Shared_ptr, construction_and_accessors)
 
     {
         // constructor with object
-        memoc::allocators::Malloc_allocator allocator{};
+        memoc::Malloc_allocator allocator{};
         memoc::Block b = allocator.allocate(sizeof(Foo));
         Foo* ptr = memoc::pointers::details::construct_at<Foo>(reinterpret_cast<Foo*>(b.p), 10);
         Shared_ptr<Foo> sp2(ptr);
@@ -289,7 +289,7 @@ TEST(LW_Shared_ptr, reset)
         EXPECT_EQ(3, sp2.use_count());
         EXPECT_EQ(3, sp3.use_count());
 
-        memoc::allocators::Malloc_allocator allocator{};
+        memoc::Malloc_allocator allocator{};
         memoc::Block b = allocator.allocate(sizeof(Foo));
         Foo* ptr = memoc::pointers::details::construct_at<Foo>(reinterpret_cast<Foo*>(b.p), 10);
         sp1.reset(ptr);

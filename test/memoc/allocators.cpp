@@ -14,7 +14,7 @@
 
 class Malloc_allocator_test : public ::testing::Test {
 protected:
-    using Allocator = memoc::allocators::Malloc_allocator;
+    using Allocator = memoc::Malloc_allocator;
     Allocator allocator_{};
 };
 
@@ -47,7 +47,7 @@ class Stack_allocator_test : public ::testing::Test {
 protected:
     static constexpr std::size_t size_ = 16;
 
-    using Allocator = memoc::allocators::Stack_allocator<size_>;
+    using Allocator = memoc::Stack_allocator<size_>;
     Allocator allocator_{};
 };
 
@@ -183,9 +183,9 @@ protected:
     static constexpr std::size_t min_size_ = 16;
     static constexpr std::size_t max_size_ = 32;
     static constexpr std::size_t max_list_size_ = 2;
-    using Parent = memoc::allocators::Malloc_allocator;
+    using Parent = memoc::Malloc_allocator;
 
-    using Allocator = memoc::allocators::Free_list_allocator<Parent, min_size_, max_size_, max_list_size_>;
+    using Allocator = memoc::Free_list_allocator<Parent, min_size_, max_size_, max_list_size_>;
     Allocator allocator_{};
 };
 
@@ -383,10 +383,10 @@ TEST_F(Free_list_allocator_test, is_movealbe)
 
 class Stl_adapter_allocator_test : public ::testing::Test {
 protected:
-    using Parent = memoc::allocators::Malloc_allocator;
+    using Parent = memoc::Malloc_allocator;
 
     template <typename T>
-    using Allocator = memoc::allocators::Stl_adapter_allocator<T, Parent>;
+    using Allocator = memoc::Stl_adapter_allocator<T, Parent>;
 };
 
 TEST_F(Stl_adapter_allocator_test, able_to_use_custom_allocator)
@@ -428,9 +428,9 @@ TEST_F(Stl_adapter_allocator_test, able_to_use_custom_allocator)
 class Stats_allocator_test : public ::testing::Test {
 protected:
     static constexpr std::size_t number_of_records_ = 2;
-    using Parent = memoc::allocators::Malloc_allocator;
+    using Parent = memoc::Malloc_allocator;
 
-    using Allocator = memoc::allocators::Stats_allocator<Parent, number_of_records_>;
+    using Allocator = memoc::Stats_allocator<Parent, number_of_records_>;
     Allocator allocator_{};
 };
 
@@ -556,12 +556,12 @@ TEST_F(Stats_allocator_test, is_moveable)
 class Shared_allocator_test : public ::testing::Test {
 protected:
     static constexpr std::size_t size_ = 16;
-    using Parent = memoc::allocators::Stack_allocator<size_>;
+    using Parent = memoc::Stack_allocator<size_>;
 
-    using Allocator_default = memoc::allocators::Shared_allocator<Parent>;
+    using Allocator_default = memoc::Shared_allocator<Parent>;
 
-    using Allocator_0 = memoc::allocators::Shared_allocator<Parent, 0>;
-    using Allocator_1 = memoc::allocators::Shared_allocator<Parent, 1>;
+    using Allocator_0 = memoc::Shared_allocator<Parent, 0>;
+    using Allocator_1 = memoc::Shared_allocator<Parent, 1>;
 };
 
 TEST_F(Shared_allocator_test, saves_state_between_instances)
@@ -599,10 +599,10 @@ TEST_F(Shared_allocator_test, not_saves_state_between_instances_when_id_is_diffe
 class Fallback_allocator_test : public ::testing::Test {
 protected:
     static constexpr std::size_t size_ = 16;
-    using Primary = memoc::allocators::Stack_allocator<size_>;
-    using Fallback = memoc::allocators::Malloc_allocator;
+    using Primary = memoc::Stack_allocator<size_>;
+    using Fallback = memoc::Malloc_allocator;
 
-    using Allocator = memoc::allocators::Fallback_allocator<Primary, Fallback>;
+    using Allocator = memoc::Fallback_allocator<Primary, Fallback>;
     Allocator allocator_{};
 };
 

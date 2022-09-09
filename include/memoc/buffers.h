@@ -121,7 +121,7 @@ namespace memoc::buffers {
             Block data_{};
         };
 
-        template <allocators::Allocator Internal_allocator, bool Lazy_init = false>
+        template <Allocator Internal_allocator, bool Lazy_init = false>
         class Allocated_buffer {
         public:
             Allocated_buffer(std::size_t size, const void* data = nullptr) noexcept
