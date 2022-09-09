@@ -27,7 +27,7 @@ BENCHMARK(BM_std_shared_ptr);
 
 static void BM_LW_shared_ptr(benchmark::State& state)
 {
-    using namespace memoc::pointers;
+    using namespace memoc;
 
     for (auto _ : state) {
         Shared_ptr<int> sp1 = make_shared<int>(1998);

@@ -10,7 +10,7 @@
 #include <memoc/errors.h>
 #include <memoc/blocks.h>
 
-namespace memoc::pointers {
+namespace memoc {
 	namespace details {
 		template <typename T, typename ...Args>
 		T* construct_at(T* dst_address, Args&&... args)

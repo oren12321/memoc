@@ -5,6 +5,5 @@
 TEST(Memoc_test, use_all_namespaces)
 {
     using namespace memoc;
-    using namespace memoc::pointers;
     SUCCEED();
 }

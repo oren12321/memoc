@@ -8,7 +8,7 @@
 
 TEST(LW_Unique_ptr, construction_and_accessors)
 {
-    using namespace memoc::pointers;
+    using namespace memoc;
 
     struct Foo {
         Foo(int i = 0)
@@ -27,7 +27,7 @@ TEST(LW_Unique_ptr, construction_and_accessors)
         // constructor with object
         memoc::Malloc_allocator allocator{};
         memoc::Block b = allocator.allocate(sizeof(Foo));
-        Foo* ptr = memoc::pointers::details::construct_at<Foo>(reinterpret_cast<Foo*>(b.p), 10);
+        Foo* ptr = memoc::details::construct_at<Foo>(reinterpret_cast<Foo*>(b.p), 10);
         Unique_ptr<Foo> sp2(ptr);
         EXPECT_TRUE(sp2);
         EXPECT_NE(nullptr, sp2.get());
@@ -47,7 +47,7 @@ TEST(LW_Unique_ptr, construction_and_accessors)
 
 TEST(LW_Unique_ptr, comparison)
 {
-    using namespace memoc::pointers;
+    using namespace memoc;
 
     Unique_ptr<int> p1 = make_unique<int>(42);
     Unique_ptr<int> p2 = make_unique<int>(42);
@@ -61,7 +61,7 @@ TEST(LW_Unique_ptr, comparison)
 
 TEST(LW_Unique_ptr_test, inheritance_and_sharing)
 {
-    using namespace memoc::pointers;
+    using namespace memoc;
 
     struct A {
         A(int a)
@@ -98,7 +98,7 @@ TEST(LW_Unique_ptr_test, inheritance_and_sharing)
 
 TEST(LW_Unique_ptr, reset)
 {
-    using namespace memoc::pointers;
+    using namespace memoc;
 
     struct Foo {
         Foo(int i = 0)
@@ -118,7 +118,7 @@ TEST(LW_Unique_ptr, reset)
         EXPECT_TRUE(sp1);
         memoc::Malloc_allocator allocator{};
         memoc::Block b = allocator.allocate(sizeof(Foo));
-        Foo* ptr = memoc::pointers::details::construct_at<Foo>(reinterpret_cast<Foo*>(b.p), 10);
+        Foo* ptr = memoc::details::construct_at<Foo>(reinterpret_cast<Foo*>(b.p), 10);
         sp1.reset(ptr);
         EXPECT_TRUE(sp1);
     }
@@ -126,7 +126,7 @@ TEST(LW_Unique_ptr, reset)
 
 TEST(LW_Unique_ptr, move)
 {
-    using namespace memoc::pointers;
+    using namespace memoc;
 
     {
         // unique ownership - constructor
@@ -150,7 +150,7 @@ TEST(LW_Unique_ptr, move)
 
 TEST(LW_Shared_ptr, construction_and_accessors)
 {
-    using namespace memoc::pointers;
+    using namespace memoc;
 
     struct Foo {
         Foo(int i = 0)
@@ -170,7 +170,7 @@ TEST(LW_Shared_ptr, construction_and_accessors)
         // constructor with object
         memoc::Malloc_allocator allocator{};
         memoc::Block b = allocator.allocate(sizeof(Foo));
-        Foo* ptr = memoc::pointers::details::construct_at<Foo>(reinterpret_cast<Foo*>(b.p), 10);
+        Foo* ptr = memoc::details::construct_at<Foo>(reinterpret_cast<Foo*>(b.p), 10);
         Shared_ptr<Foo> sp2(ptr);
         EXPECT_TRUE(sp2);
         EXPECT_NE(nullptr, sp2.get());
@@ -192,7 +192,7 @@ TEST(LW_Shared_ptr, construction_and_accessors)
 
 TEST(LW_Shared_ptr, comparison)
 {
-    using namespace memoc::pointers;
+    using namespace memoc;
 
     Shared_ptr<int> p1 = make_shared<int>(42);
     Shared_ptr<int> p2 = make_shared<int>(42);
@@ -206,7 +206,7 @@ TEST(LW_Shared_ptr, comparison)
 
 TEST(LW_Shared_ptr_test, inheritance_and_sharing)
 {
-    using namespace memoc::pointers;
+    using namespace memoc;
 
     struct A {
         A(int a)
@@ -262,7 +262,7 @@ TEST(LW_Shared_ptr_test, inheritance_and_sharing)
 
 TEST(LW_Shared_ptr, reset)
 {
-    using namespace memoc::pointers;
+    using namespace memoc;
 
     struct Foo {
         Foo(int i = 0)
@@ -291,7 +291,7 @@ TEST(LW_Shared_ptr, reset)
 
         memoc::Malloc_allocator allocator{};
         memoc::Block b = allocator.allocate(sizeof(Foo));
-        Foo* ptr = memoc::pointers::details::construct_at<Foo>(reinterpret_cast<Foo*>(b.p), 10);
+        Foo* ptr = memoc::details::construct_at<Foo>(reinterpret_cast<Foo*>(b.p), 10);
         sp1.reset(ptr);
         EXPECT_EQ(1, sp1.use_count());
         EXPECT_EQ(2, sp2.use_count());
@@ -301,7 +301,7 @@ TEST(LW_Shared_ptr, reset)
 
 TEST(LW_Shared_ptr, copy)
 {
-    using namespace memoc::pointers;
+    using namespace memoc;
 
     {
         // unique ownership - constructor
@@ -394,7 +394,7 @@ TEST(LW_Shared_ptr, copy)
 
 TEST(LW_Shared_ptr, move)
 {
-    using namespace memoc::pointers;
+    using namespace memoc;
 
     {
         // unique ownership - constructor
@@ -486,7 +486,7 @@ TEST(LW_Shared_ptr, move)
 
 TEST(LW_Shared_ptr, casting)
 {
-    using namespace memoc::pointers;
+    using namespace memoc;
     struct A {
         A(int a)
             : a_(a) {}
@@ -609,7 +609,7 @@ TEST(LW_Shared_ptr, casting)
 
 TEST(LW_Shared_ptr, from_Unique_ptr)
 {
-    using namespace memoc::pointers;
+    using namespace memoc;
 
     {
         // unique ownership - constructor
@@ -659,7 +659,7 @@ TEST(LW_Shared_ptr, from_Unique_ptr)
 
 TEST(LW_Weak_ptr, construction)
 {
-    using namespace memoc::pointers;
+    using namespace memoc;
 
     // empty weak ptr
     {
@@ -679,7 +679,7 @@ TEST(LW_Weak_ptr, construction)
 
 TEST(LW_Weak_ptr, locking_and_resetting)
 {
-    using namespace memoc::pointers;
+    using namespace memoc;
 
     // empty weak ptr
     {
@@ -723,7 +723,7 @@ TEST(LW_Weak_ptr, locking_and_resetting)
 
 TEST(LW_Weak_ptr, multiple_instances)
 {
-    using namespace memoc::pointers;
+    using namespace memoc;
 
     // empty weak ptr
     {
@@ -755,7 +755,7 @@ TEST(LW_Weak_ptr, multiple_instances)
 
 TEST(LW_Weak_ptr, copy)
 {
-    using namespace memoc::pointers;
+    using namespace memoc;
 
     // empty weak ptr - copying - constructor
     {
@@ -812,7 +812,7 @@ TEST(LW_Weak_ptr, copy)
 
 TEST(LW_Weak_ptr, move)
 {
-    using namespace memoc::pointers;
+    using namespace memoc;
 
     // empty weak ptr - copying - constructor
     {
@@ -869,7 +869,7 @@ TEST(LW_Weak_ptr, move)
 
 TEST(LW_Weak_ptr, tracked_by_shared_ptr_state)
 {
-    using namespace memoc::pointers;
+    using namespace memoc;
 
     Weak_ptr<int> wp{};
     EXPECT_TRUE(wp.expired());
