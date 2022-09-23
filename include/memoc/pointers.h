@@ -211,7 +211,7 @@ namespace memoc {
 			friend class Weak_ptr;
 
 			// Not recommended - ptr should be allocated using Internal_allocator
-			Shared_ptr(T* ptr = nullptr)
+			explicit Shared_ptr(T* ptr = nullptr)
 				: cb_(ptr ? reinterpret_cast<Control_block*>(allocator_.allocate(sizeof(Control_block)).p) : nullptr), ptr_(ptr)
 			{
 				MEMOC_THROW_IF_FALSE((ptr && cb_) || (!ptr && !cb_), std::runtime_error, "internal memory allocation failed");
@@ -366,7 +366,7 @@ namespace memoc {
 				return *(ptr_);
 			}
 
-			operator bool() const noexcept
+			explicit operator bool() const noexcept
 			{
 				return ptr_;
 			}
