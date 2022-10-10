@@ -17,6 +17,7 @@ namespace memoc {
         concept Buffer = 
             requires
         {
+            std::is_default_constructible_v<T>;
             std::is_copy_constructible_v<T>;
             std::is_copy_assignable_v<T>;
             std::is_move_constructible_v<T>;
@@ -35,6 +36,7 @@ namespace memoc {
         class Stack_buffer {
             static_assert(Stack_size > 0);
         public:
+            Stack_buffer() = default;
             Stack_buffer(std::size_t size, const void* data = nullptr) noexcept
                 : size_(size)
             {
@@ -123,6 +125,7 @@ namespace memoc {
         template <Allocator Internal_allocator, bool Lazy_init = false>
         class Allocated_buffer {
         public:
+            Allocated_buffer() = default;
             Allocated_buffer(std::size_t size, const void* data = nullptr) noexcept
                 : size_(size)
             {
