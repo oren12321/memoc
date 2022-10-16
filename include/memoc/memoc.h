@@ -6,6 +6,5 @@
 #include <memoc/buffers.h>
 #include <memoc/errors.h>
 #include <memoc/pointers.h>
-#include <memoc/accessors.h>
 
 #endif // MEMOC_MEMOC_H
