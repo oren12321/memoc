@@ -10,11 +10,11 @@ namespace memoc {
         template <typename T>
             requires (!std::is_reference_v<T>)
         struct Typed_block {
-            using Pointer = T*;
             using Size_type = std::size_t;
+            using Pointer = T*;
 
-            Pointer p{ nullptr };
             Size_type s{ 0 };
+            Pointer p{ nullptr };
 
             void clear() noexcept
             {
@@ -27,6 +27,28 @@ namespace memoc {
                 return p == nullptr && s == 0;
             }
         };
+
+        template <typename T1, typename T2>
+        inline bool operator==(const Typed_block<T1>& lhs, const Typed_block<T2> rhs) noexcept
+        {
+            if (lhs.empty() && rhs.empty()) {
+                return true;
+            }
+
+            if (lhs.s != rhs.s) {
+                return false;
+            }
+
+            if (lhs.s == 0) {
+                return false;
+            }
+
+            bool still_equal{ true };
+            for (std::size_t i = 0; i < lhs.s && still_equal; ++i) {
+                still_equal &= (lhs.p[i] == rhs.p[i]);
+            }
+            return still_equal;
+        }
     }
 
     using details::Typed_block;

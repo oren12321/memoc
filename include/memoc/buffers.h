@@ -105,7 +105,7 @@ namespace memoc {
             void init(const void* data = nullptr) noexcept
             {
                 if (size_ <= Stack_size) {
-                    data_ = { memory_, size_ };
+                    data_ = { size_, memory_ };
                 }
 
                 if (data && !data_.empty()) {
@@ -344,8 +344,8 @@ namespace memoc {
             [[nodiscard]] Typed_block<T> data() const noexcept
             {
                 return Typed_block<T>{
-                    reinterpret_cast<T*>(Internal_buffer::data().p),
-                        (Internal_buffer::data().s * sizeof(Replace_void<Remove_internal_pointer<decltype(Internal_buffer::data().p)>, std::uint8_t>)) / sizeof(Replace_void<T, std::uint8_t>)
+                    (Internal_buffer::data().s * sizeof(Replace_void<Remove_internal_pointer<decltype(Internal_buffer::data().p)>, std::uint8_t>)) / sizeof(Replace_void<T, std::uint8_t>),
+                    reinterpret_cast<T*>(Internal_buffer::data().p)      
                 };
             }
 

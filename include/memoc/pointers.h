@@ -152,7 +152,7 @@ namespace memoc {
 				// Check if there's an object in use
 				if (ptr_) {
 					destruct_at<T>(ptr_);
-					Block ptr_b = { const_cast<std::remove_const_t<T>*>(ptr_), sizeof(T) };
+					Block ptr_b = { sizeof(T), const_cast<std::remove_const_t<T>*>(ptr_) };
 					allocator_.deallocate(&ptr_b);
 					ptr_ = nullptr;
 				}
@@ -432,13 +432,13 @@ namespace memoc {
 				}
 				if (cb_->use_count == 0 && ptr_) {
 					destruct_at<T>(ptr_);
-					Block ptr_b = { const_cast<std::remove_const_t<T>*>(ptr_), sizeof(T) };
+					Block ptr_b = { sizeof(T), const_cast<std::remove_const_t<T>*>(ptr_) };
 					allocator_.deallocate(&ptr_b);
 					ptr_ = nullptr;
 				}
 				if (cb_->use_count == 0 && cb_->weak_count == 0) {
 					destruct_at<Control_block>(cb_);
-					Block cb_b = { cb_, sizeof(Control_block) };
+					Block cb_b = { sizeof(Control_block), cb_ };
 					allocator_.deallocate(&cb_b);
 					cb_ = nullptr;
 				}
@@ -749,7 +749,7 @@ namespace memoc {
 				}
 				if (cb_->use_count == 0 && cb_->weak_count == 0) {
 					destruct_at<Control_block>(cb_);
-					Block cb_b = { cb_, sizeof(Control_block) };
+					Block cb_b = { sizeof(Control_block), cb_ };
 					allocator_.deallocate(&cb_b);
 					cb_ = nullptr;
 				}

@@ -92,9 +92,9 @@ namespace memoc {
             [[nodiscard]] Block allocate(Block::Size_type s) noexcept
             {
                 if (s == 0) {
-                    return { nullptr, s };
+                    return { s, nullptr };
                 }
-                return { std::malloc(s), s };
+                return { s, std::malloc(s) };
             }
 
             void deallocate(Block* b) noexcept
@@ -146,9 +146,9 @@ namespace memoc {
             {
                 auto s1 = align(s);
                 if (p_ + s1 > d_ + Size || !p_ || s == 0) {
-                    return { nullptr, 0 };
+                    return { 0, nullptr };
                 }
-                Block b = { p_, s };
+                Block b = { s, p_ };
                 p_ += s1;
                 return b;
             }
@@ -224,7 +224,7 @@ namespace memoc {
                     for (std::size_t i = 0; i < list_size_; ++i) {
                         Node* n = root_;
                         root_ = root_->next;
-                        Block b{ n, Max_size };
+                        Block b{ Max_size, n };
                         Internal_allocator::deallocate(&b);
                     }
                 }
@@ -232,7 +232,7 @@ namespace memoc {
                 [[nodiscard]] Block allocate(Block::Size_type s) noexcept
                 {
                     if (s >= Min_size && s <= Max_size && list_size_ > 0) {
-                        Block b = { root_, s };
+                        Block b = { s, root_ };
                         root_ = root_->next;
                         --list_size_;
                         return b;
@@ -245,7 +245,7 @@ namespace memoc {
                 void deallocate(Block* b) noexcept
                 {
                     if (b->s < Min_size || b->s > Max_size || list_size_ > Max_list_size) {
-                        Block nb{ b->p, Max_size };
+                        Block nb{ Max_size, b->p };
                         b->clear();
                         return Internal_allocator::deallocate(&nb);
                     }
@@ -314,7 +314,7 @@ namespace memoc {
 
             void deallocate(T* p, std::size_t n) noexcept
             {
-                Block b = { reinterpret_cast<void*>(p), n * sizeof(T) };
+                Block b = { n * sizeof(T), reinterpret_cast<void*>(p) };
                 Internal_allocator::deallocate(&b);
             }
         };
@@ -375,7 +375,7 @@ namespace memoc {
                 Record* c = root_;
                 while (c) {
                     Record* n = c->next;
-                    Block b{ c->record_address, sizeof(Record) };
+                    Block b{ sizeof(Record), c->record_address };
                     Internal_allocator::deallocate(&b);
                     c = n;
                 }
