@@ -12,9 +12,21 @@ namespace memoc {
         struct Typed_block {
             using Size_type = std::size_t;
             using Pointer = T*;
+            using Const_pointer = const T*;
 
             Size_type s{ 0 };
             Pointer p{ nullptr };
+
+            Typed_block() noexcept = default;
+            Typed_block(const Typed_block&) noexcept = default;
+            Typed_block& operator=(const Typed_block&) noexcept = default;
+            Typed_block(Typed_block&&) noexcept = default;
+            Typed_block& operator=(Typed_block&&) noexcept = default;
+            virtual ~Typed_block() noexcept = default;
+
+            Typed_block(Size_type ns, Const_pointer np) noexcept
+                : s(ns), p(const_cast<Pointer>(np)) {}
+
 
             void clear() noexcept
             {
