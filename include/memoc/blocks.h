@@ -9,35 +9,53 @@ namespace memoc {
     namespace details {
         template <typename T>
             requires (!std::is_reference_v<T>)
-        struct Typed_block {
+        class Typed_block {
+        public:
             using Size_type = std::size_t;
             using Pointer = T*;
             using Const_pointer = const T*;
 
-            Size_type s{ 0 };
-            Pointer p{ nullptr };
-
-            Typed_block() noexcept = default;
             Typed_block(const Typed_block&) noexcept = default;
             Typed_block& operator=(const Typed_block&) noexcept = default;
             Typed_block(Typed_block&&) noexcept = default;
             Typed_block& operator=(Typed_block&&) noexcept = default;
             virtual ~Typed_block() noexcept = default;
 
-            Typed_block(Size_type ns, Const_pointer np) noexcept
-                : s(ns), p(const_cast<Pointer>(np)) {}
-
+            // Do not allow parially empty block
+            Typed_block(Size_type s = 0, Const_pointer p = nullptr) noexcept
+                : s_(p ? s : 0), p_(s ? const_cast<Pointer>(p) : nullptr)
+            {
+            }
 
             void clear() noexcept
             {
-                p = nullptr;
-                s = 0;
+                p_ = nullptr;
+                s_ = 0;
             }
 
             bool empty() const noexcept
             {
-                return p == nullptr && s == 0;
+                return p_ == nullptr && s_ == 0;
             }
+
+            Size_type s() const noexcept
+            {
+                return s_;
+            }
+
+            Const_pointer p() const noexcept
+            {
+                return p_;
+            }
+
+            Pointer p() noexcept
+            {
+                return p_;
+            }
+
+        private:
+            Size_type s_{ 0 };
+            Pointer p_{ nullptr };
         };
 
         template <typename T1, typename T2>
@@ -47,17 +65,17 @@ namespace memoc {
                 return true;
             }
 
-            if (lhs.s != rhs.s) {
+            if (lhs.s() != rhs.s()) {
                 return false;
             }
 
-            if (lhs.s == 0) {
+            if (lhs.s() == 0) {
                 return false;
             }
 
             bool still_equal{ true };
-            for (std::size_t i = 0; i < lhs.s && still_equal; ++i) {
-                still_equal &= (lhs.p[i] == rhs.p[i]);
+            for (std::size_t i = 0; i < lhs.s() && still_equal; ++i) {
+                still_equal &= (lhs.p()[i] == rhs.p()[i]);
             }
             return still_equal;
         }

@@ -192,7 +192,7 @@ namespace memoc {
 		{
 			Internal_allocator allocator_{};
 			Block b = allocator_.allocate(sizeof(T));
-			T* ptr = construct_at<T>(reinterpret_cast<T*>(b.p), std::forward<Args>(args)...);
+			T* ptr = construct_at<T>(reinterpret_cast<T*>(b.p()), std::forward<Args>(args)...);
 			return Unique_ptr<T, Internal_allocator>(ptr);
 		}
 
@@ -212,7 +212,7 @@ namespace memoc {
 
 			// Not recommended - ptr should be allocated using Internal_allocator
 			explicit Shared_ptr(T* ptr = nullptr)
-				: cb_(ptr ? reinterpret_cast<Control_block*>(allocator_.allocate(sizeof(Control_block)).p) : nullptr), ptr_(ptr)
+				: cb_(ptr ? reinterpret_cast<Control_block*>(allocator_.allocate(sizeof(Control_block)).p()) : nullptr), ptr_(ptr)
 			{
 				MEMOC_THROW_IF_FALSE((ptr && cb_) || (!ptr && !cb_), std::runtime_error, "internal memory allocation failed");
 				if (cb_) {
@@ -383,7 +383,7 @@ namespace memoc {
 			{
 				remove_reference();
 				if (ptr) {
-					cb_ = reinterpret_cast<Control_block*>(allocator_.allocate(sizeof(Control_block)).p);
+					cb_ = reinterpret_cast<Control_block*>(allocator_.allocate(sizeof(Control_block)).p());
 					MEMOC_THROW_IF_FALSE(cb_, std::runtime_error, "internal memory allocation failed");
 					construct_at<Control_block>(cb_);
 					cb_->use_count = 1;
@@ -479,7 +479,7 @@ namespace memoc {
 		{
 			Internal_allocator allocator_{};
 			Block b = allocator_.allocate(sizeof(T));
-			T* ptr = construct_at<T>(reinterpret_cast<T*>(b.p), std::forward<Args>(args)...);
+			T* ptr = construct_at<T>(reinterpret_cast<T*>(b.p()), std::forward<Args>(args)...);
 			return Shared_ptr<T, Internal_allocator>(ptr);
 		}
 

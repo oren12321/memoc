@@ -52,8 +52,7 @@ namespace memoc {
                 }
 
                 size_ = other.size_;
-                data_.p = memory_;
-                data_.s = other.data_.s;
+                data_ = { other.data_.s(), memory_ };
                 for (std::size_t i = 0; i < size_; ++i) {
                     memory_[i] = other.memory_[i];
                 }
@@ -69,8 +68,7 @@ namespace memoc {
                 }
 
                 size_ = other.size_;
-                data_.p = memory_;
-                data_.s = other.data_.s;
+                data_ = { other.data_.s(), memory_ };
                 for (std::size_t i = 0; i < size_; ++i) {
                     memory_[i] = other.memory_[i];
                 }
@@ -146,8 +144,8 @@ namespace memoc {
                     init();
                 }
                 if (!other.data_.empty()) {
-                    std::uint8_t* src_memory = reinterpret_cast<std::uint8_t*>(other.data_.p);
-                    std::uint8_t* dst_memory = reinterpret_cast<std::uint8_t*>(data_.p);
+                    const std::uint8_t* src_memory = reinterpret_cast<const std::uint8_t*>(other.data_.p());
+                    std::uint8_t* dst_memory = reinterpret_cast<std::uint8_t*>(data_.p());
                     for (std::size_t i = 0; i < size_; ++i) {
                         dst_memory[i] = src_memory[i];
                     }
@@ -170,8 +168,8 @@ namespace memoc {
                     init();
                 }
                 if (!other.data_.empty()) {
-                    std::uint8_t* src_memory = reinterpret_cast<std::uint8_t*>(other.data_.p);
-                    std::uint8_t* dst_memory = reinterpret_cast<std::uint8_t*>(data_.p);
+                    const std::uint8_t* src_memory = reinterpret_cast<const std::uint8_t*>(other.data_.p());
+                    std::uint8_t* dst_memory = reinterpret_cast<std::uint8_t*>(data_.p());
                     for (std::size_t i = 0; i < size_; ++i) {
                         dst_memory[i] = src_memory[i];
                     }
@@ -234,7 +232,7 @@ namespace memoc {
 
                 if (data && !data_.empty()) {
                     const std::uint8_t* src_bytes = reinterpret_cast<const std::uint8_t*>(data);
-                    std::uint8_t* dst_bytes = reinterpret_cast<std::uint8_t*>(data_.p);
+                    std::uint8_t* dst_bytes = reinterpret_cast<std::uint8_t*>(data_.p());
                     for (std::size_t i = 0; i < size_; ++i) {
                         dst_bytes[i] = src_bytes[i];
                     }
@@ -317,7 +315,7 @@ namespace memoc {
         public:
             Typed_buffer() = default;
             Typed_buffer(std::size_t size, const T* data = nullptr) noexcept
-                : Internal_buffer((size * sizeof(Replace_void<T, std::uint8_t>)) / sizeof(Replace_void<Remove_internal_pointer<decltype(Internal_buffer::data().p)>, std::uint8_t>), data) {}
+                : Internal_buffer((size * sizeof(Replace_void<T, std::uint8_t>)) / sizeof(Replace_void<Remove_internal_pointer<decltype(Internal_buffer::data().p())>, std::uint8_t>), data) {}
 
             Typed_buffer(const Typed_buffer& other) noexcept
                 : Internal_buffer(other) {}
@@ -344,8 +342,8 @@ namespace memoc {
             [[nodiscard]] Typed_block<T> data() const noexcept
             {
                 return Typed_block<T>{
-                    (Internal_buffer::data().s * sizeof(Replace_void<Remove_internal_pointer<decltype(Internal_buffer::data().p)>, std::uint8_t>)) / sizeof(Replace_void<T, std::uint8_t>),
-                    reinterpret_cast<T*>(Internal_buffer::data().p)      
+                    (Internal_buffer::data().s() * sizeof(Replace_void<Remove_internal_pointer<decltype(Internal_buffer::data().p())>, std::uint8_t>)) / sizeof(Replace_void<T, std::uint8_t>),
+                    reinterpret_cast<T*>(Internal_buffer::data().p())
                 };
             }
 
