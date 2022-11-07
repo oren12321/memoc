@@ -13,7 +13,7 @@
 
 namespace memoc {
     namespace details { 
-        template <class T, typename U>
+        template <class T, typename U = void>
         concept Buffer = 
             requires
         {
@@ -245,7 +245,7 @@ namespace memoc {
             Block data_{};
         };
 
-        template <Buffer<void> Primary, Buffer<void> Fallback>
+        template <Buffer Primary, Buffer Fallback>
         class Fallback_buffer
             : private Primary
             // For efficiency should be buffer with lazy initialization
@@ -303,7 +303,7 @@ namespace memoc {
             }
         };
 
-        template <typename T, Buffer<void> Internal_buffer>
+        template <typename T, Buffer Internal_buffer>
             requires (!std::is_reference_v<T>)
         class Typed_buffer : private Internal_buffer {
             // If required or internal type is void then sizeof is invalid - replace it with byte size
