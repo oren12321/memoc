@@ -47,9 +47,9 @@ namespace memoc {
 
             Stack_buffer(const Stack_buffer& other) noexcept
             {
-                if (!other.usable()) {
-                    return;
-                }
+                //if (!other.usable()) {
+                //    return;
+                //}
 
                 size_ = other.size_;
                 data_ = { other.data_.s(), memory_ };
@@ -63,9 +63,9 @@ namespace memoc {
                     return *this;
                 }
 
-                if (!other.usable()) {
-                    return *this;
-                }
+                //if (!other.usable()) {
+                //    return *this;
+                //}
 
                 size_ = other.size_;
                 data_ = { other.data_.s(), memory_ };
@@ -134,9 +134,9 @@ namespace memoc {
 
             Allocated_buffer(const Allocated_buffer& other) noexcept
             {
-                if (!other.usable()) {
-                    return;
-                }
+                //if (!other.usable()) {
+                //    return;
+                //}
 
                 size_ = other.size_;
                 allocator_ = other.allocator_;
@@ -157,9 +157,9 @@ namespace memoc {
                     return *this;
                 }
 
-                if (!other.usable()) {
-                    return *this;
-                }
+                //if (!other.usable()) {
+                //    return *this;
+                //}
 
                 size_ = other.size_;
                 allocator_ = other.allocator_;
