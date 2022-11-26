@@ -53,7 +53,7 @@ namespace memoc {
 
                 size_ = other.size_;
                 data_ = { other.data_.s(), memory_ };
-                for (std::size_t i = 0; i < size_; ++i) {
+                for (std::size_t i = 0; i < data_.s(); ++i) {
                     memory_[i] = other.memory_[i];
                 }
             }
@@ -69,7 +69,7 @@ namespace memoc {
 
                 size_ = other.size_;
                 data_ = { other.data_.s(), memory_ };
-                for (std::size_t i = 0; i < size_; ++i) {
+                for (std::size_t i = 0; i < data_.s(); ++i) {
                     memory_[i] = other.memory_[i];
                 }
                 return *this;
