@@ -26,7 +26,7 @@ namespace memoc {
             std::is_move_assignable_v<T>;
             std::is_destructible_v<T>;
         }&&
-            requires (T t, std::size_t s, Block b)
+            requires (T t, Block::Size_type s, Block b)
         {
             {t.allocate(s)} noexcept -> std::same_as<decltype(b)>;
             {t.deallocate(&b)} noexcept -> std::same_as<void>;
@@ -109,7 +109,7 @@ namespace memoc {
             }
         };
 
-        template <std::size_t Size>
+        template <Block::Size_type Size>
         class Stack_allocator {
             static_assert(Size > 1 && Size % 2 == 0);
         public:
@@ -167,7 +167,7 @@ namespace memoc {
             }
 
         private:
-            std::size_t align(std::size_t s)
+            Block::Size_type align(Block::Size_type s)
             {
                 return s % 2 == 0 ? s : s + 1;
             }
@@ -178,7 +178,7 @@ namespace memoc {
 
         template <
             Allocator Internal_allocator,
-            std::size_t Min_size, std::size_t Max_size, std::size_t Max_list_size>
+            Block::Size_type Min_size, Block::Size_type Max_size, std::int64_t Max_list_size>
             class Free_list_allocator
             : private Internal_allocator {
             static_assert(Min_size > 1 && Min_size % 2 == 0);
@@ -221,7 +221,7 @@ namespace memoc {
                 // Responsible to release the saved memory blocks
                 virtual ~Free_list_allocator() noexcept
                 {
-                    for (std::size_t i = 0; i < list_size_; ++i) {
+                    for (std::int64_t i = 0; i < list_size_; ++i) {
                         Node* n = root_;
                         root_ = root_->next;
                         Block b{ Max_size, n };
@@ -265,7 +265,7 @@ namespace memoc {
                 };
 
                 Node* root_{ nullptr };
-                std::size_t list_size_{ 0 };
+                std::int64_t list_size_{ 0 };
         };
 
         template <typename T, Allocator Internal_allocator>
@@ -304,7 +304,7 @@ namespace memoc {
 
             [[nodiscard]] T* allocate(std::size_t n)
             {
-                Block b = Internal_allocator::allocate(n * sizeof(T));
+                Block b = Internal_allocator::allocate(n * MEMOC_SSIZEOF(T));
                 if (b.empty()) {
                     throw std::bad_alloc{};
                 }
@@ -313,19 +313,19 @@ namespace memoc {
 
             void deallocate(T* p, std::size_t n) noexcept
             {
-                Block b = { n * sizeof(T), reinterpret_cast<void*>(p) };
+                Block b = { safe_64_unsigned_to_signed_cast(n) * MEMOC_SSIZEOF(T), reinterpret_cast<void*>(p) };
                 Internal_allocator::deallocate(&b);
             }
         };
 
-        template <Allocator Internal_allocator, std::size_t Number_of_records>
+        template <Allocator Internal_allocator, std::int64_t Number_of_records>
         class Stats_allocator
             : private Internal_allocator {
         public:
             struct Record {
                 void* record_address{ nullptr };
                 void* request_address{ nullptr };
-                std::int64_t amount{ 0 };
+                Block::Size_type amount{ 0 };
                 std::chrono::time_point<std::chrono::system_clock> time;
                 Record* next{ nullptr };
             };
@@ -335,7 +335,7 @@ namespace memoc {
                 : Internal_allocator(other)
             {
                 for (Record* r = other.root_; r != nullptr; r = r->next) {
-                    add_record(r->request_address, r->amount - sizeof(Record), r->time);
+                    add_record(r->request_address, r->amount - MEMOC_SSIZEOF(Record), r->time);
                 }
             }
             Stats_allocator operator=(const Stats_allocator& other) noexcept
@@ -345,7 +345,7 @@ namespace memoc {
                 }
                 Internal_allocator::operator=(other);
                 for (Record* r = other.root_; r != nullptr; r = r->next) {
-                    add_record(r->request_address, r->amount - sizeof(Record), r->time);
+                    add_record(r->request_address, r->amount - MEMOC_SSIZEOF(Record), r->time);
                 }
                 return *this;
             }
@@ -374,7 +374,7 @@ namespace memoc {
                 Record* c = root_;
                 while (c) {
                     Record* n = c->next;
-                    Block b{ sizeof(Record), c->record_address };
+                    Block b{ MEMOC_SSIZEOF(Record), c->record_address };
                     Internal_allocator::deallocate(&b);
                     c = n;
                 }
@@ -384,7 +384,7 @@ namespace memoc {
             {
                 Block b = Internal_allocator::allocate(s);
                 if (!b.empty()) {
-                    add_record(b.p(), static_cast<std::int64_t>(b.s()));
+                    add_record(b.p(), b.s());
                 }
                 return b;
             }
@@ -394,7 +394,7 @@ namespace memoc {
                 Block bc{ *b };
                 Internal_allocator::deallocate(b);
                 if (b->empty()) {
-                    add_record(bc.p(), -static_cast<std::int64_t>(bc.s()));
+                    add_record(bc.p(), -bc.s());
                 }
             }
 
@@ -407,23 +407,23 @@ namespace memoc {
                 return root_;
             }
 
-            std::size_t stats_list_size() const noexcept {
+            std::int64_t stats_list_size() const noexcept {
                 return number_of_records_;
             }
 
-            std::int64_t total_allocated() const noexcept {
+            Block::Size_type total_allocated() const noexcept {
                 return total_allocated_;
             }
 
         private:
-            void add_record(void* p, std::int64_t a, std::chrono::time_point<std::chrono::system_clock> time = std::chrono::system_clock::now()) {
+            void add_record(void* p, Block::Size_type a, std::chrono::time_point<std::chrono::system_clock> time = std::chrono::system_clock::now()) {
                 if (number_of_records_ >= Number_of_records) {
                     tail_->next = root_;
                     root_ = root_->next;
                     tail_ = tail_->next;
                     tail_->next = nullptr;
                     tail_->request_address = p;
-                    tail_->amount = static_cast<std::int64_t>(sizeof(Record)) + a;
+                    tail_->amount = MEMOC_SSIZEOF(Record) + a;
                     tail_->time = time;
 
                     total_allocated_ += tail_->amount;
@@ -431,7 +431,7 @@ namespace memoc {
                     return;
                 }
 
-                Block b1 = Internal_allocator::allocate(sizeof(Record));
+                Block b1 = Internal_allocator::allocate(MEMOC_SSIZEOF(Record));
                 if (b1.empty()) {
                     return;
                 }
@@ -446,7 +446,7 @@ namespace memoc {
                 }
                 tail_->record_address = b1.p();
                 tail_->request_address = p;
-                tail_->amount = static_cast<std::int64_t>(b1.s()) + a;
+                tail_->amount = b1.s() + a;
                 tail_->time = time;
                 tail_->next = nullptr;
 
@@ -455,13 +455,13 @@ namespace memoc {
                 ++number_of_records_;
             }
 
-            std::size_t number_of_records_{ 0 };
-            std::int64_t total_allocated_{ 0 };
+            std::int64_t number_of_records_{ 0 };
+            Block::Size_type total_allocated_{ 0 };
             Record* root_{ nullptr };
             Record* tail_{ nullptr };
         };
 
-        template <Allocator Internal_allocator, int id = -1>
+        template <Allocator Internal_allocator, std::int64_t id = -1>
         class Shared_allocator {
         public:
             [[nodiscard]] Block allocate(Block::Size_type s) noexcept

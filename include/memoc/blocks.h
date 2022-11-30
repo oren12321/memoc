@@ -3,22 +3,28 @@
 
 #include <cstdint>
 #include <limits>
-#include <cstddef>
 #include <type_traits>
 #include <utility>
+#include <cassert>
 
 namespace memoc {
     namespace details {
         template <std::uint64_t U>
-        constexpr std::int64_t safe_64_unsigned_to_signed_cast()
+        constexpr std::int64_t safe_64_unsigned_to_signed_cast() noexcept
         {
             static_assert(U <= std::numeric_limits<std::int64_t>::max(), "unsgined value is too large for casting to its unsgined version");
             return static_cast<std::int64_t>(U);
         }
+
+        constexpr std::int64_t safe_64_unsigned_to_signed_cast(std::uint64_t u) noexcept
+        {
+            assert((u <= std::numeric_limits<std::int64_t>::max()) && "unsgined value is too large for casting to its unsgined version");
+            return static_cast<std::int64_t>(u);
+        }
     }
 }
 
-#define MEMOC_SSIZEOF(expression) memoc::details::safe_64_unsigned_to_signed_cast<sizeof(expression)>()
+#define MEMOC_SSIZEOF(...) memoc::details::safe_64_unsigned_to_signed_cast<sizeof(__VA_ARGS__)>()
 
 namespace memoc {
     namespace details {
@@ -26,7 +32,7 @@ namespace memoc {
             requires (!std::is_reference_v<T>)
         class Typed_block {
         public:
-            using Size_type = std::size_t;
+            using Size_type = std::int64_t;
             using Pointer = T*;
             using Const_pointer = const T*;
 
@@ -38,7 +44,7 @@ namespace memoc {
 
             // Do not allow parially empty block
             Typed_block(Size_type s = 0, Const_pointer p = nullptr) noexcept
-                : s_(p ? s : 0), p_(s ? const_cast<Pointer>(p) : nullptr)
+                : s_(p ? (s > 0 ? s : 0) : 0), p_(s > 0 ? const_cast<Pointer>(p) : nullptr)
             {
             }
 
@@ -89,7 +95,7 @@ namespace memoc {
             }
 
             bool still_equal{ true };
-            for (std::size_t i = 0; i < lhs.s() && still_equal; ++i) {
+            for (std::int64_t i = 0; i < lhs.s() && still_equal; ++i) {
                 still_equal &= (lhs.p()[i] == rhs.p()[i]);
             }
             return still_equal;

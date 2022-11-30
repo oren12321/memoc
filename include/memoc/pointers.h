@@ -2,7 +2,7 @@
 #define MEMOC_POINTERS_H
 
 #include <memory>
-#include <cstddef>
+#include <cstdint>
 #include <compare>
 #include <utility>
 
@@ -152,7 +152,7 @@ namespace memoc {
 				// Check if there's an object in use
 				if (ptr_) {
 					destruct_at<T>(ptr_);
-					Block ptr_b = { sizeof(T), const_cast<std::remove_const_t<T>*>(ptr_) };
+					Block ptr_b = { MEMOC_SSIZEOF(T), const_cast<std::remove_const_t<T>*>(ptr_) };
 					allocator_.deallocate(&ptr_b);
 					ptr_ = nullptr;
 				}
@@ -191,14 +191,14 @@ namespace memoc {
 		inline Unique_ptr<T, Internal_allocator> make_unique(Args&&... args)
 		{
 			Internal_allocator allocator_{};
-			Block b = allocator_.allocate(sizeof(T));
+			Block b = allocator_.allocate(MEMOC_SSIZEOF(T));
 			T* ptr = construct_at<T>(reinterpret_cast<T*>(b.p()), std::forward<Args>(args)...);
 			return Unique_ptr<T, Internal_allocator>(ptr);
 		}
 
 		struct Control_block {
-			std::size_t use_count{ 0 };
-			std::size_t weak_count{ 0 };
+			std::int64_t use_count{ 0 };
+			std::int64_t weak_count{ 0 };
 		};
 
 		template <typename T, Allocator Internal_allocator>
@@ -212,7 +212,7 @@ namespace memoc {
 
 			// Not recommended - ptr should be allocated using Internal_allocator
 			explicit Shared_ptr(T* ptr = nullptr)
-				: cb_(ptr ? reinterpret_cast<Control_block*>(allocator_.allocate(sizeof(Control_block)).p()) : nullptr), ptr_(ptr)
+				: cb_(ptr ? reinterpret_cast<Control_block*>(allocator_.allocate(MEMOC_SSIZEOF(Control_block)).p()) : nullptr), ptr_(ptr)
 			{
 				MEMOC_THROW_IF_FALSE((ptr && cb_) || (!ptr && !cb_), std::runtime_error, "internal memory allocation failed");
 				if (cb_) {
@@ -346,7 +346,7 @@ namespace memoc {
 				remove_reference();
 			}
 
-			std::size_t use_count() const noexcept
+			std::int64_t use_count() const noexcept
 			{
 				return cb_ ? cb_->use_count : 0;
 			}
@@ -383,7 +383,7 @@ namespace memoc {
 			{
 				remove_reference();
 				if (ptr) {
-					cb_ = reinterpret_cast<Control_block*>(allocator_.allocate(sizeof(Control_block)).p());
+					cb_ = reinterpret_cast<Control_block*>(allocator_.allocate(MEMOC_SSIZEOF(Control_block)).p());
 					MEMOC_THROW_IF_FALSE(cb_, std::runtime_error, "internal memory allocation failed");
 					construct_at<Control_block>(cb_);
 					cb_->use_count = 1;
@@ -432,13 +432,13 @@ namespace memoc {
 				}
 				if (cb_->use_count == 0 && ptr_) {
 					destruct_at<T>(ptr_);
-					Block ptr_b = { sizeof(T), const_cast<std::remove_const_t<T>*>(ptr_) };
+					Block ptr_b = { MEMOC_SSIZEOF(T), const_cast<std::remove_const_t<T>*>(ptr_) };
 					allocator_.deallocate(&ptr_b);
 					ptr_ = nullptr;
 				}
 				if (cb_->use_count == 0 && cb_->weak_count == 0) {
 					destruct_at<Control_block>(cb_);
-					Block cb_b = { sizeof(Control_block), cb_ };
+					Block cb_b = { MEMOC_SSIZEOF(Control_block), cb_ };
 					allocator_.deallocate(&cb_b);
 					cb_ = nullptr;
 				}
@@ -478,7 +478,7 @@ namespace memoc {
 		inline Shared_ptr<T, Internal_allocator> make_shared(Args&&... args)
 		{
 			Internal_allocator allocator_{};
-			Block b = allocator_.allocate(sizeof(T));
+			Block b = allocator_.allocate(MEMOC_SSIZEOF(T));
 			T* ptr = construct_at<T>(reinterpret_cast<T*>(b.p()), std::forward<Args>(args)...);
 			return Shared_ptr<T, Internal_allocator>(ptr);
 		}
@@ -701,7 +701,7 @@ namespace memoc {
 				remove_reference();
 			}
 
-			std::size_t use_count() const noexcept
+			std::int64_t use_count() const noexcept
 			{
 				return cb_ ? cb_->use_count : 0;
 			}
@@ -749,7 +749,7 @@ namespace memoc {
 				}
 				if (cb_->use_count == 0 && cb_->weak_count == 0) {
 					destruct_at<Control_block>(cb_);
-					Block cb_b = { sizeof(Control_block), cb_ };
+					Block cb_b = { MEMOC_SSIZEOF(Control_block), cb_ };
 					allocator_.deallocate(&cb_b);
 					cb_ = nullptr;
 				}

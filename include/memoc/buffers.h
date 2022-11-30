@@ -1,7 +1,6 @@
 #ifndef MEMOC_BUFFERS_H
 #define MEMOC_BUFFERS_H
 
-#include <cstddef>
 #include <cstdint>
 #include <functional>
 #include <utility>
@@ -24,7 +23,7 @@ namespace memoc {
             std::is_move_assignable_v<T>;
             std::is_destructible_v<T>;
         }&&
-            requires (T t, std::size_t size, const U* data)
+            requires (T t, std::int64_t size, const U* data)
         {
             {T(size, data)} noexcept;
             {t.usable()} noexcept -> std::same_as<bool>;
@@ -32,12 +31,12 @@ namespace memoc {
             {t.init(data)} noexcept -> std::same_as<void>;
         };
 
-        template <std::size_t Stack_size = 2, bool Lazy_init = false>
+        template <std::int64_t Stack_size = 2, bool Lazy_init = false>
         class Stack_buffer {
             static_assert(Stack_size > 0);
         public:
             Stack_buffer() = default;
-            Stack_buffer(std::size_t size, const void* data = nullptr) noexcept
+            Stack_buffer(std::int64_t size, const void* data = nullptr) noexcept
                 : size_(size)
             {
                 if (!Lazy_init && size_ > 0) {
@@ -53,7 +52,7 @@ namespace memoc {
 
                 size_ = other.size_;
                 data_ = { other.data_.s(), memory_ };
-                for (std::size_t i = 0; i < data_.s(); ++i) {
+                for (std::int64_t i = 0; i < data_.s(); ++i) {
                     memory_[i] = other.memory_[i];
                 }
             }
@@ -69,7 +68,7 @@ namespace memoc {
 
                 size_ = other.size_;
                 data_ = { other.data_.s(), memory_ };
-                for (std::size_t i = 0; i < data_.s(); ++i) {
+                for (std::int64_t i = 0; i < data_.s(); ++i) {
                     memory_[i] = other.memory_[i];
                 }
                 return *this;
@@ -108,14 +107,14 @@ namespace memoc {
 
                 if (data && !data_.empty()) {
                     const std::uint8_t* bytes = reinterpret_cast<const std::uint8_t*>(data);
-                    for (std::size_t i = 0; i < size_; ++i) {
+                    for (std::int64_t i = 0; i < size_; ++i) {
                         memory_[i] = bytes[i];
                     }
                 }
             }
 
         private:
-            std::size_t size_{ 0 };
+            std::int64_t size_{ 0 };
             std::uint8_t memory_[Stack_size] = { 0 };
             Block data_{};
         };
@@ -124,7 +123,7 @@ namespace memoc {
         class Allocated_buffer {
         public:
             Allocated_buffer() = default;
-            Allocated_buffer(std::size_t size, const void* data = nullptr) noexcept
+            Allocated_buffer(std::int64_t size, const void* data = nullptr) noexcept
                 : size_(size)
             {
                 if (!Lazy_init && size_ > 0) {
@@ -146,7 +145,7 @@ namespace memoc {
                 if (!other.data_.empty()) {
                     const std::uint8_t* src_memory = reinterpret_cast<const std::uint8_t*>(other.data_.p());
                     std::uint8_t* dst_memory = reinterpret_cast<std::uint8_t*>(data_.p());
-                    for (std::size_t i = 0; i < size_; ++i) {
+                    for (std::int64_t i = 0; i < size_; ++i) {
                         dst_memory[i] = src_memory[i];
                     }
                 }
@@ -170,7 +169,7 @@ namespace memoc {
                 if (!other.data_.empty()) {
                     const std::uint8_t* src_memory = reinterpret_cast<const std::uint8_t*>(other.data_.p());
                     std::uint8_t* dst_memory = reinterpret_cast<std::uint8_t*>(data_.p());
-                    for (std::size_t i = 0; i < size_; ++i) {
+                    for (std::int64_t i = 0; i < size_; ++i) {
                         dst_memory[i] = src_memory[i];
                     }
                 }
@@ -233,14 +232,14 @@ namespace memoc {
                 if (data && !data_.empty()) {
                     const std::uint8_t* src_bytes = reinterpret_cast<const std::uint8_t*>(data);
                     std::uint8_t* dst_bytes = reinterpret_cast<std::uint8_t*>(data_.p());
-                    for (std::size_t i = 0; i < size_; ++i) {
+                    for (std::int64_t i = 0; i < size_; ++i) {
                         dst_bytes[i] = src_bytes[i];
                     }
                 }
             }
 
         private:
-            std::size_t size_{ 0 };
+            std::int64_t size_{ 0 };
             Internal_allocator allocator_{};
             Block data_{};
         };
@@ -252,7 +251,7 @@ namespace memoc {
             , private Fallback {
         public:
             Fallback_buffer() = default;
-            Fallback_buffer(std::size_t size, const void* data = nullptr) noexcept
+            Fallback_buffer(std::int64_t size, const void* data = nullptr) noexcept
                 : Primary(size, data), Fallback(size, data)
             {
                 init(data);
@@ -314,8 +313,8 @@ namespace memoc {
             using Remove_internal_pointer = typename std::remove_pointer_t<U>;
         public:
             Typed_buffer() = default;
-            Typed_buffer(std::size_t size, const T* data = nullptr) noexcept
-                : Internal_buffer((size * sizeof(Replace_void<T, std::uint8_t>)) / sizeof(Replace_void<Remove_internal_pointer<decltype(Internal_buffer::data().p())>, std::uint8_t>), data) {}
+            Typed_buffer(std::int64_t size, const T* data = nullptr) noexcept
+                : Internal_buffer((size * MEMOC_SSIZEOF(Replace_void<T, std::uint8_t>)) / MEMOC_SSIZEOF(Replace_void<Remove_internal_pointer<decltype(Internal_buffer::data().p())>, std::uint8_t>), data) {}
 
             Typed_buffer(const Typed_buffer& other) noexcept
                 : Internal_buffer(other) {}
@@ -342,7 +341,7 @@ namespace memoc {
             [[nodiscard]] Typed_block<T> data() const noexcept
             {
                 return Typed_block<T>{
-                    (Internal_buffer::data().s() * sizeof(Replace_void<Remove_internal_pointer<decltype(Internal_buffer::data().p())>, std::uint8_t>)) / sizeof(Replace_void<T, std::uint8_t>),
+                    (Internal_buffer::data().s() * MEMOC_SSIZEOF(Replace_void<Remove_internal_pointer<decltype(Internal_buffer::data().p())>, std::uint8_t>)) / MEMOC_SSIZEOF(Replace_void<T, std::uint8_t>),
                     reinterpret_cast<T*>(Internal_buffer::data().p())
                 };
             }
