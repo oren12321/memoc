@@ -45,7 +45,7 @@ TEST_F(Malloc_allocator_test, allocates_and_deallocates_memory_successfully)
 
 class Stack_allocator_test : public ::testing::Test {
 protected:
-    static constexpr std::size_t size_ = 16;
+    static constexpr memoc::Block::Size_type size_ = 16;
 
     using Allocator = memoc::Stack_allocator<size_>;
     Allocator allocator_{};
@@ -180,9 +180,9 @@ TEST_F(Stack_allocator_test, is_movealbe)
 
 class Free_list_allocator_test : public ::testing::Test {
 protected:
-    static constexpr std::size_t min_size_ = 16;
-    static constexpr std::size_t max_size_ = 32;
-    static constexpr std::size_t max_list_size_ = 2;
+    static constexpr memoc::Block::Size_type min_size_ = 16;
+    static constexpr memoc::Block::Size_type max_size_ = 32;
+    static constexpr std::int64_t max_list_size_ = 2;
     using Parent = memoc::Malloc_allocator;
 
     using Allocator = memoc::Free_list_allocator<Parent, min_size_, max_size_, max_list_size_>;
@@ -220,7 +220,7 @@ TEST_F(Free_list_allocator_test, reuses_the_same_memory_if_deallocating_in_memor
 
     std::array<Block, max_list_size_> saved_blocks{};
 
-    for (std::size_t i = 0; i < max_list_size_; ++i)
+    for (std::int64_t i = 0; i < max_list_size_; ++i)
     {
         Block b = allocator_.allocate(size_in_range);
         EXPECT_NE(nullptr, b.p());
@@ -393,16 +393,16 @@ TEST_F(Stl_adapter_allocator_test, able_to_use_custom_allocator)
 {
     std::vector<int, Allocator<int>> v1{};
 
-    const std::size_t number_of_allocations = 512;
+    const std::int64_t number_of_allocations = 512;
 
-    for (std::size_t i = 0; i < number_of_allocations; ++i) {
+    for (std::int64_t i = 0; i < number_of_allocations; ++i) {
         v1.push_back(static_cast<int>(i));
         EXPECT_EQ(static_cast<int>(i), v1[i]);
     }
 
     std::vector<int, Allocator<int>> v2{ v1 };
 
-    for (std::size_t i = 0; i < number_of_allocations; ++i) {
+    for (std::int64_t i = 0; i < number_of_allocations; ++i) {
         v2.push_back(static_cast<int>(i));
         EXPECT_EQ(static_cast<int>(i), v2[i]);
     }
@@ -415,7 +415,7 @@ TEST_F(Stl_adapter_allocator_test, able_to_use_custom_allocator)
 
     EXPECT_TRUE(v2.empty());
 
-    for (std::size_t i = 0; i < number_of_allocations; ++i) {
+    for (std::int64_t i = 0; i < number_of_allocations; ++i) {
         EXPECT_EQ(static_cast<int>(i), v3[i]);
     }
 
@@ -427,7 +427,7 @@ TEST_F(Stl_adapter_allocator_test, able_to_use_custom_allocator)
 
 class Stats_allocator_test : public ::testing::Test {
 protected:
-    static constexpr std::size_t number_of_records_ = 2;
+    static constexpr std::int64_t number_of_records_ = 2;
     using Parent = memoc::Malloc_allocator;
 
     using Allocator = memoc::Stats_allocator<Parent, number_of_records_>;
@@ -459,7 +459,7 @@ TEST_F(Stats_allocator_test, records_allocation_stats_in_cyclic_buffer)
 
     EXPECT_NE(nullptr, s->record_address);
     EXPECT_NE(nullptr, s->request_address);
-    EXPECT_EQ(sizeof(Allocator::Record) + 2, s->amount);
+    EXPECT_EQ(MEMOC_SSIZEOF(Allocator::Record) + 2, s->amount);
 
     auto start = s->time;
 
@@ -468,7 +468,7 @@ TEST_F(Stats_allocator_test, records_allocation_stats_in_cyclic_buffer)
 
     EXPECT_NE(nullptr, s->record_address);
     EXPECT_NE(nullptr, s->request_address);
-    EXPECT_EQ(sizeof(Allocator::Record) - 2, s->amount);
+    EXPECT_EQ(MEMOC_SSIZEOF(Allocator::Record) - 2, s->amount);
 
     auto end = s->time;
 
@@ -476,7 +476,7 @@ TEST_F(Stats_allocator_test, records_allocation_stats_in_cyclic_buffer)
 
     EXPECT_GE(end.time_since_epoch().count(), start.time_since_epoch().count());
 
-    EXPECT_EQ(sizeof(Allocator::Record) * 4, allocator_.total_allocated());
+    EXPECT_EQ(MEMOC_SSIZEOF(Allocator::Record) * 4, allocator_.total_allocated());
 }
 
 TEST_F(Stats_allocator_test, is_copyable)
@@ -489,13 +489,13 @@ TEST_F(Stats_allocator_test, is_copyable)
     Allocator copy1{ allocator_ };
 
     EXPECT_EQ(allocator_.stats_list_size(), copy1.stats_list_size());
-    EXPECT_EQ(sizeof(Allocator::Record) * 2, allocator_.total_allocated());
-    EXPECT_EQ(sizeof(Allocator::Record) * 2, copy1.total_allocated());
+    EXPECT_EQ(MEMOC_SSIZEOF(Allocator::Record) * 2, allocator_.total_allocated());
+    EXPECT_EQ(MEMOC_SSIZEOF(Allocator::Record) * 2, copy1.total_allocated());
 
     const Allocator::Record* s1 = allocator_.stats_list();
     const Allocator::Record* s2 = copy1.stats_list();
 
-    for (std::size_t i = 0; i < allocator_.stats_list_size(); ++i) {
+    for (std::int64_t i = 0; i < allocator_.stats_list_size(); ++i) {
         EXPECT_EQ(s1->amount, s2->amount);
         EXPECT_NE(s1->record_address, s2->record_address);
         EXPECT_NE(s1->next, s2->next);
@@ -507,13 +507,13 @@ TEST_F(Stats_allocator_test, is_copyable)
     copy2 = allocator_;
 
     EXPECT_EQ(allocator_.stats_list_size(), copy2.stats_list_size());
-    EXPECT_EQ(sizeof(Allocator::Record) * 2, allocator_.total_allocated());
-    EXPECT_EQ(sizeof(Allocator::Record) * 2, copy2.total_allocated());
+    EXPECT_EQ(MEMOC_SSIZEOF(Allocator::Record) * 2, allocator_.total_allocated());
+    EXPECT_EQ(MEMOC_SSIZEOF(Allocator::Record) * 2, copy2.total_allocated());
 
     const Allocator::Record* s3 = allocator_.stats_list();
     const Allocator::Record* s4 = copy2.stats_list();
 
-    for (std::size_t i = 0; i < allocator_.stats_list_size(); ++i) {
+    for (std::int64_t i = 0; i < allocator_.stats_list_size(); ++i) {
         EXPECT_EQ(s3->amount, s4->amount);
         EXPECT_NE(s3->record_address, s4->record_address);
         EXPECT_NE(s3->next, s4->next);
@@ -536,7 +536,7 @@ TEST_F(Stats_allocator_test, is_moveable)
     EXPECT_EQ(0, allocator_.total_allocated());
 
     EXPECT_EQ(2, moved1.stats_list_size());
-    EXPECT_EQ(sizeof(Allocator::Record) * 2, moved1.total_allocated());
+    EXPECT_EQ(MEMOC_SSIZEOF(Allocator::Record) * 2, moved1.total_allocated());
     EXPECT_NE(nullptr, moved1.stats_list());
 
     Allocator moved2{};
@@ -547,7 +547,7 @@ TEST_F(Stats_allocator_test, is_moveable)
     EXPECT_EQ(0, moved1.total_allocated());
 
     EXPECT_EQ(2, moved2.stats_list_size());
-    EXPECT_EQ(sizeof(Allocator::Record) * 2, moved2.total_allocated());
+    EXPECT_EQ(MEMOC_SSIZEOF(Allocator::Record) * 2, moved2.total_allocated());
     EXPECT_NE(nullptr, moved2.stats_list());
 }
 
@@ -555,7 +555,7 @@ TEST_F(Stats_allocator_test, is_moveable)
 
 class Shared_allocator_test : public ::testing::Test {
 protected:
-    static constexpr std::size_t size_ = 16;
+    static constexpr memoc::Block::Size_type size_ = 16;
     using Parent = memoc::Stack_allocator<size_>;
 
     using Allocator_default = memoc::Shared_allocator<Parent>;
@@ -568,7 +568,7 @@ TEST_F(Shared_allocator_test, saves_state_between_instances)
 {
     using namespace memoc;
 
-    const std::size_t aligned_size = 2;
+    const memoc::Block::Size_type aligned_size = 2;
 
     Allocator_default a1{};
     Block b1 = a1.allocate(aligned_size);
@@ -583,7 +583,7 @@ TEST_F(Shared_allocator_test, not_saves_state_between_instances_when_id_is_diffe
 {
     using namespace memoc;
 
-    const std::size_t aligned_size = 2;
+    const memoc::Block::Size_type aligned_size = 2;
 
     Allocator_0 a1{};
     Block b1 = a1.allocate(aligned_size);
@@ -598,7 +598,7 @@ TEST_F(Shared_allocator_test, not_saves_state_between_instances_when_id_is_diffe
 
 class Fallback_allocator_test : public ::testing::Test {
 protected:
-    static constexpr std::size_t size_ = 16;
+    static constexpr memoc::Block::Size_type size_ = 16;
     using Primary = memoc::Stack_allocator<size_>;
     using Fallback = memoc::Malloc_allocator;
 

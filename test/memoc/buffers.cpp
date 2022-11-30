@@ -96,23 +96,23 @@ TEST(Stack_buffer_test, can_be_initalized_with_data)
 
     const int data[2] = {1, 2};
 
-    Stack_buffer<2 * sizeof(int)> buff1{ 2 * sizeof(int), data };
+    Stack_buffer<2 * MEMOC_SSIZEOF(int)> buff1{ 2 * MEMOC_SSIZEOF(int), data };
 
     EXPECT_TRUE(buff1.usable());
     EXPECT_FALSE(buff1.data().empty());
     EXPECT_NE(nullptr, buff1.data().p());
-    EXPECT_EQ(2 * sizeof(int), buff1.data().s());
+    EXPECT_EQ(2 * MEMOC_SSIZEOF(int), buff1.data().s());
 
     int* data1 = reinterpret_cast<int*>(buff1.data().p());
     EXPECT_EQ(data[0], data1[0]);
     EXPECT_EQ(data[1], data1[1]);
 
-    Stack_buffer<2 * sizeof(int)> copy1{buff1};
+    Stack_buffer<2 * MEMOC_SSIZEOF(int)> copy1{buff1};
 
     EXPECT_TRUE(copy1.usable());
     EXPECT_FALSE(copy1.data().empty());
     EXPECT_NE(nullptr, copy1.data().p());
-    EXPECT_EQ(2 * sizeof(int), copy1.data().s());
+    EXPECT_EQ(2 * MEMOC_SSIZEOF(int), copy1.data().s());
 
     EXPECT_NE(buff1.data().p(), copy1.data().p());
     EXPECT_EQ(buff1.data().s(), copy1.data().s());
@@ -121,7 +121,7 @@ TEST(Stack_buffer_test, can_be_initalized_with_data)
     EXPECT_EQ(data[0], copy_data1[0]);
     EXPECT_EQ(data[1], copy_data1[1]);
 
-    Stack_buffer<2 * sizeof(int)> moved1{std::move(buff1)};
+    Stack_buffer<2 * MEMOC_SSIZEOF(int)> moved1{std::move(buff1)};
 
     EXPECT_FALSE(buff1.usable());
     EXPECT_TRUE(buff1.data().empty());
@@ -129,7 +129,7 @@ TEST(Stack_buffer_test, can_be_initalized_with_data)
     EXPECT_TRUE(moved1.usable());
     EXPECT_FALSE(moved1.data().empty());
     EXPECT_NE(nullptr, moved1.data().p());
-    EXPECT_EQ(2 * sizeof(int), moved1.data().s());
+    EXPECT_EQ(2 * MEMOC_SSIZEOF(int), moved1.data().s());
 
     int* moved_data1 = reinterpret_cast<int*>(moved1.data().p());
     EXPECT_EQ(data[0], moved_data1[0]);
@@ -226,12 +226,12 @@ TEST(Allocated_buffer_test, can_be_initalized_with_data)
 
     const int data[2] = {1, 2};
 
-    Allocated_buffer<Malloc_allocator> buff1{ 2 * sizeof(int), data };
+    Allocated_buffer<Malloc_allocator> buff1{ 2 * MEMOC_SSIZEOF(int), data };
 
     EXPECT_TRUE(buff1.usable());
     EXPECT_FALSE(buff1.data().empty());
     EXPECT_NE(nullptr, buff1.data().p());
-    EXPECT_EQ(2 * sizeof(int), buff1.data().s());
+    EXPECT_EQ(2 * MEMOC_SSIZEOF(int), buff1.data().s());
 
     int* data1 = reinterpret_cast<int*>(buff1.data().p());
     EXPECT_EQ(data[0], data1[0]);
@@ -242,7 +242,7 @@ TEST(Allocated_buffer_test, can_be_initalized_with_data)
     EXPECT_TRUE(copy1.usable());
     EXPECT_FALSE(copy1.data().empty());
     EXPECT_NE(nullptr, copy1.data().p());
-    EXPECT_EQ(2 * sizeof(int), copy1.data().s());
+    EXPECT_EQ(2 * MEMOC_SSIZEOF(int), copy1.data().s());
 
     EXPECT_NE(buff1.data().p(), copy1.data().p());
     EXPECT_EQ(buff1.data().s(), copy1.data().s());
@@ -259,7 +259,7 @@ TEST(Allocated_buffer_test, can_be_initalized_with_data)
     EXPECT_TRUE(moved1.usable());
     EXPECT_FALSE(moved1.data().empty());
     EXPECT_NE(nullptr, moved1.data().p());
-    EXPECT_EQ(2 * sizeof(int), moved1.data().s());
+    EXPECT_EQ(2 * MEMOC_SSIZEOF(int), moved1.data().s());
 
     int* moved_data1 = reinterpret_cast<int*>(moved1.data().p());
     EXPECT_EQ(data[0], moved_data1[0]);
@@ -331,29 +331,29 @@ TEST(Fallback_buffer_test, can_be_initalized_with_data)
 
     const int data[2] = { 1, 2 };
 
-    Fallback_buffer<Stack_buffer<2 * sizeof(int)>, Allocated_buffer<Malloc_allocator, true>> buff1{ 2 * sizeof(int), data };
+    Fallback_buffer<Stack_buffer<2 * MEMOC_SSIZEOF(int)>, Allocated_buffer<Malloc_allocator, true>> buff1{ 2 * MEMOC_SSIZEOF(int), data };
 
     EXPECT_TRUE(buff1.usable());
     EXPECT_FALSE(buff1.data().empty());
     EXPECT_NE(nullptr, buff1.data().p());
-    EXPECT_EQ(2 * sizeof(int), buff1.data().s());
+    EXPECT_EQ(2 * MEMOC_SSIZEOF(int), buff1.data().s());
 
     int* data1 = reinterpret_cast<int*>(buff1.data().p());
     EXPECT_EQ(data[0], data1[0]);
     EXPECT_EQ(data[1], data1[1]);
 
-    Fallback_buffer<Stack_buffer<2 * sizeof(int)>, Allocated_buffer<Malloc_allocator, true>> copy1{ buff1 };
+    Fallback_buffer<Stack_buffer<2 * MEMOC_SSIZEOF(int)>, Allocated_buffer<Malloc_allocator, true>> copy1{ buff1 };
 
     EXPECT_TRUE(copy1.usable());
     EXPECT_FALSE(copy1.data().empty());
     EXPECT_NE(nullptr, copy1.data().p());
-    EXPECT_EQ(2 * sizeof(int), copy1.data().s());
+    EXPECT_EQ(2 * MEMOC_SSIZEOF(int), copy1.data().s());
 
     int* copy_data1 = reinterpret_cast<int*>(copy1.data().p());
     EXPECT_EQ(data[0], copy_data1[0]);
     EXPECT_EQ(data[1], copy_data1[1]);
 
-    Fallback_buffer<Stack_buffer<2 * sizeof(int)>, Allocated_buffer<Malloc_allocator, true>> moved1{ std::move(buff1) };
+    Fallback_buffer<Stack_buffer<2 * MEMOC_SSIZEOF(int)>, Allocated_buffer<Malloc_allocator, true>> moved1{ std::move(buff1) };
 
     EXPECT_FALSE(buff1.usable());
     EXPECT_TRUE(buff1.data().empty());
@@ -361,18 +361,18 @@ TEST(Fallback_buffer_test, can_be_initalized_with_data)
     EXPECT_TRUE(moved1.usable());
     EXPECT_FALSE(moved1.data().empty());
     EXPECT_NE(nullptr, moved1.data().p());
-    EXPECT_EQ(2 * sizeof(int), moved1.data().s());
+    EXPECT_EQ(2 * MEMOC_SSIZEOF(int), moved1.data().s());
 
     int* moved_data1 = reinterpret_cast<int*>(moved1.data().p());
     EXPECT_EQ(data[0], moved_data1[0]);
     EXPECT_EQ(data[1], moved_data1[1]);
 
-    Fallback_buffer<Stack_buffer<2>, Allocated_buffer<Malloc_allocator, true>> buff2{ 2 * sizeof(int), data };
+    Fallback_buffer<Stack_buffer<2>, Allocated_buffer<Malloc_allocator, true>> buff2{ 2 * MEMOC_SSIZEOF(int), data };
 
     EXPECT_TRUE(buff2.usable());
     EXPECT_FALSE(buff2.data().empty());
     EXPECT_NE(nullptr, buff2.data().p());
-    EXPECT_EQ(2 * sizeof(int), buff2.data().s());
+    EXPECT_EQ(2 * MEMOC_SSIZEOF(int), buff2.data().s());
 
     int* data2 = reinterpret_cast<int*>(buff2.data().p());
     EXPECT_EQ(data[0], data2[0]);
@@ -383,7 +383,7 @@ TEST(Fallback_buffer_test, can_be_initalized_with_data)
     EXPECT_TRUE(copy2.usable());
     EXPECT_FALSE(copy2.data().empty());
     EXPECT_NE(nullptr, copy2.data().p());
-    EXPECT_EQ(2 * sizeof(int), copy2.data().s());
+    EXPECT_EQ(2 * MEMOC_SSIZEOF(int), copy2.data().s());
 
     int* copy_data2 = reinterpret_cast<int*>(copy2.data().p());
     EXPECT_EQ(data[0], copy_data2[0]);
@@ -397,7 +397,7 @@ TEST(Fallback_buffer_test, can_be_initalized_with_data)
     EXPECT_TRUE(moved2.usable());
     EXPECT_FALSE(moved2.data().empty());
     EXPECT_NE(nullptr, moved2.data().p());
-    EXPECT_EQ(2 * sizeof(int), moved2.data().s());
+    EXPECT_EQ(2 * MEMOC_SSIZEOF(int), moved2.data().s());
 
     int* moved_data2 = reinterpret_cast<int*>(moved2.data().p());
     EXPECT_EQ(data[0], moved_data2[0]);
