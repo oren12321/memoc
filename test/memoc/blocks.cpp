@@ -4,6 +4,14 @@
 
 #include <memoc/blocks.h>
 
+TEST(Ssize_of_test, signed_version_of_sizeof)
+{
+    struct S {
+        char buff[128];
+    };
+    EXPECT_EQ(sizeof(S), MEMOC_SSIZEOF(S));
+}
+
 TEST(Block_test, is_empty_when_deafult_initalized_or_when_initialized_partially_empty)
 {
     using namespace memoc;

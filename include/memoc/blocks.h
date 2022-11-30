@@ -1,9 +1,24 @@
 #ifndef MEMOC_BLOCKS_H
 #define MEMOC_BLOCKS_H
 
+#include <cstdint>
+#include <limits>
 #include <cstddef>
 #include <type_traits>
 #include <utility>
+
+namespace memoc {
+    namespace details {
+        template <std::uint64_t U>
+        constexpr std::int64_t safe_64_unsigned_to_signed_cast()
+        {
+            static_assert(U <= std::numeric_limits<std::int64_t>::max(), "unsgined value is too large for casting to its unsgined version");
+            return static_cast<std::int64_t>(U);
+        }
+    }
+}
+
+#define MEMOC_SSIZEOF(expression) memoc::details::safe_64_unsigned_to_signed_cast<sizeof(expression)>()
 
 namespace memoc {
     namespace details {
