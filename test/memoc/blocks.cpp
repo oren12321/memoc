@@ -32,17 +32,19 @@ TEST(Block_test, can_be_of_specific_type)
 {
     using namespace memoc;
 
-    Block<int> b{};
+    const int data[]{ 1 };
+    Block<int> b{ 1, data };
 
-    EXPECT_EQ(nullptr, b.p());
-    EXPECT_EQ(0, b.s());
-    EXPECT_TRUE(b.empty());
+    EXPECT_NE(nullptr, b.p());
+    EXPECT_EQ(1, b.s());
+    EXPECT_FALSE(b.empty());
+    EXPECT_EQ(1, b[0]);
 
     bool valid_buffer_type = std::is_same<int, typename std::remove_pointer<decltype(b.p())>::type>();
     EXPECT_TRUE(valid_buffer_type);
 }
 
-TEST(Block_test, can_be_compared_with_another_block_of_the_same_type)
+TEST(Block_test, can_be_compared_with_another_block)
 {
     using namespace memoc;
 
@@ -59,4 +61,8 @@ TEST(Block_test, can_be_compared_with_another_block_of_the_same_type)
     // partially empty blocks considered
     EXPECT_EQ((Block<int>{ 2, nullptr }), (Block<double>{ 4, nullptr }));
     EXPECT_EQ((Block{ 0, data1 }), (Block{ 0, data2 }));
+
+    // comparison of void type blocks
+    EXPECT_EQ((Block<void>{ MEMOC_SSIZEOF(int) * 4, data1 }), (Block{ 4, data1 }));
+    EXPECT_NE((Block{ 4, data2 }), (Block<void>{ MEMOC_SSIZEOF(int) * 4, data1 }));
 }
