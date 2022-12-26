@@ -27,7 +27,7 @@ namespace memoc {
         {
             {T(size, data)} noexcept;
             {t.usable()} noexcept -> std::same_as<bool>;
-            {t.data()} noexcept -> std::same_as<Typed_block<U>>;
+            {t.data()} noexcept -> std::same_as<Block<U>>;
             {t.init(data)} noexcept -> std::same_as<void>;
         };
 
@@ -46,10 +46,6 @@ namespace memoc {
 
             Stack_buffer(const Stack_buffer& other) noexcept
             {
-                //if (!other.usable()) {
-                //    return;
-                //}
-
                 size_ = other.size_;
                 data_ = { other.data_.s(), memory_ };
                 for (std::int64_t i = 0; i < data_.s(); ++i) {
@@ -61,10 +57,6 @@ namespace memoc {
                 if (this == &other) {
                     return *this;
                 }
-
-                //if (!other.usable()) {
-                //    return *this;
-                //}
 
                 size_ = other.size_;
                 data_ = { other.data_.s(), memory_ };
@@ -89,7 +81,7 @@ namespace memoc {
             }
             virtual ~Stack_buffer() = default;
 
-            [[nodiscard]] Block data() const noexcept
+            [[nodiscard]] Block<void> data() const noexcept
             {
                 return data_;
             }
@@ -116,7 +108,7 @@ namespace memoc {
         private:
             std::int64_t size_{ 0 };
             std::uint8_t memory_[Stack_size] = { 0 };
-            Block data_{};
+            Block<void> data_{};
         };
 
         template <Allocator Internal_allocator, bool Lazy_init = false>
@@ -133,10 +125,6 @@ namespace memoc {
 
             Allocated_buffer(const Allocated_buffer& other) noexcept
             {
-                //if (!other.usable()) {
-                //    return;
-                //}
-
                 size_ = other.size_;
                 allocator_ = other.allocator_;
                 if (!Lazy_init || !other.data_.empty()) {
@@ -155,10 +143,6 @@ namespace memoc {
                 if (this == &other) {
                     return *this;
                 }
-
-                //if (!other.usable()) {
-                //    return *this;
-                //}
 
                 size_ = other.size_;
                 allocator_ = other.allocator_;
@@ -215,7 +199,7 @@ namespace memoc {
                 }
             }
 
-            [[nodiscard]] Block data() const noexcept
+            [[nodiscard]] Block<void> data() const noexcept
             {
                 return data_;
             }
@@ -241,7 +225,7 @@ namespace memoc {
         private:
             std::int64_t size_{ 0 };
             Internal_allocator allocator_{};
-            Block data_{};
+            Block<void> data_{};
         };
 
         template <Buffer Primary, Buffer Fallback>
@@ -281,7 +265,7 @@ namespace memoc {
             }
             virtual ~Fallback_buffer() = default;
 
-            [[nodiscard]] Block data() const noexcept
+            [[nodiscard]] Block<void> data() const noexcept
             {
                 if (Primary::usable()) {
                     return Primary::data();
@@ -338,9 +322,9 @@ namespace memoc {
             }
             virtual ~Typed_buffer() = default;
 
-            [[nodiscard]] Typed_block<T> data() const noexcept
+            [[nodiscard]] Block<T> data() const noexcept
             {
-                return Typed_block<T>{
+                return Block<T>{
                     (Internal_buffer::data().s() * MEMOC_SSIZEOF(Replace_void<Remove_internal_pointer<decltype(Internal_buffer::data().p())>, std::uint8_t>)) / MEMOC_SSIZEOF(Replace_void<T, std::uint8_t>),
                     reinterpret_cast<T*>(Internal_buffer::data().p())
                 };

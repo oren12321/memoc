@@ -30,20 +30,20 @@ namespace memoc {
     namespace details {
         template <typename T>
             requires (!std::is_reference_v<T>)
-        class Typed_block {
+        class Block {
         public:
             using Size_type = std::int64_t;
             using Pointer = T*;
             using Const_pointer = const T*;
 
-            Typed_block(const Typed_block&) noexcept = default;
-            Typed_block& operator=(const Typed_block&) noexcept = default;
-            Typed_block(Typed_block&&) noexcept = default;
-            Typed_block& operator=(Typed_block&&) noexcept = default;
-            virtual ~Typed_block() noexcept = default;
+            Block(const Block&) noexcept = default;
+            Block& operator=(const Block&) noexcept = default;
+            Block(Block&&) noexcept = default;
+            Block& operator=(Block&&) noexcept = default;
+            virtual ~Block() noexcept = default;
 
             // Do not allow parially empty block
-            Typed_block(Size_type s = 0, Const_pointer p = nullptr) noexcept
+            Block(Size_type s = 0, Const_pointer p = nullptr) noexcept
                 : s_(p ? (s > 0 ? s : 0) : 0), p_(s > 0 ? const_cast<Pointer>(p) : nullptr)
             {
             }
@@ -80,7 +80,7 @@ namespace memoc {
         };
 
         template <typename T1, typename T2>
-        inline bool operator==(const Typed_block<T1>& lhs, const Typed_block<T2> rhs) noexcept
+        inline bool operator==(const Block<T1>& lhs, const Block<T2> rhs) noexcept
         {
             if (lhs.empty() && rhs.empty()) {
                 return true;
@@ -102,8 +102,7 @@ namespace memoc {
         }
     }
 
-    using details::Typed_block;
-    using Block = Typed_block<void>;
+    using details::Block;
 }
 
 #endif // MEMOC_BLOCKS_H

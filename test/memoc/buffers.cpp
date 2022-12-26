@@ -416,7 +416,7 @@ TEST(TYped_buffer_test, can_be_initialized_with_specific_data_type)
 
     EXPECT_TRUE(buff.usable());
 
-    Typed_block b = buff.data();
+    Block b = buff.data();
 
     EXPECT_FALSE(b.empty());
     EXPECT_NE(nullptr, b.p());

@@ -26,7 +26,7 @@ namespace memoc {
             std::is_move_assignable_v<T>;
             std::is_destructible_v<T>;
         }&&
-            requires (T t, Block::Size_type s, Block b)
+            requires (T t, Block<void>::Size_type s, Block<void> b)
         {
             {t.allocate(s)} noexcept -> std::same_as<decltype(b)>;
             {t.deallocate(&b)} noexcept -> std::same_as<void>;
@@ -64,16 +64,16 @@ namespace memoc {
             }
             virtual ~Fallback_allocator() = default;
 
-            [[nodiscard]] Block allocate(Block::Size_type s) noexcept
+            [[nodiscard]] Block<void> allocate(Block<void>::Size_type s) noexcept
             {
-                Block b = Primary::allocate(s);
+                Block<void> b = Primary::allocate(s);
                 if (b.empty()) {
                     b = Fallback::allocate(s);
                 }
                 return b;
             }
 
-            void deallocate(Block* b) noexcept
+            void deallocate(Block<void>* b) noexcept
             {
                 if (Primary::owns(*b)) {
                     return Primary::deallocate(b);
@@ -81,7 +81,7 @@ namespace memoc {
                 Fallback::deallocate(b);
             }
 
-            [[nodiscard]] bool owns(Block b) const noexcept
+            [[nodiscard]] bool owns(Block<void> b) const noexcept
             {
                 return Primary::owns(b) || Fallback::owns(b);
             }
@@ -89,7 +89,7 @@ namespace memoc {
 
         class Malloc_allocator {
         public:
-            [[nodiscard]] Block allocate(Block::Size_type s) noexcept
+            [[nodiscard]] Block<void> allocate(Block<void>::Size_type s) noexcept
             {
                 if (s == 0) {
                     return { s, nullptr };
@@ -97,19 +97,19 @@ namespace memoc {
                 return { s, std::malloc(s) };
             }
 
-            void deallocate(Block* b) noexcept
+            void deallocate(Block<void>* b) noexcept
             {
                 std::free(b->p());
                 b->clear();
             }
 
-            [[nodiscard]] bool owns(Block b) const noexcept
+            [[nodiscard]] bool owns(Block<void> b) const noexcept
             {
                 return b.p();
             }
         };
 
-        template <Block::Size_type Size>
+        template <Block<void>::Size_type Size>
         class Stack_allocator {
             static_assert(Size > 1 && Size % 2 == 0);
         public:
@@ -142,18 +142,18 @@ namespace memoc {
             }
             virtual ~Stack_allocator() = default;
 
-            [[nodiscard]] Block allocate(Block::Size_type s) noexcept
+            [[nodiscard]] Block<void> allocate(Block<void>::Size_type s) noexcept
             {
                 auto s1 = align(s);
                 if (p_ + s1 > d_ + Size || !p_ || s == 0) {
                     return { 0, nullptr };
                 }
-                Block b = { s, p_ };
+                Block<void> b = { s, p_ };
                 p_ += s1;
                 return b;
             }
 
-            void deallocate(Block* b) noexcept
+            void deallocate(Block<void>* b) noexcept
             {
                 if (b->p() == p_ - align(b->s())) {
                     p_ = reinterpret_cast<std::uint8_t*>(b->p());
@@ -161,13 +161,13 @@ namespace memoc {
                 b->clear();
             }
 
-            [[nodiscard]] bool owns(Block b) const noexcept
+            [[nodiscard]] bool owns(Block<void> b) const noexcept
             {
                 return b.p() >= d_ && b.p() < d_ + Size;
             }
 
         private:
-            Block::Size_type align(Block::Size_type s)
+            Block<void>::Size_type align(Block<void>::Size_type s)
             {
                 return s % 2 == 0 ? s : s + 1;
             }
@@ -178,7 +178,7 @@ namespace memoc {
 
         template <
             Allocator Internal_allocator,
-            Block::Size_type Min_size, Block::Size_type Max_size, std::int64_t Max_list_size>
+            Block<void>::Size_type Min_size, Block<void>::Size_type Max_size, std::int64_t Max_list_size>
             class Free_list_allocator
             : private Internal_allocator {
             static_assert(Min_size > 1 && Min_size % 2 == 0);
@@ -224,27 +224,27 @@ namespace memoc {
                     for (std::int64_t i = 0; i < list_size_; ++i) {
                         Node* n = root_;
                         root_ = root_->next;
-                        Block b{ Max_size, n };
+                        Block<void> b{ Max_size, n };
                         Internal_allocator::deallocate(&b);
                     }
                 }
 
-                [[nodiscard]] Block allocate(Block::Size_type s) noexcept
+                [[nodiscard]] Block<void> allocate(Block<void>::Size_type s) noexcept
                 {
                     if (s >= Min_size && s <= Max_size && list_size_ > 0) {
-                        Block b = { s, root_ };
+                        Block<void> b = { s, root_ };
                         root_ = root_->next;
                         --list_size_;
                         return b;
                     }
-                    Block b = { s, Internal_allocator::allocate((s < Min_size || s > Max_size) ? s : Max_size).p() };
+                    Block<void> b = { s, Internal_allocator::allocate((s < Min_size || s > Max_size) ? s : Max_size).p() };
                     return b;
                 }
 
-                void deallocate(Block* b) noexcept
+                void deallocate(Block<void>* b) noexcept
                 {
                     if (b->s() < Min_size || b->s() > Max_size || list_size_ > Max_list_size) {
-                        Block nb{ Max_size, b->p() };
+                        Block<void> nb{ Max_size, b->p() };
                         b->clear();
                         return Internal_allocator::deallocate(&nb);
                     }
@@ -255,7 +255,7 @@ namespace memoc {
                     b->clear();
                 }
 
-                [[nodiscard]] bool owns(Block b) const noexcept
+                [[nodiscard]] bool owns(Block<void> b) const noexcept
                 {
                     return (b.s() >= Min_size && b.s() <= Max_size) || Internal_allocator::owns(b);
                 }
@@ -304,7 +304,7 @@ namespace memoc {
 
             [[nodiscard]] T* allocate(std::size_t n)
             {
-                Block b = Internal_allocator::allocate(n * MEMOC_SSIZEOF(T));
+                Block<void> b = Internal_allocator::allocate(n * MEMOC_SSIZEOF(T));
                 if (b.empty()) {
                     throw std::bad_alloc{};
                 }
@@ -313,7 +313,7 @@ namespace memoc {
 
             void deallocate(T* p, std::size_t n) noexcept
             {
-                Block b = { safe_64_unsigned_to_signed_cast(n) * MEMOC_SSIZEOF(T), reinterpret_cast<void*>(p) };
+                Block<void> b = { safe_64_unsigned_to_signed_cast(n) * MEMOC_SSIZEOF(T), reinterpret_cast<void*>(p) };
                 Internal_allocator::deallocate(&b);
             }
         };
@@ -325,7 +325,7 @@ namespace memoc {
             struct Record {
                 void* record_address{ nullptr };
                 void* request_address{ nullptr };
-                Block::Size_type amount{ 0 };
+                Block<void>::Size_type amount{ 0 };
                 std::chrono::time_point<std::chrono::system_clock> time;
                 Record* next{ nullptr };
             };
@@ -374,31 +374,31 @@ namespace memoc {
                 Record* c = root_;
                 while (c) {
                     Record* n = c->next;
-                    Block b{ MEMOC_SSIZEOF(Record), c->record_address };
+                    Block<void> b{ MEMOC_SSIZEOF(Record), c->record_address };
                     Internal_allocator::deallocate(&b);
                     c = n;
                 }
             }
 
-            [[nodiscard]] Block allocate(Block::Size_type s) noexcept
+            [[nodiscard]] Block<void> allocate(Block<void>::Size_type s) noexcept
             {
-                Block b = Internal_allocator::allocate(s);
+                Block<void> b = Internal_allocator::allocate(s);
                 if (!b.empty()) {
                     add_record(b.p(), b.s());
                 }
                 return b;
             }
 
-            void deallocate(Block* b) noexcept
+            void deallocate(Block<void>* b) noexcept
             {
-                Block bc{ *b };
+                Block<void> bc{ *b };
                 Internal_allocator::deallocate(b);
                 if (b->empty()) {
                     add_record(bc.p(), -bc.s());
                 }
             }
 
-            [[nodiscard]] bool owns(Block b) const noexcept
+            [[nodiscard]] bool owns(Block<void> b) const noexcept
             {
                 return Internal_allocator::owns(b);
             }
@@ -411,12 +411,12 @@ namespace memoc {
                 return number_of_records_;
             }
 
-            Block::Size_type total_allocated() const noexcept {
+            Block<void>::Size_type total_allocated() const noexcept {
                 return total_allocated_;
             }
 
         private:
-            void add_record(void* p, Block::Size_type a, std::chrono::time_point<std::chrono::system_clock> time = std::chrono::system_clock::now()) {
+            void add_record(void* p, Block<void>::Size_type a, std::chrono::time_point<std::chrono::system_clock> time = std::chrono::system_clock::now()) {
                 if (number_of_records_ >= Number_of_records) {
                     tail_->next = root_;
                     root_ = root_->next;
@@ -431,7 +431,7 @@ namespace memoc {
                     return;
                 }
 
-                Block b1 = Internal_allocator::allocate(MEMOC_SSIZEOF(Record));
+                Block<void> b1 = Internal_allocator::allocate(MEMOC_SSIZEOF(Record));
                 if (b1.empty()) {
                     return;
                 }
@@ -456,7 +456,7 @@ namespace memoc {
             }
 
             std::int64_t number_of_records_{ 0 };
-            Block::Size_type total_allocated_{ 0 };
+            Block<void>::Size_type total_allocated_{ 0 };
             Record* root_{ nullptr };
             Record* tail_{ nullptr };
         };
@@ -464,17 +464,17 @@ namespace memoc {
         template <Allocator Internal_allocator, std::int64_t id = -1>
         class Shared_allocator {
         public:
-            [[nodiscard]] Block allocate(Block::Size_type s) noexcept
+            [[nodiscard]] Block<void> allocate(Block<void>::Size_type s) noexcept
             {
                 return allocator_.allocate(s);
             }
 
-            void deallocate(Block* b) noexcept
+            void deallocate(Block<void>* b) noexcept
             {
                 allocator_.deallocate(b);
             }
 
-            [[nodiscard]] bool owns(Block b) const noexcept
+            [[nodiscard]] bool owns(Block<void> b) const noexcept
             {
                 return allocator_.owns(b);
             }
