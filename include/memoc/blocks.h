@@ -112,6 +112,26 @@ namespace memoc {
             return still_equal;
         }
 
+        template <typename T1, typename T2>
+        inline std::int64_t copy(const Block<T1>& src, Block<T2> dst, std::int64_t count) noexcept
+        {
+            std::int64_t min_size{ src.s() > dst.s() ? dst.s() : src.s() };
+            std::int64_t num_copied{ count > min_size ? min_size : count };
+            if (num_copied == 0) {
+                return 0;
+            }
+
+            for (std::int64_t i = 0; i < num_copied; ++i) {
+                dst.p()[i] = src.p()[i];
+            }
+            return num_copied;
+        }
+
+        template <typename T1, typename T2>
+        inline std::int64_t copy(const Block<T1>& src, Block<T2> dst) noexcept
+        {
+            return copy(src, dst, src.s());
+        }
 
         template <>
         class Block<void> {
@@ -197,6 +217,52 @@ namespace memoc {
         inline bool operator==(const Block<T>& lhs, const Block<void>& rhs) noexcept
         {
             return operator==(Block<void>{MEMOC_SSIZEOF(T)* lhs.s(), lhs.p()}, rhs);
+        }
+
+        inline std::int64_t copy(const Block<void>& src, Block<void> dst, std::int64_t bytes) noexcept
+        {
+            std::int64_t min_size{ src.s() > dst.s() ? dst.s() : src.s() };
+            std::int64_t num_copied{ bytes > min_size ? min_size : bytes };
+            if (num_copied == 0) {
+                return 0;
+            }
+
+            const std::uint8_t* src_ptr{ reinterpret_cast<const std::uint8_t*>(src.p()) };
+            std::uint8_t* dst_ptr{ reinterpret_cast<std::uint8_t*>(dst.p()) };
+
+            for (std::int64_t i = 0; i < num_copied; ++i) {
+                dst_ptr[i] = src_ptr[i];
+            }
+            return num_copied;
+        }
+
+        inline std::int64_t copy(const Block<void>& src, Block<void> dst) noexcept
+        {
+            return copy(src, dst, src.s());
+        }
+
+        template <typename T>
+        inline std::int64_t copy(const Block<void>& src, Block<T> dst, std::int64_t bytes) noexcept
+        {
+            return copy(src, Block<void>{MEMOC_SSIZEOF(T)* dst.s(), dst.p()}, bytes);
+        }
+
+        template <typename T>
+        inline std::int64_t copy(const Block<void>& src, Block<T> dst) noexcept
+        {
+            return copy(src, Block<void>{MEMOC_SSIZEOF(T)* dst.s(), dst.p()}, src.s());
+        }
+
+        template <typename T>
+        inline std::int64_t copy(const Block<T>& src, Block<void> dst, std::int64_t bytes) noexcept
+        {
+            return copy(Block<void>{MEMOC_SSIZEOF(T)* src.s(), src.p()}, dst, bytes);
+        }
+
+        template <typename T>
+        inline std::int64_t copy(const Block<T>& src, Block<void> dst) noexcept
+        {
+            return copy(Block<void>{MEMOC_SSIZEOF(T)* src.s(), src.p()}, dst, MEMOC_SSIZEOF(T)* src.s());
         }
     }
 

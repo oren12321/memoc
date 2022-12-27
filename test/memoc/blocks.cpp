@@ -66,3 +66,27 @@ TEST(Block_test, can_be_compared_with_another_block)
     EXPECT_EQ((Block<void>{ MEMOC_SSIZEOF(int) * 4, data1 }), (Block{ 4, data1 }));
     EXPECT_NE((Block{ 4, data2 }), (Block<void>{ MEMOC_SSIZEOF(int) * 4, data1 }));
 }
+
+TEST(Block_test, can_be_copied_to_another_block)
+{
+    using namespace memoc;
+
+    const int data1[]{ 1, 2, 3, 4, 5 };
+    Block<int> sb1{ 5, data1 };
+
+    const double data2[]{ 1.0, 2.0, 3.0, 4.0, 5.0, 6.0 };
+    Block<double> sb2{ 6, data2 };
+
+    const int data3[]{ 0, 0, 0, 0, 0 };
+    Block<int> db1{ 5, data3 };
+
+    EXPECT_EQ(4, copy(sb1, db1, 4));
+    EXPECT_EQ((Block<int>{4, db1.p()}), (Block<int>{4, sb1.p()}));
+
+    EXPECT_EQ(5, copy(sb2, db1));
+    EXPECT_EQ(db1, sb1);
+
+    EXPECT_EQ(20, copy(Block<void>{MEMOC_SSIZEOF(double)* sb2.s(), sb2.p()}, db1));
+    EXPECT_NE(db1, sb1);
+    EXPECT_NE(db1, (Block{ 5, sb2.p() }));
+}
