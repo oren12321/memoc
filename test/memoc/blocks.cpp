@@ -90,3 +90,16 @@ TEST(Block_test, can_be_copied_to_another_block)
     EXPECT_NE(db1, sb1);
     EXPECT_NE(db1, (Block{ 5, sb2.p() }));
 }
+
+TEST(Block_test, can_be_set_by_value)
+{
+    using namespace memoc;
+
+    const int data[]{ 0, 0, 0, 0, 0 };
+    Block<int> b{ 5, data };
+
+    EXPECT_EQ(5, set(b, 1));
+    for (std::int64_t i = 0; i < 5; ++i) {
+        EXPECT_EQ(1, b.p()[i]);
+    }
+}

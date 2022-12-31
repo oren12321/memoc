@@ -133,6 +133,26 @@ namespace memoc {
             return copy(src, dst, src.s());
         }
 
+        template <typename T>
+        inline std::int64_t set(Block<T> b, const T& value, std::int64_t count) noexcept
+        {
+            std::int64_t num_set{ count > b.s() ? b.s() : count };
+            if (num_set == 0) {
+                return 0;
+            }
+
+            for (std::int64_t i = 0; i < num_set; ++i) {
+                b.p()[i] = value;
+            }
+            return num_set;
+        }
+
+        template <typename T>
+        inline std::int64_t set(Block<T> b, const T& value) noexcept
+        {
+            return set(b, value, b.s());
+        }
+
         template <>
         class Block<void> {
         public:
@@ -267,6 +287,9 @@ namespace memoc {
     }
 
     using details::Block;
+
+    using details::copy;
+    using details::set;
 }
 
 #endif // MEMOC_BLOCKS_H
