@@ -284,6 +284,28 @@ namespace memoc {
         {
             return copy(Block<void>{MEMOC_SSIZEOF(T)* src.s(), src.p()}, dst, MEMOC_SSIZEOF(T)* src.s());
         }
+
+        template <typename T>
+        inline std::int64_t set(Block<void> b, const T& value, std::int64_t count) noexcept
+        {
+            std::int64_t block_size_by_type{ b.s() / MEMOC_SSIZEOF(T) };
+            std::int64_t num_set{ count > block_size_by_type ? block_size_by_type : count };
+            if (num_set == 0) {
+                return 0;
+            }
+
+            T* ptr{ reinterpret_cast<T*>(b.p()) };
+            for (std::int64_t i = 0; i < num_set; ++i) {
+                ptr[i] = value;
+            }
+            return num_set;
+        }
+
+        template <typename T>
+        inline std::int64_t set(Block<void> b, const T& value) noexcept
+        {
+            return set(b, value, b.s() / MEMOC_SSIZEOF(T));
+        }
     }
 
     using details::Block;

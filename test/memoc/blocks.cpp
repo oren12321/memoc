@@ -102,4 +102,16 @@ TEST(Block_test, can_be_set_by_value)
     for (std::int64_t i = 0; i < 5; ++i) {
         EXPECT_EQ(1, b.p()[i]);
     }
+
+    EXPECT_EQ(5, set(b, 0));
+    for (std::int64_t i = 0; i < 5; ++i) {
+        EXPECT_EQ(0, b.p()[i]);
+    }
+
+    Block<void> bv{ b.s() * MEMOC_SSIZEOF(int), b.p() };
+
+    EXPECT_EQ(20, set(bv, std::uint8_t{ 1 }));
+    for (std::int64_t i = 0; i < 5; ++i) {
+        EXPECT_EQ(16843009, b.p()[i]);
+    }
 }
