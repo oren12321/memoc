@@ -9,6 +9,7 @@
 
 #include <memoc/blocks.h>
 #include <memoc/allocators.h>
+#include <memoc/pointers.h>
 
 namespace memoc {
     namespace details { 
@@ -298,7 +299,21 @@ namespace memoc {
         public:
             Typed_buffer() = default;
             Typed_buffer(std::int64_t size, const T* data = nullptr) noexcept
-                : Internal_buffer((size * MEMOC_SSIZEOF(Replace_void<T, std::uint8_t>)) / MEMOC_SSIZEOF(Replace_void<Remove_internal_pointer<decltype(Internal_buffer::data().p())>, std::uint8_t>), data) {}
+                : Internal_buffer((size* MEMOC_SSIZEOF(Replace_void<T, std::uint8_t>)) / MEMOC_SSIZEOF(Replace_void<Remove_internal_pointer<decltype(Internal_buffer::data().p())>, std::uint8_t>), data)
+            {
+                // For non-fundamental type an object construction is required.
+                if (!std::is_fundamental_v<T>) {
+                    Block<T> b{ this->data() };
+                    for (std::int64_t i = 0; i < b.s(); ++i) {
+                        memoc::details::construct_at<T>(reinterpret_cast<T*>(&(b[i])));
+                    }
+                    if (data) {
+                        for (std::int64_t i = 0; i < b.s(); ++i) {
+                            b[i] = data[i];
+                        }
+                    }
+                }
+            }
 
             Typed_buffer(const Typed_buffer& other) noexcept
                 : Internal_buffer(other) {}

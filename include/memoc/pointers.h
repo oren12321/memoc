@@ -151,7 +151,7 @@ namespace memoc {
 			{
 				// Check if there's an object in use
 				if (ptr_) {
-					destruct_at<T>(ptr_);
+					memoc::details::destruct_at<T>(ptr_);
 					Block<void> ptr_b = { MEMOC_SSIZEOF(T), const_cast<std::remove_const_t<T>*>(ptr_) };
 					allocator_.deallocate(&ptr_b);
 					ptr_ = nullptr;
@@ -192,7 +192,7 @@ namespace memoc {
 		{
 			Internal_allocator allocator_{};
 			Block<void> b = allocator_.allocate(MEMOC_SSIZEOF(T));
-			T* ptr = construct_at<T>(reinterpret_cast<T*>(b.p()), std::forward<Args>(args)...);
+			T* ptr = memoc::details::construct_at<T>(reinterpret_cast<T*>(b.p()), std::forward<Args>(args)...);
 			return Unique_ptr<T, Internal_allocator>(ptr);
 		}
 
@@ -216,7 +216,7 @@ namespace memoc {
 			{
 				MEMOC_THROW_IF_FALSE((ptr && cb_) || (!ptr && !cb_), std::runtime_error, "internal memory allocation failed");
 				if (cb_) {
-					construct_at<Control_block>(cb_);
+					memoc::details::construct_at<Control_block>(cb_);
 					cb_->use_count = ptr_ ? 1 : 0;
 					cb_->weak_count = 0;
 				}
@@ -385,7 +385,7 @@ namespace memoc {
 				if (ptr) {
 					cb_ = reinterpret_cast<Control_block*>(allocator_.allocate(MEMOC_SSIZEOF(Control_block)).p());
 					MEMOC_THROW_IF_FALSE(cb_, std::runtime_error, "internal memory allocation failed");
-					construct_at<Control_block>(cb_);
+					memoc::details::construct_at<Control_block>(cb_);
 					cb_->use_count = 1;
 					cb_->weak_count = 0;
 				}
@@ -431,13 +431,13 @@ namespace memoc {
 					--cb_->use_count;
 				}
 				if (cb_->use_count == 0 && ptr_) {
-					destruct_at<T>(ptr_);
+					memoc::details::destruct_at<T>(ptr_);
 					Block<void> ptr_b = { MEMOC_SSIZEOF(T), const_cast<std::remove_const_t<T>*>(ptr_) };
 					allocator_.deallocate(&ptr_b);
 					ptr_ = nullptr;
 				}
 				if (cb_->use_count == 0 && cb_->weak_count == 0) {
-					destruct_at<Control_block>(cb_);
+					memoc::details::destruct_at<Control_block>(cb_);
 					Block<void> cb_b = { MEMOC_SSIZEOF(Control_block), cb_ };
 					allocator_.deallocate(&cb_b);
 					cb_ = nullptr;
@@ -479,7 +479,7 @@ namespace memoc {
 		{
 			Internal_allocator allocator_{};
 			Block<void> b = allocator_.allocate(MEMOC_SSIZEOF(T));
-			T* ptr = construct_at<T>(reinterpret_cast<T*>(b.p()), std::forward<Args>(args)...);
+			T* ptr = memoc::details::construct_at<T>(reinterpret_cast<T*>(b.p()), std::forward<Args>(args)...);
 			return Shared_ptr<T, Internal_allocator>(ptr);
 		}
 
@@ -748,7 +748,7 @@ namespace memoc {
 					--cb_->weak_count;
 				}
 				if (cb_->use_count == 0 && cb_->weak_count == 0) {
-					destruct_at<Control_block>(cb_);
+					memoc::details::destruct_at<Control_block>(cb_);
 					Block<void> cb_b = { MEMOC_SSIZEOF(Control_block), cb_ };
 					allocator_.deallocate(&cb_b);
 					cb_ = nullptr;

@@ -406,7 +406,7 @@ TEST(Fallback_buffer_test, can_be_initalized_with_data)
 
 // Typed_buffer tests
 
-TEST(TYped_buffer_test, can_be_initialized_with_specific_data_type)
+TEST(TYped_buffer_test, can_be_initialized_with_fundamental_data_type)
 {
     using namespace memoc;
 
@@ -426,3 +426,29 @@ TEST(TYped_buffer_test, can_be_initialized_with_specific_data_type)
     EXPECT_EQ(data[1], b.p()[1]);
 }
 
+TEST(TYped_buffer_test, can_be_initialized_with_custom_data_type)
+{
+    using namespace memoc;
+
+    struct S {
+        int a = 1;
+        float b = 2.2;
+    };
+
+    S data[2];
+    data[0] = S{};
+    data[1] = S{ 2, 4.4 };
+
+    Typed_buffer<S, Allocated_buffer<Malloc_allocator>> buff{ 2, data };
+
+    EXPECT_TRUE(buff.usable());
+
+    Block b = buff.data();
+
+    EXPECT_FALSE(b.empty());
+    EXPECT_NE(nullptr, b.p());
+    EXPECT_EQ(2, b.s());
+
+    EXPECT_EQ(data[0].a, b.p()[0].a); EXPECT_EQ(data[0].b, b.p()[0].b);
+    EXPECT_EQ(data[1].a, b.p()[1].a); EXPECT_EQ(data[1].b, b.p()[1].b);
+}
