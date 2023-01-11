@@ -91,7 +91,7 @@ namespace memoc {
         public:
             [[nodiscard]] Block<void> allocate(Block<void>::Size_type s) noexcept
             {
-                if (s == 0) {
+                if (s <= 0) {
                     return { s, nullptr };
                 }
                 return { s, std::malloc(s) };
@@ -145,7 +145,7 @@ namespace memoc {
             [[nodiscard]] Block<void> allocate(Block<void>::Size_type s) noexcept
             {
                 auto s1 = align(s);
-                if (p_ + s1 > d_ + Size || !p_ || s == 0) {
+                if (p_ + s1 > d_ + Size || !p_ || s <= 0) {
                     return { 0, nullptr };
                 }
                 Block<void> b = { s, p_ };
