@@ -4,7 +4,6 @@
 #include <memoc/allocators.h>
 #include <memoc/blocks.h>
 #include <memoc/buffers.h>
-#include <memoc/errors.h>
 #include <memoc/pointers.h>
 
 #endif // MEMOC_MEMOC_H
