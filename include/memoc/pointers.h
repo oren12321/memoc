@@ -212,9 +212,10 @@ namespace memoc {
 
 			// Not recommended - ptr should be allocated using Internal_allocator
 			explicit Shared_ptr(T* ptr = nullptr)
-				: cb_(ptr ? reinterpret_cast<Control_block*>(allocator_.allocate(MEMOC_SSIZEOF(Control_block)).p()) : nullptr), ptr_(ptr)
+				: cb_(ptr ? reinterpret_cast<Control_block*>(const_cast<void*>(allocate(allocator_, MEMOC_SSIZEOF(Control_block)).value().p())) : nullptr), ptr_(ptr)
 			{
-				ERROC_EXPECT((ptr && cb_) || (!ptr && !cb_), std::runtime_error, "internal memory allocation failed");
+				// Using value from allocate API that throws an exception if not available.
+				//ERROC_EXPECT((ptr && cb_) || (!ptr && !cb_), std::runtime_error, "internal memory allocation failed");
 				if (cb_) {
 					memoc::details::construct_at<Control_block>(cb_);
 					cb_->use_count = ptr_ ? 1 : 0;
@@ -383,8 +384,9 @@ namespace memoc {
 			{
 				remove_reference();
 				if (ptr) {
-					cb_ = reinterpret_cast<Control_block*>(allocator_.allocate(MEMOC_SSIZEOF(Control_block)).p());
-					ERROC_EXPECT(cb_, std::runtime_error, "internal memory allocation failed");
+					cb_ = reinterpret_cast<Control_block*>(const_cast<void*>(allocate(allocator_, MEMOC_SSIZEOF(Control_block)).value().p()));
+					// Using value from allocate API that throws an exception if not available.
+					//ERROC_EXPECT(cb_, std::runtime_error, "internal memory allocation failed");
 					memoc::details::construct_at<Control_block>(cb_);
 					cb_->use_count = 1;
 					cb_->weak_count = 0;

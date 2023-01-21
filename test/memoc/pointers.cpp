@@ -886,3 +886,10 @@ TEST(LW_Weak_ptr, tracked_by_shared_ptr_state)
     EXPECT_TRUE(wp.expired());
     EXPECT_EQ(0, wp.use_count());
 }
+
+//TEST(LW_Shared_ptr, failed_CB_via_invalid_internal_allocator)
+//{
+//    using namespace memoc;
+//
+//    EXPECT_THROW((make_shared<int, Stack_allocator<2>>(0)), std::runtime_error);
+//}
