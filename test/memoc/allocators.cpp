@@ -6,6 +6,7 @@
 #include <vector>
 #include <chrono>
 #include <utility>
+#include <limits>
 
 #include <memoc/allocators.h>
 #include <memoc/blocks.h>
@@ -644,4 +645,50 @@ TEST_F(Fallback_allocator_test, is_moveable)
     EXPECT_FALSE(b2.empty());
     EXPECT_EQ(size_, b2.s());
     EXPECT_NE(nullptr, b2.p());
+}
+
+// Allocators API tests
+
+class Any_allocator_test : public ::testing::Test {
+protected:
+    using Allocator = memoc::Malloc_allocator;
+    Allocator allocator_{ memoc::create<Allocator>() };
+};
+
+TEST_F(Any_allocator_test, allocate_free_and_give_owning_indication_for_successfull_allocation)
+{
+    using namespace memoc;
+
+    const Block<void>::Size_type s{ 1 };
+
+    Block<void> b = allocate(allocator_, s).value();
+    EXPECT_NE(nullptr, b.p());
+    EXPECT_EQ(1, b.s());
+
+    EXPECT_TRUE(owns(allocator_, b));
+
+    deallocate(allocator_, b);
+    EXPECT_TRUE(b.empty());
+}
+
+TEST_F(Any_allocator_test, fails_when_allocation_size_is_negative_or_when_not_in_available_memory_range)
+{
+    using namespace memoc;
+
+    const Block<void>::Size_type negative_size{ -1 };
+    EXPECT_EQ(Allocator_error::invalid_size, allocate(allocator_, negative_size).error());
+
+    const Block<void>::Size_type not_in_range_size{ std::numeric_limits<Block<void>::Size_type>::max() };
+    EXPECT_EQ(Allocator_error::unknown, allocate(allocator_, not_in_range_size).error());
+}
+
+TEST_F(Any_allocator_test, returns_empty_non_owned_block_when_size_is_zero)
+{
+    using namespace memoc;
+
+    const Block<void>::Size_type zero_size{ 0 };
+
+    Block<void> b = allocate(allocator_, zero_size).value();
+    EXPECT_TRUE(b.empty());
+    EXPECT_FALSE(owns(allocator_, b));
 }

@@ -7,13 +7,19 @@
 #include <type_traits>
 #include <concepts>
 
+#include <erroc/errors.h>
+#include <enumoc/enumoc.h>
 #include <memoc/blocks.h>
 #include <memoc/allocators.h>
 #include <memoc/pointers.h>
 
+ENUMOC_GENERATE(memoc, Buffer_error,
+    invalid_size,
+    unknown);
+
 namespace memoc {
     namespace details { 
-        template <class T, typename U = void>
+        template <class T>
         concept Buffer = 
             requires
         {
@@ -24,12 +30,12 @@ namespace memoc {
             std::is_move_assignable_v<T>;
             std::is_destructible_v<T>;
         }&&
-            requires (T t, std::int64_t size, const U* data)
+            requires (T t, std::int64_t size)
         {
-            {T(size, data)} noexcept;
+            {T(size, nullptr)} noexcept;
             {t.usable()} noexcept -> std::same_as<bool>;
-            {t.data()} noexcept -> std::same_as<Block<U>>;
-            {t.init(data)} noexcept -> std::same_as<void>;
+            {t.data()} noexcept -> std::same_as<Block<typename decltype(t.data())::Type>>;
+            {t.init(nullptr)} noexcept -> std::same_as<void>;
         };
 
         template <std::int64_t Stack_size = 2, bool Lazy_init = false>
@@ -352,6 +358,24 @@ namespace memoc {
 
             void init(const void* data = nullptr) noexcept {}
         };
+
+        template <Buffer T, typename U = void>
+        [[nodiscard]] erroc::Expected<T, Buffer_error> create(std::int64_t size = 0, const typename decltype(T().data())::Type* data = nullptr)
+        {
+            if (size < 0) {
+                return erroc::Unexpected(Buffer_error::invalid_size);
+            }
+
+            if (size == 0) {
+                return T();
+            }
+
+            T buff(size, data);
+            if (!buff.usable()) {
+                return erroc::Unexpected(Buffer_error::unknown);
+            }
+            return buff;
+        }
     }
 
     using details::Buffer;
@@ -359,6 +383,7 @@ namespace memoc {
     using details::Fallback_buffer;
     using details::Stack_buffer;
     using details::Typed_buffer;
+    using details::create;
 }
 
 #endif // MEMOC_BUFFERS_H

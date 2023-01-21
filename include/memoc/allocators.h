@@ -11,7 +11,14 @@
 #include <concepts>
 #include <memory>
 
+#include <erroc/errors.h>
+#include <enumoc/enumoc.h>
+
 #include <memoc/blocks.h>
+
+ENUMOC_GENERATE(memoc, Allocator_error,
+    invalid_size,
+    unknown);
 
 namespace memoc {
     namespace details {
@@ -481,6 +488,44 @@ namespace memoc {
         private:
             inline static Internal_allocator allocator_{};
         };
+
+        // Allocators API
+
+        template <Allocator T>
+        [[nodiscard]] T create() noexcept
+        {
+            return T();
+        }
+
+        template <Allocator T>
+        [[nodiscard]] erroc::Expected<decltype(T().allocate(0)), Allocator_error> allocate(T& allocator, typename decltype(T().allocate(0))::Size_type size) noexcept
+        {
+            if (size < 0) {
+                return erroc::Unexpected(Allocator_error::invalid_size);
+            }
+
+            if (size == 0) {
+                return decltype(T().allocate(0))();
+            }
+
+            decltype(T().allocate(0)) b = allocator.allocate(size);
+            if (b.empty()) {
+                return erroc::Unexpected(Allocator_error::unknown);
+            }
+            return b;
+        }
+
+        template <Allocator T>
+        void deallocate(T& allocator, decltype(T().allocate(0))& block) noexcept
+        {
+            allocator.deallocate(&block);
+        }
+
+        template <Allocator T>
+        [[nodiscard]] bool owns(const T& allocator, const decltype(T().allocate(0))& block) noexcept
+        {
+            return allocator.owns(block);
+        }
     }
 
     using details::Allocator;
@@ -492,6 +537,10 @@ namespace memoc {
     using details::Stack_allocator;
     using details::Stats_allocator;
     using details::Stl_adapter_allocator;
+    using details::create;
+    using details::allocate;
+    using details::deallocate;
+    using details::owns;
 }
 
 #endif // MEMOC_ALLOCATORS_H

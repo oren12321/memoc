@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include <utility>
+#include <limits>
 
 #include <memoc/buffers.h>
 #include <memoc/allocators.h>
@@ -406,7 +407,7 @@ TEST(Fallback_buffer_test, can_be_initalized_with_data)
 
 // Typed_buffer tests
 
-TEST(TYped_buffer_test, can_be_initialized_with_fundamental_data_type)
+TEST(Typed_buffer_test, can_be_initialized_with_fundamental_data_type)
 {
     using namespace memoc;
 
@@ -426,7 +427,7 @@ TEST(TYped_buffer_test, can_be_initialized_with_fundamental_data_type)
     EXPECT_EQ(data[1], b.p()[1]);
 }
 
-TEST(TYped_buffer_test, can_be_initialized_with_custom_data_type)
+TEST(Typed_buffer_test, can_be_initialized_with_custom_data_type)
 {
     using namespace memoc;
 
@@ -451,4 +452,36 @@ TEST(TYped_buffer_test, can_be_initialized_with_custom_data_type)
 
     EXPECT_EQ(data[0].a, b.p()[0].a); EXPECT_EQ(data[0].b, b.p()[0].b);
     EXPECT_EQ(data[1].a, b.p()[1].a); EXPECT_EQ(data[1].b, b.p()[1].b);
+}
+
+// Buffer API tests
+
+TEST(Any_buffer_test, creation_via_create_function)
+{
+    using namespace memoc;
+
+    using Buffer_type = Allocated_buffer<Malloc_allocator>;
+
+    Buffer_type empty_buffer = create<Buffer_type>().value();
+    EXPECT_FALSE(empty_buffer.usable());
+    EXPECT_TRUE(empty_buffer.data().empty());
+
+    Buffer_error buffer_with_invalid_size = create<Buffer_type>(-1).error();
+    EXPECT_EQ(Buffer_error::invalid_size, buffer_with_invalid_size);
+
+    Buffer_error buffer_with_unknown_failure = create<Buffer_type>(std::numeric_limits<std::int64_t>::max()).error();
+    // Should be Allocator_error::unknwonw propogated from internal allocator.
+    EXPECT_EQ(Buffer_error::unknown, buffer_with_unknown_failure);
+
+    Buffer_type buffer_with_no_data = create<Buffer_type>(2).value();
+    EXPECT_TRUE(buffer_with_no_data.usable());
+    EXPECT_EQ(2, buffer_with_no_data.data().s());
+    EXPECT_NE(nullptr, buffer_with_no_data.data().p());
+
+    int data[]{ 150, 151 };
+    Typed_buffer<int, Buffer_type> buffer_with_data = create<Typed_buffer<int, Buffer_type>>(2, data).value();
+    EXPECT_TRUE(buffer_with_data.usable());
+    EXPECT_EQ(2, buffer_with_data.data().s());
+    EXPECT_NE(nullptr, buffer_with_data.data().p());
+    EXPECT_EQ(150, buffer_with_data.data().p()[0]); EXPECT_EQ(151, buffer_with_data.data().p()[1]);
 }
