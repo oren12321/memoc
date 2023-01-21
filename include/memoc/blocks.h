@@ -157,6 +157,7 @@ namespace memoc {
         class Block<void> {
         public:
             using Size_type = std::int64_t;
+            using Type = void;
             using Pointer = void*;
             using Const_pointer = const void*;
 
