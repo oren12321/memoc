@@ -35,7 +35,7 @@ namespace memoc {
             {T(size, nullptr)} noexcept;
             {t.usable()} noexcept -> std::same_as<bool>;
             {t.data()} noexcept -> std::same_as<Block<typename decltype(t.data())::Type>>;
-            {t.init(nullptr)} noexcept -> std::same_as<void>;
+            {t.init(size, nullptr)} noexcept -> std::same_as<void>;
         };
 
         template <std::int64_t Stack_size = 2, bool Lazy_init = false>
@@ -44,10 +44,9 @@ namespace memoc {
         public:
             Stack_buffer() = default;
             Stack_buffer(std::int64_t size, const void* data = nullptr) noexcept
-                : size_(size)
             {
-                if (!Lazy_init && size_ > 0) {
-                    init(data);
+                if (!Lazy_init) {
+                    init(size, data);
                 }
             }
 
@@ -98,15 +97,20 @@ namespace memoc {
                 return !data_.empty();
             }
 
-            void init(const void* data = nullptr) noexcept
+            void init(std::int64_t size, const void* data = nullptr) noexcept
             {
-                if (size_ <= Stack_size) {
-                    data_ = { size_, memory_ };
+                if (size <= 0) {
+                    return;
+                }
+
+                if (size <= Stack_size) {
+                    size_ = size;
+                    data_ = { size, memory_ };
                 }
 
                 if (data && !data_.empty()) {
                     const std::uint8_t* bytes = reinterpret_cast<const std::uint8_t*>(data);
-                    for (std::int64_t i = 0; i < size_; ++i) {
+                    for (std::int64_t i = 0; i < size; ++i) {
                         memory_[i] = bytes[i];
                     }
                 }
@@ -123,10 +127,9 @@ namespace memoc {
         public:
             Allocated_buffer() = default;
             Allocated_buffer(std::int64_t size, const void* data = nullptr) noexcept
-                : size_(size)
             {
-                if (!Lazy_init && size_ > 0) {
-                    init(data);
+                if (!Lazy_init) {
+                    init(size, data);
                 }
             }
 
@@ -135,14 +138,7 @@ namespace memoc {
                 size_ = other.size_;
                 allocator_ = other.allocator_;
                 if (!Lazy_init || !other.data_.empty()) {
-                    init();
-                }
-                if (!other.data_.empty()) {
-                    const std::uint8_t* src_memory = reinterpret_cast<const std::uint8_t*>(other.data_.p());
-                    std::uint8_t* dst_memory = reinterpret_cast<std::uint8_t*>(data_.p());
-                    for (std::int64_t i = 0; i < size_; ++i) {
-                        dst_memory[i] = src_memory[i];
-                    }
+                    init(size_, other.data_.p());
                 }
             }
             Allocated_buffer operator=(const Allocated_buffer& other) noexcept
@@ -155,15 +151,9 @@ namespace memoc {
                 allocator_ = other.allocator_;
                 if (!Lazy_init || !other.data_.empty()) {
                     allocator_.deallocate(&data_);
-                    init();
+                    init(size_, other.data_.p());
                 }
-                if (!other.data_.empty()) {
-                    const std::uint8_t* src_memory = reinterpret_cast<const std::uint8_t*>(other.data_.p());
-                    std::uint8_t* dst_memory = reinterpret_cast<std::uint8_t*>(data_.p());
-                    for (std::int64_t i = 0; i < size_; ++i) {
-                        dst_memory[i] = src_memory[i];
-                    }
-                }
+
                 return *this;
             }
             Allocated_buffer(Allocated_buffer&& other) noexcept
@@ -216,14 +206,19 @@ namespace memoc {
                 return !data_.empty();
             }
 
-            void init(const void* data = nullptr) noexcept
+            void init(std::int64_t size, const void* data = nullptr) noexcept
             {
-                data_ = allocator_.allocate(size_);
+                if (size <= 0) {
+                    return;
+                }
+
+                size_ = size;
+                data_ = allocator_.allocate(size);
 
                 if (data && !data_.empty()) {
                     const std::uint8_t* src_bytes = reinterpret_cast<const std::uint8_t*>(data);
                     std::uint8_t* dst_bytes = reinterpret_cast<std::uint8_t*>(data_.p());
-                    for (std::int64_t i = 0; i < size_; ++i) {
+                    for (std::int64_t i = 0; i < size; ++i) {
                         dst_bytes[i] = src_bytes[i];
                     }
                 }
@@ -245,7 +240,7 @@ namespace memoc {
             Fallback_buffer(std::int64_t size, const void* data = nullptr) noexcept
                 : Primary(size, data), Fallback(size, data)
             {
-                init(data);
+                init(size, data);
             }
 
             Fallback_buffer(const Fallback_buffer& other) noexcept
@@ -285,10 +280,10 @@ namespace memoc {
                 return Primary::usable() || Fallback::usable();
             }
 
-            void init(const void* data = nullptr) noexcept
+            void init(std::int64_t size, const void* data = nullptr) noexcept
             {
                 if (!Primary::usable()) {
-                    Fallback::init(data);
+                    Fallback::init(size, data);
                 }
             }
         };
@@ -307,18 +302,7 @@ namespace memoc {
             Typed_buffer(std::int64_t size, const T* data = nullptr) noexcept
                 : Internal_buffer((size* MEMOC_SSIZEOF(Replace_void<T, std::uint8_t>)) / MEMOC_SSIZEOF(Replace_void<Remove_internal_pointer<decltype(Internal_buffer::data().p())>, std::uint8_t>), data)
             {
-                // For non-fundamental type an object construction is required.
-                if (!std::is_fundamental_v<T>) {
-                    Block<T> b{ this->data() };
-                    for (std::int64_t i = 0; i < b.s(); ++i) {
-                        memoc::details::construct_at<T>(reinterpret_cast<T*>(&(b[i])));
-                    }
-                    if (data) {
-                        for (std::int64_t i = 0; i < b.s(); ++i) {
-                            b[i] = data[i];
-                        }
-                    }
-                }
+                init(size, data);
             }
 
             Typed_buffer(const Typed_buffer& other) noexcept
@@ -356,7 +340,22 @@ namespace memoc {
                 return Internal_buffer::usable();
             }
 
-            void init(const void* data = nullptr) noexcept {}
+            void init(std::int64_t size, const void* data = nullptr) noexcept
+            {
+                // For non-fundamental type an object construction is required.
+                if (!std::is_fundamental_v<T>) {
+                    Block<T> b{ this->data() };
+                    for (std::int64_t i = 0; i < b.s(); ++i) {
+                        memoc::details::construct_at<T>(reinterpret_cast<T*>(&(b[i])));
+                    }
+                    if (data) {
+                        const T* typed_data = reinterpret_cast<const T*>(data);
+                        for (std::int64_t i = 0; i < b.s(); ++i) {
+                            b[i] = typed_data[i];
+                        }
+                    }
+                }
+            }
         };
 
         template <Buffer T, typename U = void>
