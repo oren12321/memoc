@@ -55,11 +55,6 @@ namespace memoc {
                 s_ = 0;
             }
 
-            bool empty() const noexcept
-            {
-                return p_ == nullptr && s_ == 0;
-            }
-
             Size_type s() const noexcept
             {
                 return s_;
@@ -90,10 +85,16 @@ namespace memoc {
             Pointer p_{ nullptr };
         };
 
+        template <typename T>
+        [[nodiscard]] inline bool empty(const Block<T>& b) noexcept
+        {
+            return !b.p() && !b.s();
+        }
+
         template <typename T1, typename T2>
         inline bool operator==(const Block<T1>& lhs, const Block<T2>& rhs) noexcept
         {
-            if (lhs.empty() && rhs.empty()) {
+            if (empty(lhs) && empty(rhs)) {
                 return true;
             }
 
@@ -179,11 +180,6 @@ namespace memoc {
                 s_ = 0;
             }
 
-            bool empty() const noexcept
-            {
-                return p_ == nullptr && s_ == 0;
-            }
-
             Size_type s() const noexcept
             {
                 return s_;
@@ -206,7 +202,7 @@ namespace memoc {
 
         inline bool operator==(const Block<void>& lhs, const Block<void>& rhs) noexcept
         {
-            if (lhs.empty() && rhs.empty()) {
+            if (empty(lhs) && empty(rhs)) {
                 return true;
             }
 
@@ -311,6 +307,7 @@ namespace memoc {
 
     using details::Block;
 
+    using details::empty;
     using details::copy;
     using details::set;
 }

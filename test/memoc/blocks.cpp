@@ -20,12 +20,12 @@ TEST(Block_test, is_empty_when_deafult_initalized_or_when_initialized_partially_
 
     EXPECT_EQ(nullptr, b.p());
     EXPECT_EQ(0, b.s());
-    EXPECT_TRUE(b.empty());
+    EXPECT_TRUE(empty(b));
 
     const std::uint8_t buffer[]{ 0 };
-    EXPECT_FALSE((Block<void>{ 1, buffer }).empty());
-    EXPECT_TRUE((Block<void>{ 1, nullptr }).empty());
-    EXPECT_TRUE((Block<void>{ 0, buffer }).empty());
+    EXPECT_FALSE(empty(Block<void>{ 1, buffer }));
+    EXPECT_TRUE(empty(Block<void>{ 1, nullptr }));
+    EXPECT_TRUE(empty(Block<void>{ 0, buffer }));
 }
 
 TEST(Block_test, can_be_of_specific_type)
@@ -37,7 +37,7 @@ TEST(Block_test, can_be_of_specific_type)
 
     EXPECT_NE(nullptr, b.p());
     EXPECT_EQ(1, b.s());
-    EXPECT_FALSE(b.empty());
+    EXPECT_FALSE(empty(b));
     EXPECT_EQ(1, b[0]);
 
     bool valid_buffer_type = std::is_same<int, typename std::remove_pointer<decltype(b.p())>::type>();

@@ -74,7 +74,7 @@ namespace memoc {
             [[nodiscard]] Block<void> allocate(Block<void>::Size_type s) noexcept
             {
                 Block<void> b = Primary::allocate(s);
-                if (b.empty()) {
+                if (empty(b)) {
                     b = Fallback::allocate(s);
                 }
                 return b;
@@ -312,7 +312,7 @@ namespace memoc {
             [[nodiscard]] T* allocate(std::size_t n)
             {
                 Block<void> b = Internal_allocator::allocate(n * MEMOC_SSIZEOF(T));
-                if (b.empty()) {
+                if (empty(b)) {
                     throw std::bad_alloc{};
                 }
                 return reinterpret_cast<T*>(b.p());
@@ -390,7 +390,7 @@ namespace memoc {
             [[nodiscard]] Block<void> allocate(Block<void>::Size_type s) noexcept
             {
                 Block<void> b = Internal_allocator::allocate(s);
-                if (!b.empty()) {
+                if (!empty(b)) {
                     add_record(b.p(), b.s());
                 }
                 return b;
@@ -400,7 +400,7 @@ namespace memoc {
             {
                 Block<void> bc{ *b };
                 Internal_allocator::deallocate(b);
-                if (b->empty()) {
+                if (empty(*b)) {
                     add_record(bc.p(), -bc.s());
                 }
             }
@@ -439,7 +439,7 @@ namespace memoc {
                 }
 
                 Block<void> b1 = Internal_allocator::allocate(MEMOC_SSIZEOF(Record));
-                if (b1.empty()) {
+                if (empty(b1)) {
                     return;
                 }
 
@@ -509,7 +509,7 @@ namespace memoc {
             }
 
             decltype(T().allocate(0)) b = allocator.allocate(size);
-            if (b.empty()) {
+            if (empty(b)) {
                 return erroc::Unexpected(Allocator_error::unknown);
             }
             return b;

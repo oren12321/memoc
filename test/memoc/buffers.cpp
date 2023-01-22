@@ -9,26 +9,24 @@
 
 // Stack_buffer tests
 
-TEST(Stack_buffer_test, usable_when_initialized_with_valid_size)
+TEST(Stack_buffer_test, not_empty_when_initialized_with_valid_size)
 {
     using namespace memoc;
 
     Stack_buffer buff{ 2 };
 
-    EXPECT_TRUE(buff.usable());
-    EXPECT_FALSE(buff.data().empty());
+    EXPECT_FALSE(empty(buff));
     EXPECT_NE(nullptr, buff.data().p());
     EXPECT_EQ(2, buff.data().s());
 }
 
-TEST(Stack_buffer_test, not_usable_when_initialized_with_invalid_size)
+TEST(Stack_buffer_test, empty_when_initialized_with_invalid_size)
 {
     using namespace memoc;
 
     Stack_buffer buff{ 4 };
 
-    EXPECT_FALSE(buff.usable());
-    EXPECT_TRUE(buff.data().empty());
+    EXPECT_TRUE(empty(buff));
 }
 
 TEST(Stack_buffer_test, is_copyable)
@@ -38,13 +36,11 @@ TEST(Stack_buffer_test, is_copyable)
     Stack_buffer buff1{ 2 };
     Stack_buffer buff2{ buff1 };
 
-    EXPECT_TRUE(buff1.usable());
-    EXPECT_FALSE(buff1.data().empty());
+    EXPECT_FALSE(empty(buff1));
     EXPECT_NE(nullptr, buff1.data().p());
     EXPECT_EQ(2, buff1.data().s());
 
-    EXPECT_TRUE(buff2.usable());
-    EXPECT_FALSE(buff2.data().empty());
+    EXPECT_FALSE(empty(buff2));
     EXPECT_NE(nullptr, buff2.data().p());
     EXPECT_EQ(2, buff2.data().s());
 
@@ -54,8 +50,7 @@ TEST(Stack_buffer_test, is_copyable)
     Stack_buffer buff3{ 2 };
     buff3 = buff2;
 
-    EXPECT_TRUE(buff3.usable());
-    EXPECT_FALSE(buff3.data().empty());
+    EXPECT_FALSE(empty(buff3));
     EXPECT_NE(nullptr, buff3.data().p());
     EXPECT_EQ(2, buff3.data().s());
 
@@ -70,11 +65,9 @@ TEST(Stack_buffer_test, is_moveable)
     Stack_buffer buff1{ 2 };
     Stack_buffer buff2{ std::move(buff1) };
 
-    EXPECT_FALSE(buff1.usable());
-    EXPECT_TRUE(buff1.data().empty());
+    EXPECT_TRUE(empty(buff1));
 
-    EXPECT_TRUE(buff2.usable());
-    EXPECT_FALSE(buff2.data().empty());
+    EXPECT_FALSE(empty(buff2));
     EXPECT_NE(nullptr, buff2.data().p());
     EXPECT_EQ(2, buff2.data().s());
 
@@ -84,8 +77,7 @@ TEST(Stack_buffer_test, is_moveable)
     Stack_buffer buff3{ 2 };
     buff3 = std::move(buff2);
 
-    EXPECT_FALSE(buff2.usable());
-    EXPECT_TRUE(buff2.data().empty());
+    EXPECT_TRUE(empty(buff2));
 
     EXPECT_NE(buff2.data().p(), buff3.data().p());
     EXPECT_NE(buff2.data().s(), buff3.data().s());
@@ -99,8 +91,7 @@ TEST(Stack_buffer_test, can_be_initalized_with_data)
 
     Stack_buffer<2 * MEMOC_SSIZEOF(int)> buff1{ 2 * MEMOC_SSIZEOF(int), data };
 
-    EXPECT_TRUE(buff1.usable());
-    EXPECT_FALSE(buff1.data().empty());
+    EXPECT_FALSE(empty(buff1));
     EXPECT_NE(nullptr, buff1.data().p());
     EXPECT_EQ(2 * MEMOC_SSIZEOF(int), buff1.data().s());
 
@@ -110,8 +101,7 @@ TEST(Stack_buffer_test, can_be_initalized_with_data)
 
     Stack_buffer<2 * MEMOC_SSIZEOF(int)> copy1{buff1};
 
-    EXPECT_TRUE(copy1.usable());
-    EXPECT_FALSE(copy1.data().empty());
+    EXPECT_FALSE(empty(copy1));
     EXPECT_NE(nullptr, copy1.data().p());
     EXPECT_EQ(2 * MEMOC_SSIZEOF(int), copy1.data().s());
 
@@ -124,11 +114,9 @@ TEST(Stack_buffer_test, can_be_initalized_with_data)
 
     Stack_buffer<2 * MEMOC_SSIZEOF(int)> moved1{std::move(buff1)};
 
-    EXPECT_FALSE(buff1.usable());
-    EXPECT_TRUE(buff1.data().empty());
+    EXPECT_TRUE(empty(buff1));
 
-    EXPECT_TRUE(moved1.usable());
-    EXPECT_FALSE(moved1.data().empty());
+    EXPECT_FALSE(empty(moved1));
     EXPECT_NE(nullptr, moved1.data().p());
     EXPECT_EQ(2 * MEMOC_SSIZEOF(int), moved1.data().s());
 
@@ -139,26 +127,24 @@ TEST(Stack_buffer_test, can_be_initalized_with_data)
 
 // Allocated_buffer tests
 
-TEST(Allocated_buffer_test, usable_when_initialized_with_valid_size)
+TEST(Allocated_buffer_test, not_empty_when_initialized_with_valid_size)
 {
     using namespace memoc;
 
     Allocated_buffer<Malloc_allocator> buff{ 2 };
 
-    EXPECT_TRUE(buff.usable());
-    EXPECT_FALSE(buff.data().empty());
+    EXPECT_FALSE(empty(buff));
     EXPECT_NE(nullptr, buff.data().p());
     EXPECT_EQ(2, buff.data().s());
 }
 
-TEST(Allocated_buffer_test, not_usable_when_initialized_with_invalid_size)
+TEST(Allocated_buffer_test, empty_when_initialized_with_invalid_size)
 {
     using namespace memoc;
 
     Allocated_buffer<Stack_allocator<2>> buff{ 4 };
 
-    EXPECT_FALSE(buff.usable());
-    EXPECT_TRUE(buff.data().empty());
+    EXPECT_TRUE(empty(buff));
 }
 
 TEST(Allocated_buffer_test, is_copyable)
@@ -168,13 +154,11 @@ TEST(Allocated_buffer_test, is_copyable)
     Allocated_buffer<Malloc_allocator> buff1{ 2 };
     Allocated_buffer<Malloc_allocator> buff2{ buff1 };
 
-    EXPECT_TRUE(buff1.usable());
-    EXPECT_FALSE(buff1.data().empty());
+    EXPECT_FALSE(empty(buff1));
     EXPECT_NE(nullptr, buff1.data().p());
     EXPECT_EQ(2, buff1.data().s());
 
-    EXPECT_TRUE(buff2.usable());
-    EXPECT_FALSE(buff2.data().empty());
+    EXPECT_FALSE(empty(buff2));
     EXPECT_NE(nullptr, buff2.data().p());
     EXPECT_EQ(2, buff2.data().s());
 
@@ -184,8 +168,7 @@ TEST(Allocated_buffer_test, is_copyable)
     Allocated_buffer<Malloc_allocator> buff3{ 2 };
     buff3 = buff2;
 
-    EXPECT_TRUE(buff3.usable());
-    EXPECT_FALSE(buff3.data().empty());
+    EXPECT_FALSE(empty(buff3));
     EXPECT_NE(nullptr, buff3.data().p());
     EXPECT_EQ(2, buff3.data().s());
 
@@ -200,11 +183,9 @@ TEST(Allocated_buffer_test, is_moveable)
     Allocated_buffer<Malloc_allocator> buff1{ 2 };
     Allocated_buffer<Malloc_allocator> buff2{ std::move(buff1) };
 
-    EXPECT_FALSE(buff1.usable());
-    EXPECT_TRUE(buff1.data().empty());
+    EXPECT_TRUE(empty(buff1));
 
-    EXPECT_TRUE(buff2.usable());
-    EXPECT_FALSE(buff2.data().empty());
+    EXPECT_FALSE(empty(buff2));
     EXPECT_NE(nullptr, buff2.data().p());
     EXPECT_EQ(2, buff2.data().s());
 
@@ -214,8 +195,7 @@ TEST(Allocated_buffer_test, is_moveable)
     Allocated_buffer<Malloc_allocator> buff3{ 2 };
     buff3 = std::move(buff2);
 
-    EXPECT_FALSE(buff2.usable());
-    EXPECT_TRUE(buff2.data().empty());
+    EXPECT_TRUE(empty(buff2));
 
     EXPECT_NE(buff2.data().p(), buff3.data().p());
     EXPECT_NE(buff2.data().s(), buff3.data().s());
@@ -229,8 +209,7 @@ TEST(Allocated_buffer_test, can_be_initalized_with_data)
 
     Allocated_buffer<Malloc_allocator> buff1{ 2 * MEMOC_SSIZEOF(int), data };
 
-    EXPECT_TRUE(buff1.usable());
-    EXPECT_FALSE(buff1.data().empty());
+    EXPECT_FALSE(empty(buff1));
     EXPECT_NE(nullptr, buff1.data().p());
     EXPECT_EQ(2 * MEMOC_SSIZEOF(int), buff1.data().s());
 
@@ -240,8 +219,7 @@ TEST(Allocated_buffer_test, can_be_initalized_with_data)
 
     Allocated_buffer<Malloc_allocator> copy1{buff1};
 
-    EXPECT_TRUE(copy1.usable());
-    EXPECT_FALSE(copy1.data().empty());
+    EXPECT_FALSE(empty(copy1));
     EXPECT_NE(nullptr, copy1.data().p());
     EXPECT_EQ(2 * MEMOC_SSIZEOF(int), copy1.data().s());
 
@@ -254,11 +232,9 @@ TEST(Allocated_buffer_test, can_be_initalized_with_data)
 
     Allocated_buffer<Malloc_allocator> moved1{std::move(buff1)};
 
-    EXPECT_FALSE(buff1.usable());
-    EXPECT_TRUE(buff1.data().empty());
+    EXPECT_TRUE(empty(buff1));
 
-    EXPECT_TRUE(moved1.usable());
-    EXPECT_FALSE(moved1.data().empty());
+    EXPECT_FALSE(empty(moved1));
     EXPECT_NE(nullptr, moved1.data().p());
     EXPECT_EQ(2 * MEMOC_SSIZEOF(int), moved1.data().s());
 
@@ -269,39 +245,36 @@ TEST(Allocated_buffer_test, can_be_initalized_with_data)
 
 // Fallback_buffer tests
 
-TEST(Fallback_buffer_test, uses_the_first_buffer_when_usable)
+TEST(Fallback_buffer_test, uses_the_first_buffer_when_not_empty)
 {
     using namespace memoc;
 
     Fallback_buffer<Stack_buffer<2>, Allocated_buffer<Malloc_allocator>> buff{ 2 };
 
-    EXPECT_TRUE(buff.usable());
-    EXPECT_FALSE(buff.data().empty());
+    EXPECT_FALSE(empty(buff));
     EXPECT_NE(nullptr, buff.data().p());
     EXPECT_EQ(2, buff.data().s());
 }
 
-TEST(Fallback_buffer_test, uses_the_second_buffer_when_usable)
+TEST(Fallback_buffer_test, uses_the_second_buffer_when_not_empty)
 {
     using namespace memoc;
 
     // Required size invalid for first allocator
     Fallback_buffer<Stack_buffer<2>, Allocated_buffer<Malloc_allocator>> buff{ 4 };
 
-    EXPECT_TRUE(buff.usable());
-    EXPECT_FALSE(buff.data().empty());
+    EXPECT_FALSE(empty(buff));
     EXPECT_NE(nullptr, buff.data().p());
     EXPECT_EQ(4, buff.data().s());
 }
 
-TEST(Fallback_buffer_test, not_usable_when_initialized_with_invalid_size_for_both_buffers)
+TEST(Fallback_buffer_test, empty_when_initialized_with_invalid_size_for_both_buffers)
 {
     using namespace memoc;
 
     Fallback_buffer<Stack_buffer<2>, Allocated_buffer<Stack_allocator<2>>> buff{ 4 };
 
-    EXPECT_FALSE(buff.usable());
-    EXPECT_TRUE(buff.data().empty());
+    EXPECT_TRUE(empty(buff));
 }
 
 // Just for compilation check
@@ -309,9 +282,9 @@ TEST(Fallback_buffer_test, is_copyable)
 {
     using namespace memoc;
 
-    Fallback_buffer<Stack_buffer<2>, Allocated_buffer<Malloc_allocator>> buff1{ 4 };
-    Fallback_buffer<Stack_buffer<2>, Allocated_buffer<Malloc_allocator>> buff2{ buff1 };
-    Fallback_buffer<Stack_buffer<2>, Allocated_buffer<Malloc_allocator>> buff3{ 4 };
+    Fallback_buffer<Stack_buffer<2>, Allocated_buffer<Stack_allocator<2>>> buff1{ 4 };
+    Fallback_buffer<Stack_buffer<2>, Allocated_buffer<Stack_allocator<2>>> buff2{ buff1 };
+    Fallback_buffer<Stack_buffer<2>, Allocated_buffer<Stack_allocator<2>>> buff3{ 4 };
     buff3 = buff2;
 }
 
@@ -320,9 +293,9 @@ TEST(Fallback_buffer_test, is_moveable)
 {
     using namespace memoc;
 
-    Fallback_buffer<Stack_buffer<2>, Allocated_buffer<Malloc_allocator>> buff1{ 4 };
-    Fallback_buffer<Stack_buffer<2>, Allocated_buffer<Malloc_allocator>> buff2{ std::move(buff1) };
-    Fallback_buffer<Stack_buffer<2>, Allocated_buffer<Malloc_allocator>> buff3{ 4 };
+    Fallback_buffer<Stack_buffer<2>, Allocated_buffer<Stack_allocator<2>>> buff1{ 4 };
+    Fallback_buffer<Stack_buffer<2>, Allocated_buffer<Stack_allocator<2>>> buff2{ std::move(buff1) };
+    Fallback_buffer<Stack_buffer<2>, Allocated_buffer<Stack_allocator<2>>> buff3{ 4 };
     buff3 = std::move(buff2);
 }
 
@@ -334,8 +307,7 @@ TEST(Fallback_buffer_test, can_be_initalized_with_data)
 
     Fallback_buffer<Stack_buffer<2 * MEMOC_SSIZEOF(int)>, Allocated_buffer<Malloc_allocator>> buff1{ 2 * MEMOC_SSIZEOF(int), data };
 
-    EXPECT_TRUE(buff1.usable());
-    EXPECT_FALSE(buff1.data().empty());
+    EXPECT_FALSE(empty(buff1));
     EXPECT_NE(nullptr, buff1.data().p());
     EXPECT_EQ(2 * MEMOC_SSIZEOF(int), buff1.data().s());
 
@@ -345,8 +317,7 @@ TEST(Fallback_buffer_test, can_be_initalized_with_data)
 
     Fallback_buffer<Stack_buffer<2 * MEMOC_SSIZEOF(int)>, Allocated_buffer<Malloc_allocator>> copy1{ buff1 };
 
-    EXPECT_TRUE(copy1.usable());
-    EXPECT_FALSE(copy1.data().empty());
+    EXPECT_FALSE(empty(copy1));
     EXPECT_NE(nullptr, copy1.data().p());
     EXPECT_EQ(2 * MEMOC_SSIZEOF(int), copy1.data().s());
 
@@ -356,11 +327,9 @@ TEST(Fallback_buffer_test, can_be_initalized_with_data)
 
     Fallback_buffer<Stack_buffer<2 * MEMOC_SSIZEOF(int)>, Allocated_buffer<Malloc_allocator>> moved1{ std::move(buff1) };
 
-    EXPECT_FALSE(buff1.usable());
-    EXPECT_TRUE(buff1.data().empty());
+    EXPECT_TRUE(empty(buff1));
 
-    EXPECT_TRUE(moved1.usable());
-    EXPECT_FALSE(moved1.data().empty());
+    EXPECT_FALSE(empty(moved1));
     EXPECT_NE(nullptr, moved1.data().p());
     EXPECT_EQ(2 * MEMOC_SSIZEOF(int), moved1.data().s());
 
@@ -370,8 +339,7 @@ TEST(Fallback_buffer_test, can_be_initalized_with_data)
 
     Fallback_buffer<Stack_buffer<2>, Allocated_buffer<Malloc_allocator>> buff2{ 2 * MEMOC_SSIZEOF(int), data };
 
-    EXPECT_TRUE(buff2.usable());
-    EXPECT_FALSE(buff2.data().empty());
+    EXPECT_FALSE(empty(buff2));
     EXPECT_NE(nullptr, buff2.data().p());
     EXPECT_EQ(2 * MEMOC_SSIZEOF(int), buff2.data().s());
 
@@ -381,8 +349,7 @@ TEST(Fallback_buffer_test, can_be_initalized_with_data)
 
     Fallback_buffer<Stack_buffer<2>, Allocated_buffer<Malloc_allocator>> copy2{ buff2 };
 
-    EXPECT_TRUE(copy2.usable());
-    EXPECT_FALSE(copy2.data().empty());
+    EXPECT_FALSE(empty(copy2));
     EXPECT_NE(nullptr, copy2.data().p());
     EXPECT_EQ(2 * MEMOC_SSIZEOF(int), copy2.data().s());
 
@@ -392,11 +359,9 @@ TEST(Fallback_buffer_test, can_be_initalized_with_data)
 
     Fallback_buffer<Stack_buffer<2>, Allocated_buffer<Malloc_allocator>> moved2{ std::move(buff2) };
 
-    EXPECT_FALSE(buff2.usable());
-    EXPECT_TRUE(buff2.data().empty());
+    EXPECT_TRUE(empty(buff2));
 
-    EXPECT_TRUE(moved2.usable());
-    EXPECT_FALSE(moved2.data().empty());
+    EXPECT_FALSE(empty(moved2));
     EXPECT_NE(nullptr, moved2.data().p());
     EXPECT_EQ(2 * MEMOC_SSIZEOF(int), moved2.data().s());
 
@@ -415,11 +380,10 @@ TEST(Typed_buffer_test, can_be_initialized_with_fundamental_data_type)
 
     Typed_buffer<int, Allocated_buffer<Malloc_allocator>> buff{2, data};
 
-    EXPECT_TRUE(buff.usable());
+    EXPECT_FALSE(empty(buff));
 
     Block b = buff.data();
 
-    EXPECT_FALSE(b.empty());
     EXPECT_NE(nullptr, b.p());
     EXPECT_EQ(2, b.s());
 
@@ -442,11 +406,10 @@ TEST(Typed_buffer_test, can_be_initialized_with_custom_data_type)
 
     Typed_buffer<S, Allocated_buffer<Malloc_allocator>> buff{ 2, data };
 
-    EXPECT_TRUE(buff.usable());
+    EXPECT_FALSE(empty(buff));
 
     Block b = buff.data();
 
-    EXPECT_FALSE(b.empty());
     EXPECT_NE(nullptr, b.p());
     EXPECT_EQ(2, b.s());
 
@@ -463,8 +426,7 @@ TEST(Any_buffer_test, creation_via_create_function)
     using Buffer_type = Allocated_buffer<Malloc_allocator>;
 
     Buffer_type empty_buffer = create<Buffer_type>().value();
-    EXPECT_FALSE(empty_buffer.usable());
-    EXPECT_TRUE(empty_buffer.data().empty());
+    EXPECT_TRUE(empty(empty_buffer));
 
     Buffer_error buffer_with_invalid_size = create<Buffer_type>(-1).error();
     EXPECT_EQ(Buffer_error::invalid_size, buffer_with_invalid_size);
@@ -474,13 +436,13 @@ TEST(Any_buffer_test, creation_via_create_function)
     EXPECT_EQ(Buffer_error::unknown, buffer_with_unknown_failure);
 
     Buffer_type buffer_with_no_data = create<Buffer_type>(2).value();
-    EXPECT_TRUE(buffer_with_no_data.usable());
+    EXPECT_FALSE(empty(buffer_with_no_data));
     EXPECT_EQ(2, buffer_with_no_data.data().s());
     EXPECT_NE(nullptr, buffer_with_no_data.data().p());
 
     int data[]{ 150, 151 };
     Typed_buffer<int, Buffer_type> buffer_with_data = create<Typed_buffer<int, Buffer_type>>(2, data).value();
-    EXPECT_TRUE(buffer_with_data.usable());
+    EXPECT_FALSE(empty(buffer_with_data));
     EXPECT_EQ(2, buffer_with_data.data().s());
     EXPECT_NE(nullptr, buffer_with_data.data().p());
     EXPECT_EQ(150, buffer_with_data.data().p()[0]); EXPECT_EQ(151, buffer_with_data.data().p()[1]);
