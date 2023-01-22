@@ -492,13 +492,13 @@ namespace memoc {
         // Allocators API
 
         template <Allocator T>
-        [[nodiscard]] T create() noexcept
+        [[nodiscard]] inline T create() noexcept
         {
             return T();
         }
 
         template <Allocator T>
-        [[nodiscard]] erroc::Expected<decltype(T().allocate(0)), Allocator_error> allocate(T& allocator, typename decltype(T().allocate(0))::Size_type size) noexcept
+        [[nodiscard]] inline erroc::Expected<decltype(T().allocate(0)), Allocator_error> allocate(T& allocator, typename decltype(T().allocate(0))::Size_type size) noexcept
         {
             if (size < 0) {
                 return erroc::Unexpected(Allocator_error::invalid_size);
@@ -516,13 +516,13 @@ namespace memoc {
         }
 
         template <Allocator T>
-        void deallocate(T& allocator, decltype(T().allocate(0))& block) noexcept
+        inline void deallocate(T& allocator, decltype(T().allocate(0))& block) noexcept
         {
             allocator.deallocate(&block);
         }
 
         template <Allocator T>
-        [[nodiscard]] bool owns(const T& allocator, const decltype(T().allocate(0))& block) noexcept
+        [[nodiscard]] inline bool owns(const T& allocator, const decltype(T().allocate(0))& block) noexcept
         {
             return allocator.owns(block);
         }
