@@ -10,13 +10,13 @@
 namespace memoc {
     namespace details {
         template <std::uint64_t U>
-        constexpr std::int64_t safe_64_unsigned_to_signed_cast() noexcept
+        [[nodiscard]] constexpr std::int64_t safe_64_unsigned_to_signed_cast() noexcept
         {
             static_assert(U <= std::numeric_limits<std::int64_t>::max(), "unsgined value is too large for casting to its unsgined version");
             return static_cast<std::int64_t>(U);
         }
 
-        constexpr std::int64_t safe_64_unsigned_to_signed_cast(std::uint64_t u) noexcept
+        [[nodiscard]] constexpr std::int64_t safe_64_unsigned_to_signed_cast(std::uint64_t u) noexcept
         {
             assert((u <= std::numeric_limits<std::int64_t>::max()) && "unsgined value is too large for casting to its unsgined version");
             return static_cast<std::int64_t>(u);
@@ -49,12 +49,12 @@ namespace memoc {
             {
             }
 
-            Size_type s() const noexcept
+            [[nodiscard]] Size_type s() const noexcept
             {
                 return s_;
             }
 
-            Const_pointer p() const noexcept
+            [[nodiscard]] Const_pointer p() const noexcept
             {
                 return p_;
             }
@@ -64,7 +64,7 @@ namespace memoc {
                 return p_;
             }
 
-            const Type& operator[](std::int64_t offset) const noexcept
+            [[nodiscard]] const Type& operator[](std::int64_t offset) const noexcept
             {
                 return p_[offset];
             }
@@ -86,7 +86,7 @@ namespace memoc {
         }
 
         template <typename T1, typename T2>
-        inline bool operator==(const Block<T1>& lhs, const Block<T2>& rhs) noexcept
+        [[nodiscard]] inline bool operator==(const Block<T1>& lhs, const Block<T2>& rhs) noexcept
         {
             if (empty(lhs) && empty(rhs)) {
                 return true;
@@ -168,12 +168,12 @@ namespace memoc {
             {
             }
 
-            Size_type s() const noexcept
+            [[nodiscard]] Size_type s() const noexcept
             {
                 return s_;
             }
 
-            Const_pointer p() const noexcept
+            [[nodiscard]] Const_pointer p() const noexcept
             {
                 return p_;
             }
@@ -188,7 +188,7 @@ namespace memoc {
             Pointer p_{ nullptr };
         };
 
-        inline bool operator==(const Block<void>& lhs, const Block<void>& rhs) noexcept
+        [[nodiscard]] inline bool operator==(const Block<void>& lhs, const Block<void>& rhs) noexcept
         {
             if (empty(lhs) && empty(rhs)) {
                 return true;
@@ -213,13 +213,13 @@ namespace memoc {
         }
 
         template <typename T>
-        inline bool operator==(const Block<void>& lhs, const Block<T>& rhs) noexcept
+        [[nodiscard]] inline bool operator==(const Block<void>& lhs, const Block<T>& rhs) noexcept
         {
             return operator==(lhs, Block<void>{MEMOC_SSIZEOF(T)* rhs.s(), rhs.p()});
         }
 
         template <typename T>
-        inline bool operator==(const Block<T>& lhs, const Block<void>& rhs) noexcept
+        [[nodiscard]] inline bool operator==(const Block<T>& lhs, const Block<void>& rhs) noexcept
         {
             return operator==(Block<void>{MEMOC_SSIZEOF(T)* lhs.s(), lhs.p()}, rhs);
         }
