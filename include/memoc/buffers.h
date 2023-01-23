@@ -33,7 +33,7 @@ namespace memoc {
             requires (T t, std::int64_t size)
         {
             {T(size, nullptr)} noexcept;
-            {t.data()} noexcept -> std::same_as<Block<typename decltype(t.data())::Type>>;
+            {t.block()} noexcept -> std::same_as<Block<typename decltype(t.block())::Type>>;
         };
 
         template <std::int64_t Stack_size = 2>
@@ -96,7 +96,7 @@ namespace memoc {
             }
             virtual ~Stack_buffer() = default;
 
-            [[nodiscard]] Block<void> data() const noexcept
+            [[nodiscard]] Block<void> block() const noexcept
             {
                 return data_;
             }
@@ -189,7 +189,7 @@ namespace memoc {
                 }
             }
 
-            [[nodiscard]] Block<void> data() const noexcept
+            [[nodiscard]] Block<void> block() const noexcept
             {
                 return data_;
             }
@@ -209,7 +209,7 @@ namespace memoc {
             Fallback_buffer(std::int64_t size = 0, const void* data = nullptr) noexcept
                 : Primary(size, data)
             {
-                if (empty(Primary::data())) {
+                if (empty(Primary::block())) {
                     *(dynamic_cast<Fallback*>(this)) = Fallback(size, data);
                 }
             }
@@ -238,12 +238,12 @@ namespace memoc {
             }
             virtual ~Fallback_buffer() = default;
 
-            [[nodiscard]] Block<void> data() const noexcept
+            [[nodiscard]] Block<void> block() const noexcept
             {
-                if (!empty(Primary::data())) {
-                    return Primary::data();
+                if (!empty(Primary::block())) {
+                    return Primary::block();
                 }
-                return Fallback::data();
+                return Fallback::block();
             }
         };
 
@@ -258,11 +258,11 @@ namespace memoc {
             using Remove_internal_pointer = typename std::remove_pointer_t<U>;
         public:
             Typed_buffer(std::int64_t size = 0, const T* data = nullptr) noexcept
-                : Internal_buffer((size* MEMOC_SSIZEOF(Replace_void<T, std::uint8_t>)) / MEMOC_SSIZEOF(Replace_void<Remove_internal_pointer<decltype(Internal_buffer::data().p())>, std::uint8_t>), data)
+                : Internal_buffer((size* MEMOC_SSIZEOF(Replace_void<T, std::uint8_t>)) / MEMOC_SSIZEOF(Replace_void<Remove_internal_pointer<decltype(Internal_buffer::block().p())>, std::uint8_t>), data)
             {
                 // For non-fundamental type an object construction is required.
                 if (!std::is_fundamental_v<T>) {
-                    Block<T> b{ this->data() };
+                    Block<T> b{ this->block() };
                     for (std::int64_t i = 0; i < b.s(); ++i) {
                         memoc::details::construct_at<T>(reinterpret_cast<T*>(&(b[i])));
                     }
@@ -297,17 +297,17 @@ namespace memoc {
             }
             virtual ~Typed_buffer() = default;
 
-            [[nodiscard]] Block<T> data() const noexcept
+            [[nodiscard]] Block<T> block() const noexcept
             {
                 return Block<T>{
-                    (Internal_buffer::data().s() * MEMOC_SSIZEOF(Replace_void<Remove_internal_pointer<decltype(Internal_buffer::data().p())>, std::uint8_t>)) / MEMOC_SSIZEOF(Replace_void<T, std::uint8_t>),
-                    reinterpret_cast<T*>(Internal_buffer::data().p())
+                    (Internal_buffer::block().s() * MEMOC_SSIZEOF(Replace_void<Remove_internal_pointer<decltype(Internal_buffer::block().p())>, std::uint8_t>)) / MEMOC_SSIZEOF(Replace_void<T, std::uint8_t>),
+                    reinterpret_cast<T*>(Internal_buffer::block().p())
                 };
             }
         };
 
         template <Buffer T, typename U = void>
-        [[nodiscard]] inline erroc::Expected<T, Buffer_error> create(std::int64_t size = 0, const typename decltype(T().data())::Type* data = nullptr)
+        [[nodiscard]] inline erroc::Expected<T, Buffer_error> create(std::int64_t size = 0, const typename decltype(T().block())::Type* data = nullptr)
         {
             if (size < 0) {
                 return erroc::Unexpected(Buffer_error::invalid_size);
@@ -318,7 +318,7 @@ namespace memoc {
             }
 
             T buff(size, data);
-            if (empty(buff.data())) {
+            if (empty(buff.block())) {
                 return erroc::Unexpected(Buffer_error::unknown);
             }
             return buff;
@@ -327,7 +327,28 @@ namespace memoc {
         template <Buffer T>
         [[nodiscard]] inline bool empty(const T& buffer) noexcept
         {
-            return empty(buffer.data());
+            return empty(buffer.block());
+        }
+
+        template <Buffer T>
+        [[nodiscard]] inline auto size(const T& buffer) noexcept
+            -> decltype(buffer.block().s())
+        {
+            return buffer.block().s();
+        }
+
+        template <Buffer T>
+        [[nodiscard]] inline auto block(const T& buffer) noexcept
+            -> decltype(buffer.block())
+        {
+            return buffer.block();
+        }
+
+        template <Buffer T>
+        [[nodiscard]] inline auto data(const T& buffer) noexcept
+            -> decltype(buffer.block().p())
+        {
+            return buffer.block().p();
         }
     }
 
@@ -338,6 +359,9 @@ namespace memoc {
     using details::Typed_buffer;
     using details::create;
     using details::empty;
+    using details::size;
+    using details::block;
+    using details::data;
 }
 
 #endif // MEMOC_BUFFERS_H
