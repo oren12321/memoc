@@ -49,6 +49,11 @@ namespace memoc {
             {
             }
 
+            [[nodiscard]] bool empty() const noexcept
+            {
+                return !s_ && !p_;
+            }
+
             [[nodiscard]] Size_type size() const noexcept
             {
                 return s_;
@@ -77,7 +82,7 @@ namespace memoc {
         template <typename T>
         [[nodiscard]] inline bool empty(const Block<T>& b) noexcept
         {
-            return !data(b) && !size(b);
+            return b.empty();
         }
 
         template <typename T>
@@ -173,6 +178,11 @@ namespace memoc {
             Block(Size_type s = 0, Const_pointer p = nullptr) noexcept
                 : s_(p ? (s > 0 ? s : 0) : 0), p_(s > 0 ? const_cast<Pointer>(p) : nullptr)
             {
+            }
+
+            [[nodiscard]] bool empty() const noexcept
+            {
+                return !s_ && !p_;
             }
 
             [[nodiscard]] Size_type size() const noexcept
