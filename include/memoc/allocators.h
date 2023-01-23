@@ -107,7 +107,7 @@ namespace memoc {
             void deallocate(Block<void>* b) noexcept
             {
                 std::free(b->p());
-                b->clear();
+                *b = {};
             }
 
             [[nodiscard]] bool owns(Block<void> b) const noexcept
@@ -165,7 +165,7 @@ namespace memoc {
                 if (b->p() == p_ - align(b->s())) {
                     p_ = reinterpret_cast<std::uint8_t*>(b->p());
                 }
-                b->clear();
+                *b = {};
             }
 
             [[nodiscard]] bool owns(Block<void> b) const noexcept
@@ -252,14 +252,14 @@ namespace memoc {
                 {
                     if (b->s() < Min_size || b->s() > Max_size || list_size_ > Max_list_size) {
                         Block<void> nb{ Max_size, b->p() };
-                        b->clear();
+                        *b = {};
                         return Internal_allocator::deallocate(&nb);
                     }
                     auto node = reinterpret_cast<Node*>(b->p());
                     node->next = root_;
                     root_ = node;
                     ++list_size_;
-                    b->clear();
+                    *b = {};
                 }
 
                 [[nodiscard]] bool owns(Block<void> b) const noexcept

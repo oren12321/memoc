@@ -49,12 +49,6 @@ namespace memoc {
             {
             }
 
-            void clear() noexcept
-            {
-                p_ = nullptr;
-                s_ = 0;
-            }
-
             Size_type s() const noexcept
             {
                 return s_;
@@ -172,12 +166,6 @@ namespace memoc {
             Block(Size_type s = 0, Const_pointer p = nullptr) noexcept
                 : s_(p ? (s > 0 ? s : 0) : 0), p_(s > 0 ? const_cast<Pointer>(p) : nullptr)
             {
-            }
-
-            void clear() noexcept
-            {
-                p_ = nullptr;
-                s_ = 0;
             }
 
             Size_type s() const noexcept

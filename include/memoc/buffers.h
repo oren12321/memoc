@@ -83,7 +83,7 @@ namespace memoc {
             Stack_buffer(Stack_buffer&& other) noexcept
                 : Stack_buffer(std::cref(other))
             {
-                other.data_.clear();
+                other.data_ = {};
             }
             Stack_buffer& operator=(Stack_buffer&& other) noexcept
             {
@@ -91,7 +91,7 @@ namespace memoc {
                     return *this;
                 }
                 operator=(std::cref(other));
-                other.data_.clear();
+                other.data_ = {};
                 return *this;
             }
             virtual ~Stack_buffer() = default;
@@ -160,7 +160,7 @@ namespace memoc {
                 data_ = other.data_;
 
                 other.size_ = 0;
-                other.data_.clear();
+                other.data_ = {};
             }
             Allocated_buffer& operator=(Allocated_buffer&& other) noexcept
             {
@@ -178,7 +178,7 @@ namespace memoc {
                 data_ = other.data_;
 
                 other.size_ = 0;
-                other.data_.clear();
+                other.data_ = {};
 
                 return *this;
             }
