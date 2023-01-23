@@ -376,19 +376,19 @@ TEST(Typed_buffer_test, can_be_initialized_with_fundamental_data_type)
 {
     using namespace memoc;
 
-    const int data[2] = {1, 2};
+    const int values[2] = {1, 2};
 
-    Typed_buffer<int, Allocated_buffer<Malloc_allocator>> buff{2, data};
+    Typed_buffer<int, Allocated_buffer<Malloc_allocator>> buff{2, values };
 
     EXPECT_FALSE(empty(buff));
 
     Block b = block(buff);
 
-    EXPECT_NE(nullptr, b.p());
-    EXPECT_EQ(2, b.s());
+    EXPECT_NE(nullptr, data(b));
+    EXPECT_EQ(2, size(b));
 
-    EXPECT_EQ(data[0], b.p()[0]);
-    EXPECT_EQ(data[1], b.p()[1]);
+    EXPECT_EQ(values[0], data(b)[0]);
+    EXPECT_EQ(values[1], data(b)[1]);
 }
 
 TEST(Typed_buffer_test, can_be_initialized_with_custom_data_type)
@@ -400,21 +400,21 @@ TEST(Typed_buffer_test, can_be_initialized_with_custom_data_type)
         float b = 2.2;
     };
 
-    S data[2];
-    data[0] = S{};
-    data[1] = S{ 2, 4.4 };
+    S s[2];
+    s[0] = S{};
+    s[1] = S{ 2, 4.4 };
 
-    Typed_buffer<S, Allocated_buffer<Malloc_allocator>> buff{ 2, data };
+    Typed_buffer<S, Allocated_buffer<Malloc_allocator>> buff{ 2, s };
 
     EXPECT_FALSE(empty(buff));
 
     Block b = block(buff);
 
-    EXPECT_NE(nullptr, b.p());
-    EXPECT_EQ(2, b.s());
+    EXPECT_NE(nullptr, data(b));
+    EXPECT_EQ(2, size(b));
 
-    EXPECT_EQ(data[0].a, b.p()[0].a); EXPECT_EQ(data[0].b, b.p()[0].b);
-    EXPECT_EQ(data[1].a, b.p()[1].a); EXPECT_EQ(data[1].b, b.p()[1].b);
+    EXPECT_EQ(s[0].a, data(b)[0].a); EXPECT_EQ(s[0].b, data(b)[0].b);
+    EXPECT_EQ(s[1].a, data(b)[1].a); EXPECT_EQ(s[1].b, data(b)[1].b);
 }
 
 // Buffer API tests

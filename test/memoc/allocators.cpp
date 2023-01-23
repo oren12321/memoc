@@ -33,8 +33,8 @@ TEST_F(Malloc_allocator_test, allocates_and_deallocates_memory_successfully)
     const Block<void>::Size_type s{ 1 };
 
     Block<void> b = allocator_.allocate(s);
-    EXPECT_NE(nullptr, b.p());
-    EXPECT_EQ(1, b.s());
+    EXPECT_NE(nullptr, data(b));
+    EXPECT_EQ(1, size(b));
 
     EXPECT_TRUE(allocator_.owns(b));
 
@@ -66,8 +66,8 @@ TEST_F(Stack_allocator_test, allocates_and_deallocates_an_arbitrary_in_range_mem
     const Block<void>::Size_type size_in_range{ size_ / 2 };
 
     Block<void> b = allocator_.allocate(size_in_range);
-    EXPECT_NE(nullptr, b.p());
-    EXPECT_EQ(size_in_range, b.s());
+    EXPECT_NE(nullptr, data(b));
+    EXPECT_EQ(size_in_range, size(b));
 
     EXPECT_TRUE(allocator_.owns(b));
 
@@ -80,8 +80,8 @@ TEST_F(Stack_allocator_test, allocates_and_deallocates_all_available_memory_succ
     using namespace memoc;
 
     Block<void> b = allocator_.allocate(size_);
-    EXPECT_NE(nullptr, b.p());
-    EXPECT_EQ(size_, b.s());
+    EXPECT_NE(nullptr, data(b));
+    EXPECT_EQ(size_, size(b));
 
     EXPECT_TRUE(allocator_.owns(b));
 
@@ -96,8 +96,8 @@ TEST_F(Stack_allocator_test, reuses_the_same_memory_if_deallocating_between_two_
     const Block<void>::Size_type size_in_range{ size_ / 2 };
 
     Block<void> b1 = allocator_.allocate(size_in_range);
-    EXPECT_NE(nullptr, b1.p());
-    EXPECT_EQ(size_in_range, b1.s());
+    EXPECT_NE(nullptr, data(b1));
+    EXPECT_EQ(size_in_range, size(b1));
     EXPECT_TRUE(allocator_.owns(b1));
 
     Block<void> b1_copy{ b1 };
@@ -106,11 +106,11 @@ TEST_F(Stack_allocator_test, reuses_the_same_memory_if_deallocating_between_two_
     EXPECT_TRUE(empty(b1));
 
     Block<void> b2 = allocator_.allocate(size_in_range);
-    EXPECT_NE(nullptr, b2.p());
-    EXPECT_EQ(size_in_range, b2.s());
+    EXPECT_NE(nullptr, data(b2));
+    EXPECT_EQ(size_in_range, size(b2));
     EXPECT_TRUE(allocator_.owns(b2));
-    EXPECT_EQ(b1_copy.p(), b2.p());
-    EXPECT_EQ(b1_copy.s(), b2.s());
+    EXPECT_EQ(data(b1_copy), data(b2));
+    EXPECT_EQ(size(b1_copy), size(b2));
 
     allocator_.deallocate(&b2);
     EXPECT_TRUE(empty(b2));
@@ -135,9 +135,9 @@ TEST_F(Stack_allocator_test, is_copyable)
 
     EXPECT_FALSE(empty(b1));
     EXPECT_FALSE(empty(b2));
-    EXPECT_EQ(size_, b1.s());
-    EXPECT_EQ(size_, b2.s());
-    EXPECT_NE(b1.p(), b2.p());
+    EXPECT_EQ(size_, size(b1));
+    EXPECT_EQ(size_, size(b2));
+    EXPECT_NE(data(b1), data(b2));
 
     Allocator copy2{};
     copy2 = allocator_;
@@ -146,9 +146,9 @@ TEST_F(Stack_allocator_test, is_copyable)
 
     EXPECT_FALSE(empty(b1));
     EXPECT_FALSE(empty(b3));
-    EXPECT_EQ(size_, b1.s());
-    EXPECT_EQ(size_, b3.s());
-    EXPECT_NE(b1.p(), b3.p());
+    EXPECT_EQ(size_, size(b1));
+    EXPECT_EQ(size_, size(b3));
+    EXPECT_NE(data(b1), data(b3));
 }
 
 TEST_F(Stack_allocator_test, is_movealbe)
@@ -162,8 +162,8 @@ TEST_F(Stack_allocator_test, is_movealbe)
 
     EXPECT_TRUE(empty(b1));
     EXPECT_FALSE(empty(b2));
-    EXPECT_EQ(size_, b2.s());
-    EXPECT_NE(nullptr, b2.p());
+    EXPECT_EQ(size_, size(b2));
+    EXPECT_NE(nullptr, data(b2));
 
     Allocator moved2{};
     moved2 = std::move(moved1);
@@ -173,8 +173,8 @@ TEST_F(Stack_allocator_test, is_movealbe)
 
     EXPECT_TRUE(empty(b3));
     EXPECT_FALSE(empty(b4));
-    EXPECT_EQ(size_, b4.s());
-    EXPECT_NE(nullptr, b4.p());
+    EXPECT_EQ(size_, size(b4));
+    EXPECT_NE(nullptr, data(b4));
 }
 
 // Free_list_allocator tests
@@ -204,8 +204,8 @@ TEST_F(Free_list_allocator_test, allocates_and_deallocates_an_arbitrary_not_in_r
     const Block<void>::Size_type size_out_of_range{ max_size_ + 1 };
 
     Block<void> b = allocator_.allocate(size_out_of_range);
-    EXPECT_NE(nullptr, b.p());
-    EXPECT_EQ(size_out_of_range, b.s());
+    EXPECT_NE(nullptr, data(b));
+    EXPECT_EQ(size_out_of_range, size(b));
 
     EXPECT_TRUE(allocator_.owns(b));
 
@@ -224,8 +224,8 @@ TEST_F(Free_list_allocator_test, reuses_the_same_memory_if_deallocating_in_memor
     for (std::int64_t i = 0; i < max_list_size_; ++i)
     {
         Block<void> b = allocator_.allocate(size_in_range);
-        EXPECT_NE(nullptr, b.p());
-        EXPECT_EQ(size_in_range, b.s());
+        EXPECT_NE(nullptr, data(b));
+        EXPECT_EQ(size_in_range, size(b));
         EXPECT_TRUE(allocator_.owns(b));
 
         saved_blocks[i] = b;
@@ -241,11 +241,11 @@ TEST_F(Free_list_allocator_test, reuses_the_same_memory_if_deallocating_in_memor
     for (const auto& saved_block : saved_blocks)
     {
         Block<void> b = allocator_.allocate(size_in_range);
-        EXPECT_NE(nullptr, b.p());
-        EXPECT_EQ(size_in_range, b.s());
+        EXPECT_NE(nullptr, data(b));
+        EXPECT_EQ(size_in_range, size(b));
         EXPECT_TRUE(allocator_.owns(b));
-        EXPECT_EQ(saved_block.p(), b.p());
-        EXPECT_EQ(saved_block.s(), b.s());
+        EXPECT_EQ(data(saved_block), data(b));
+        EXPECT_EQ(size(saved_block), size(b));
     }
 
     // Test cleanup since free list does not actually release memory
@@ -270,9 +270,9 @@ TEST_F(Free_list_allocator_test, is_copyable)
 
     EXPECT_FALSE(empty(b1));
     EXPECT_FALSE(empty(b2));
-    EXPECT_EQ(size_in_range, b1.s());
-    EXPECT_EQ(size_in_range, b2.s());
-    EXPECT_NE(b1.p(), b2.p());
+    EXPECT_EQ(size_in_range, size(b1));
+    EXPECT_EQ(size_in_range, size(b2));
+    EXPECT_NE(data(b1), data(b2));
 
     Block<void> b1_copy = b1;
     allocator_.deallocate(&b1);
@@ -281,10 +281,10 @@ TEST_F(Free_list_allocator_test, is_copyable)
     copy1.deallocate(&b2);
     Block<void> b4 = copy1.allocate(size_in_range);
 
-    EXPECT_EQ(b1_copy.s(), b3.s());
-    EXPECT_EQ(b1_copy.p(), b3.p());
-    EXPECT_EQ(b2_copy.s(), b4.s());
-    EXPECT_EQ(b2_copy.p(), b4.p());
+    EXPECT_EQ(size(b1_copy), size(b3));
+    EXPECT_EQ(data(b1_copy), data(b3));
+    EXPECT_EQ(size(b2_copy), size(b4));
+    EXPECT_EQ(data(b2_copy), data(b4));
 
     allocator_.deallocate(&b3);
     copy1.deallocate(&b4);
@@ -299,9 +299,9 @@ TEST_F(Free_list_allocator_test, is_copyable)
 
     EXPECT_FALSE(empty(b5));
     EXPECT_FALSE(empty(b6));
-    EXPECT_EQ(size_in_range, b5.s());
-    EXPECT_EQ(size_in_range, b6.s());
-    EXPECT_NE(b5.p(), b6.p());
+    EXPECT_EQ(size_in_range, size(b5));
+    EXPECT_EQ(size_in_range, size(b6));
+    EXPECT_NE(data(b5), data(b6));
 
     Block<void> b5_copy = b5;
     allocator_.deallocate(&b5);
@@ -310,10 +310,10 @@ TEST_F(Free_list_allocator_test, is_copyable)
     copy2.deallocate(&b6);
     Block<void> b8 = copy2.allocate(size_in_range);
 
-    EXPECT_EQ(b5_copy.s(), b7.s());
-    EXPECT_EQ(b5_copy.p(), b7.p());
-    EXPECT_EQ(b6_copy.s(), b8.s());
-    EXPECT_EQ(b6_copy.p(), b8.p());
+    EXPECT_EQ(size(b5_copy), size(b7));
+    EXPECT_EQ(data(b5_copy), data(b7));
+    EXPECT_EQ(size(b6_copy), size(b8));
+    EXPECT_EQ(data(b6_copy), data(b8));
 
     allocator_.deallocate(&b7);
     copy2.deallocate(&b8);
@@ -331,8 +331,8 @@ TEST_F(Free_list_allocator_test, is_movealbe)
     Block<void> b1_copy = b1;
 
     EXPECT_FALSE(empty(b1));
-    EXPECT_EQ(size_in_range, b1.s());
-    EXPECT_NE(nullptr, b1.p());
+    EXPECT_EQ(size_in_range, size(b1));
+    EXPECT_NE(nullptr, data(b1));
 
     allocator_.deallocate(&b1);
     Allocator moved1{ std::move(allocator_) };
@@ -341,11 +341,11 @@ TEST_F(Free_list_allocator_test, is_movealbe)
     Block<void> b3 = moved1.allocate(size_in_range);
 
     EXPECT_FALSE(empty(b2));
-    EXPECT_EQ(b1_copy.s(), b2.s());
-    EXPECT_NE(b1_copy.p(), b2.p());
+    EXPECT_EQ(size(b1_copy), size(b2));
+    EXPECT_NE(data(b1_copy), data(b2));
     EXPECT_FALSE(empty(b3));
-    EXPECT_EQ(size_in_range, b3.s());
-    EXPECT_NE(nullptr, b3.p());
+    EXPECT_EQ(size_in_range, size(b3));
+    EXPECT_NE(nullptr, data(b3));
 
     allocator_.deallocate(&b2);
     allocator_.deallocate(&b3);
@@ -358,8 +358,8 @@ TEST_F(Free_list_allocator_test, is_movealbe)
     Block<void> b4_copy = b4;
 
     EXPECT_FALSE(empty(b4));
-    EXPECT_EQ(size_in_range, b4.s());
-    EXPECT_NE(nullptr, b4.p());
+    EXPECT_EQ(size_in_range, size(b4));
+    EXPECT_NE(nullptr, data(b4));
 
     allocator_.deallocate(&b4);
     moved2 = std::move(moved1);
@@ -368,11 +368,11 @@ TEST_F(Free_list_allocator_test, is_movealbe)
     Block<void> b6 = moved2.allocate(size_in_range);
 
     EXPECT_FALSE(empty(b5));
-    EXPECT_EQ(b4_copy.s(), b5.s());
-    EXPECT_NE(b4_copy.p(), b5.p());
+    EXPECT_EQ(size(b4_copy), size(b5));
+    EXPECT_NE(data(b4_copy), data(b5));
     EXPECT_FALSE(empty(b6));
-    EXPECT_EQ(size_in_range, b6.s());
-    EXPECT_NE(nullptr, b6.p());
+    EXPECT_EQ(size_in_range, size(b6));
+    EXPECT_NE(nullptr, data(b6));
 
     allocator_.deallocate(&b5);
     allocator_.deallocate(&b6);
@@ -577,7 +577,7 @@ TEST_F(Shared_allocator_test, saves_state_between_instances)
     Allocator_default a2{};
     Block<void> b2 = a2.allocate(aligned_size);
     
-    EXPECT_EQ(reinterpret_cast<std::uint8_t*>(b1.p()) + aligned_size, b2.p());
+    EXPECT_EQ(reinterpret_cast<std::uint8_t*>(data(b1)) + aligned_size, data(b2));
 }
 
 TEST_F(Shared_allocator_test, not_saves_state_between_instances_when_id_is_different)
@@ -592,7 +592,7 @@ TEST_F(Shared_allocator_test, not_saves_state_between_instances_when_id_is_diffe
     Allocator_1 a2{};
     Block<void> b2 = a2.allocate(aligned_size);
 
-    EXPECT_NE(reinterpret_cast<std::uint8_t*>(b1.p()) + aligned_size, b2.p());
+    EXPECT_NE(reinterpret_cast<std::uint8_t*>(data(b1)) + aligned_size, data(b2));
 }
 
 // Fallback_allocator tests
@@ -615,16 +615,16 @@ TEST_F(Fallback_allocator_test, is_copyable)
     Block<void> b1 = copy1.allocate(size_);
 
     EXPECT_FALSE(empty(b1));
-    EXPECT_EQ(size_, b1.s());
-    EXPECT_NE(nullptr, b1.p());
+    EXPECT_EQ(size_, size(b1));
+    EXPECT_NE(nullptr, data(b1));
 
     Allocator copy2{};
     copy2 = allocator_;
     Block<void> b2 = copy2.allocate(size_);
 
     EXPECT_FALSE(empty(b2));
-    EXPECT_EQ(size_, b2.s());
-    EXPECT_NE(nullptr, b2.p());
+    EXPECT_EQ(size_, size(b2));
+    EXPECT_NE(nullptr, data(b2));
 }
 
 TEST_F(Fallback_allocator_test, is_moveable)
@@ -635,16 +635,16 @@ TEST_F(Fallback_allocator_test, is_moveable)
     Block<void> b1 = moved1.allocate(size_);
 
     EXPECT_FALSE(empty(b1));
-    EXPECT_EQ(size_, b1.s());
-    EXPECT_NE(nullptr, b1.p());
+    EXPECT_EQ(size_, size(b1));
+    EXPECT_NE(nullptr, data(b1));
 
     Allocator moved2{};
     moved2 = std::move(moved1);
     Block<void> b2 = moved2.allocate(size_);
 
     EXPECT_FALSE(empty(b2));
-    EXPECT_EQ(size_, b2.s());
-    EXPECT_NE(nullptr, b2.p());
+    EXPECT_EQ(size_, size(b2));
+    EXPECT_NE(nullptr, data(b2));
 }
 
 // Allocators API tests
@@ -662,8 +662,8 @@ TEST_F(Any_allocator_test, allocate_free_and_give_owning_indication_for_successf
     const Block<void>::Size_type s{ 1 };
 
     Block<void> b = allocate(allocator_, s).value();
-    EXPECT_NE(nullptr, b.p());
-    EXPECT_EQ(1, b.s());
+    EXPECT_NE(nullptr, data(b));
+    EXPECT_EQ(1, size(b));
 
     EXPECT_TRUE(owns(allocator_, b));
 

@@ -18,8 +18,8 @@ TEST(Block_test, is_empty_when_deafult_initalized_or_when_initialized_partially_
 
     Block<void> b{};
 
-    EXPECT_EQ(nullptr, b.p());
-    EXPECT_EQ(0, b.s());
+    EXPECT_EQ(nullptr, data(b));
+    EXPECT_EQ(0, size(b));
     EXPECT_TRUE(empty(b));
 
     const std::uint8_t buffer[]{ 0 };
@@ -32,15 +32,15 @@ TEST(Block_test, can_be_of_specific_type)
 {
     using namespace memoc;
 
-    const int data[]{ 1 };
-    Block<int> b{ 1, data };
+    const int values[]{ 1 };
+    Block<int> b{ 1, values };
 
-    EXPECT_NE(nullptr, b.p());
-    EXPECT_EQ(1, b.s());
+    EXPECT_NE(nullptr, data(b));
+    EXPECT_EQ(1, size(b));
     EXPECT_FALSE(empty(b));
     EXPECT_EQ(1, b[0]);
 
-    bool valid_buffer_type = std::is_same<int, typename std::remove_pointer<decltype(b.p())>::type>();
+    bool valid_buffer_type = std::is_same<int, typename std::remove_pointer<decltype(data(b))>::type>();
     EXPECT_TRUE(valid_buffer_type);
 }
 
@@ -81,37 +81,37 @@ TEST(Block_test, can_be_copied_to_another_block)
     Block<int> db1{ 5, data3 };
 
     EXPECT_EQ(4, copy(sb1, db1, 4));
-    EXPECT_EQ((Block<int>{4, db1.p()}), (Block<int>{4, sb1.p()}));
+    EXPECT_EQ((Block<int>{4, data(db1)}), (Block<int>{4, data(sb1)}));
 
     EXPECT_EQ(5, copy(sb2, db1));
     EXPECT_EQ(db1, sb1);
 
-    EXPECT_EQ(20, copy(Block<void>{MEMOC_SSIZEOF(double)* sb2.s(), sb2.p()}, db1));
+    EXPECT_EQ(20, copy(Block<void>{MEMOC_SSIZEOF(double)* size(sb2), data(sb2)}, db1));
     EXPECT_NE(db1, sb1);
-    EXPECT_NE(db1, (Block{ 5, sb2.p() }));
+    EXPECT_NE(db1, (Block{ 5, data(sb2) }));
 }
 
 TEST(Block_test, can_be_set_by_value)
 {
     using namespace memoc;
 
-    const int data[]{ 0, 0, 0, 0, 0 };
-    Block<int> b{ 5, data };
+    const int values[]{ 0, 0, 0, 0, 0 };
+    Block<int> b{ 5, values };
 
     EXPECT_EQ(5, set(b, 1));
     for (std::int64_t i = 0; i < 5; ++i) {
-        EXPECT_EQ(1, b.p()[i]);
+        EXPECT_EQ(1, data(b)[i]);
     }
 
     EXPECT_EQ(5, set(b, 0));
     for (std::int64_t i = 0; i < 5; ++i) {
-        EXPECT_EQ(0, b.p()[i]);
+        EXPECT_EQ(0, data(b)[i]);
     }
 
-    Block<void> bv{ b.s() * MEMOC_SSIZEOF(int), b.p() };
+    Block<void> bv{ size(b) * MEMOC_SSIZEOF(int), data(b) };
 
     EXPECT_EQ(20, set(bv, std::uint8_t{ 1 }));
     for (std::int64_t i = 0; i < 5; ++i) {
-        EXPECT_EQ(16843009, b.p()[i]);
+        EXPECT_EQ(16843009, data(b)[i]);
     }
 }

@@ -106,13 +106,13 @@ namespace memoc {
 
             void deallocate(Block<void>* b) noexcept
             {
-                std::free(b->p());
+                std::free(data(*b));
                 *b = {};
             }
 
             [[nodiscard]] bool owns(Block<void> b) const noexcept
             {
-                return b.p();
+                return data(b);
             }
         };
 
@@ -162,15 +162,15 @@ namespace memoc {
 
             void deallocate(Block<void>* b) noexcept
             {
-                if (b->p() == p_ - align(b->s())) {
-                    p_ = reinterpret_cast<std::uint8_t*>(b->p());
+                if (data(*b) == p_ - align(size(*b))) {
+                    p_ = reinterpret_cast<std::uint8_t*>(data(*b));
                 }
                 *b = {};
             }
 
             [[nodiscard]] bool owns(Block<void> b) const noexcept
             {
-                return b.p() >= d_ && b.p() < d_ + Size;
+                return data(b) >= d_ && data(b) < d_ + Size;
             }
 
         private:
@@ -244,18 +244,18 @@ namespace memoc {
                         --list_size_;
                         return b;
                     }
-                    Block<void> b = { s, Internal_allocator::allocate((s < Min_size || s > Max_size) ? s : Max_size).p() };
+                    Block<void> b = { s, data(Internal_allocator::allocate((s < Min_size || s > Max_size) ? s : Max_size)) };
                     return b;
                 }
 
                 void deallocate(Block<void>* b) noexcept
                 {
-                    if (b->s() < Min_size || b->s() > Max_size || list_size_ > Max_list_size) {
-                        Block<void> nb{ Max_size, b->p() };
+                    if (size(*b) < Min_size || size(*b) > Max_size || list_size_ > Max_list_size) {
+                        Block<void> nb{ Max_size, data(*b) };
                         *b = {};
                         return Internal_allocator::deallocate(&nb);
                     }
-                    auto node = reinterpret_cast<Node*>(b->p());
+                    auto node = reinterpret_cast<Node*>(data(*b));
                     node->next = root_;
                     root_ = node;
                     ++list_size_;
@@ -264,7 +264,7 @@ namespace memoc {
 
                 [[nodiscard]] bool owns(Block<void> b) const noexcept
                 {
-                    return (b.s() >= Min_size && b.s() <= Max_size) || Internal_allocator::owns(b);
+                    return (size(b) >= Min_size && size(b) <= Max_size) || Internal_allocator::owns(b);
                 }
             private:
                 struct Node {
@@ -315,7 +315,7 @@ namespace memoc {
                 if (empty(b)) {
                     throw std::bad_alloc{};
                 }
-                return reinterpret_cast<T*>(b.p());
+                return reinterpret_cast<T*>(data(b));
             }
 
             void deallocate(T* p, std::size_t n) noexcept
@@ -391,7 +391,7 @@ namespace memoc {
             {
                 Block<void> b = Internal_allocator::allocate(s);
                 if (!empty(b)) {
-                    add_record(b.p(), b.s());
+                    add_record(data(b), size(b));
                 }
                 return b;
             }
@@ -401,7 +401,7 @@ namespace memoc {
                 Block<void> bc{ *b };
                 Internal_allocator::deallocate(b);
                 if (empty(*b)) {
-                    add_record(bc.p(), -bc.s());
+                    add_record(data(bc), -size(bc));
                 }
             }
 
@@ -444,16 +444,16 @@ namespace memoc {
                 }
 
                 if (!root_) {
-                    root_ = reinterpret_cast<Record*>(b1.p());
+                    root_ = reinterpret_cast<Record*>(data(b1));
                     tail_ = root_;
                 }
                 else {
-                    tail_->next = reinterpret_cast<Record*>(b1.p());
+                    tail_->next = reinterpret_cast<Record*>(data(b1));
                     tail_ = tail_->next;
                 }
-                tail_->record_address = b1.p();
+                tail_->record_address = data(b1);
                 tail_->request_address = p;
-                tail_->amount = b1.s() + a;
+                tail_->amount = size(b1) + a;
                 tail_->time = time;
                 tail_->next = nullptr;
 
