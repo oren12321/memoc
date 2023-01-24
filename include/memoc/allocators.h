@@ -74,7 +74,7 @@ namespace memoc {
             [[nodiscard]] Block<void> allocate(Block<void>::Size_type s) noexcept
             {
                 Block<void> b = Primary::allocate(s);
-                if (empty(b)) {
+                if (b.empty()) {
                     b = Fallback::allocate(s);
                 }
                 return b;
@@ -106,13 +106,13 @@ namespace memoc {
 
             void deallocate(Block<void>* b) noexcept
             {
-                std::free(data(*b));
+                std::free(b->data());
                 *b = {};
             }
 
             [[nodiscard]] bool owns(Block<void> b) const noexcept
             {
-                return data(b);
+                return b.data();
             }
         };
 
@@ -162,15 +162,15 @@ namespace memoc {
 
             void deallocate(Block<void>* b) noexcept
             {
-                if (data(*b) == p_ - align(size(*b))) {
-                    p_ = reinterpret_cast<std::uint8_t*>(data(*b));
+                if (b->data() == p_ - align(b->size())) {
+                    p_ = reinterpret_cast<std::uint8_t*>(b->data());
                 }
                 *b = {};
             }
 
             [[nodiscard]] bool owns(Block<void> b) const noexcept
             {
-                return data(b) >= d_ && data(b) < d_ + Size;
+                return b.data() >= d_ && b.data() < d_ + Size;
             }
 
         private:
@@ -244,18 +244,18 @@ namespace memoc {
                         --list_size_;
                         return b;
                     }
-                    Block<void> b = { s, data(Internal_allocator::allocate((s < Min_size || s > Max_size) ? s : Max_size)) };
+                    Block<void> b = { s, Internal_allocator::allocate((s < Min_size || s > Max_size) ? s : Max_size).data() };
                     return b;
                 }
 
                 void deallocate(Block<void>* b) noexcept
                 {
-                    if (size(*b) < Min_size || size(*b) > Max_size || list_size_ > Max_list_size) {
-                        Block<void> nb{ Max_size, data(*b) };
+                    if (b->size() < Min_size || b->size() > Max_size || list_size_ > Max_list_size) {
+                        Block<void> nb{ Max_size, b->data() };
                         *b = {};
                         return Internal_allocator::deallocate(&nb);
                     }
-                    auto node = reinterpret_cast<Node*>(data(*b));
+                    auto node = reinterpret_cast<Node*>(b->data());
                     node->next = root_;
                     root_ = node;
                     ++list_size_;
@@ -264,7 +264,7 @@ namespace memoc {
 
                 [[nodiscard]] bool owns(Block<void> b) const noexcept
                 {
-                    return (size(b) >= Min_size && size(b) <= Max_size) || Internal_allocator::owns(b);
+                    return (b.size() >= Min_size && b.size() <= Max_size) || Internal_allocator::owns(b);
                 }
             private:
                 struct Node {
@@ -312,10 +312,10 @@ namespace memoc {
             [[nodiscard]] T* allocate(std::size_t n)
             {
                 Block<void> b = Internal_allocator::allocate(n * MEMOC_SSIZEOF(T));
-                if (empty(b)) {
+                if (b.empty()) {
                     throw std::bad_alloc{};
                 }
-                return reinterpret_cast<T*>(data(b));
+                return reinterpret_cast<T*>(b.data());
             }
 
             void deallocate(T* p, std::size_t n) noexcept
@@ -390,8 +390,8 @@ namespace memoc {
             [[nodiscard]] Block<void> allocate(Block<void>::Size_type s) noexcept
             {
                 Block<void> b = Internal_allocator::allocate(s);
-                if (!empty(b)) {
-                    add_record(data(b), size(b));
+                if (!b.empty()) {
+                    add_record(b.data(), b.size());
                 }
                 return b;
             }
@@ -400,8 +400,8 @@ namespace memoc {
             {
                 Block<void> bc{ *b };
                 Internal_allocator::deallocate(b);
-                if (empty(*b)) {
-                    add_record(data(bc), -size(bc));
+                if (b->empty()) {
+                    add_record(bc.data(), -bc.size());
                 }
             }
 
@@ -439,21 +439,21 @@ namespace memoc {
                 }
 
                 Block<void> b1 = Internal_allocator::allocate(MEMOC_SSIZEOF(Record));
-                if (empty(b1)) {
+                if (b1.empty()) {
                     return;
                 }
 
                 if (!root_) {
-                    root_ = reinterpret_cast<Record*>(data(b1));
+                    root_ = reinterpret_cast<Record*>(b1.data());
                     tail_ = root_;
                 }
                 else {
-                    tail_->next = reinterpret_cast<Record*>(data(b1));
+                    tail_->next = reinterpret_cast<Record*>(b1.data());
                     tail_ = tail_->next;
                 }
-                tail_->record_address = data(b1);
+                tail_->record_address = b1.data();
                 tail_->request_address = p;
-                tail_->amount = size(b1) + a;
+                tail_->amount = b1.size() + a;
                 tail_->time = time;
                 tail_->next = nullptr;
 
@@ -509,7 +509,7 @@ namespace memoc {
             }
 
             decltype(T().allocate(0)) b = allocator.allocate(size);
-            if (empty(b)) {
+            if (b.empty()) {
                 return erroc::Unexpected(Allocator_error::unknown);
             }
             return b;

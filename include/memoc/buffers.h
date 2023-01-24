@@ -45,30 +45,22 @@ namespace memoc {
         public:
             Stack_buffer(std::int64_t size = 0, const void* data = nullptr) noexcept
             {
-                if (size <= 0) {
+                if (size <= 0 || size > Stack_size) {
                     return;
                 }
-
-                if (size <= Stack_size) {
-                    size_ = size;
-                    data_ = { size, memory_ };
-                }
-
-                if (data && !data_.empty()) {
-                    const std::uint8_t* bytes = reinterpret_cast<const std::uint8_t*>(data);
-                    for (std::int64_t i = 0; i < size; ++i) {
-                        memory_[i] = bytes[i];
-                    }
-                }
+                data_ = { size, memory_ };
+                copy(Block<void>(size, data), data_);
             }
 
             Stack_buffer(const Stack_buffer& other) noexcept
             {
-                size_ = other.size_;
-                data_ = { other.data_.size(), memory_ };
-                for (std::int64_t i = 0; i < data_.size(); ++i) {
-                    memory_[i] = other.memory_[i];
+                if (other.empty()) {
+                    return;
                 }
+
+                const std::int64_t size{ other.size() };
+                data_ = { size, memory_ };
+                copy(Block<void>(size, other.memory_), data_);
             }
             Stack_buffer operator=(const Stack_buffer& other) noexcept
             {
@@ -76,11 +68,15 @@ namespace memoc {
                     return *this;
                 }
 
-                size_ = other.size_;
-                data_ = { other.data_.size(), memory_ };
-                for (std::int64_t i = 0; i < data_.size(); ++i) {
-                    memory_[i] = other.memory_[i];
+                const std::int64_t size{ other.size() };
+                data_ = { size, memory_ };
+
+                if (data_.empty()) {
+                    return *this;
                 }
+
+                copy(Block<void>(size, other.memory_), data_);
+
                 return *this;
             }
             Stack_buffer(Stack_buffer&& other) noexcept
@@ -120,7 +116,6 @@ namespace memoc {
             }
 
         private:
-            std::int64_t size_{ 0 };
             std::uint8_t memory_[Stack_size] = { 0 };
             Block<void> data_{};
         };
@@ -133,23 +128,18 @@ namespace memoc {
                 if (size <= 0) {
                     return;
                 }
-
-                size_ = size;
                 data_ = allocator_.allocate(size);
-
-                if (data && !data_.empty()) {
-                    copy(Block<void>(size, data), data_);
-                }
+                copy(Block<void>(size, data), data_);
             }
 
             Allocated_buffer(const Allocated_buffer& other) noexcept
             {
-                size_ = other.size_;
                 allocator_ = other.allocator_;
-                if (!other.data_.empty()) {
-                    data_ = allocator_.allocate(size_);
-                    copy(other.data_, data_);
+                if (other.empty()) {
+                    return;
                 }
+                data_ = allocator_.allocate(other.size());
+                copy(other.data_, data_);
             }
             Allocated_buffer operator=(const Allocated_buffer& other) noexcept
             {
@@ -157,27 +147,26 @@ namespace memoc {
                     return *this;
                 }
 
-                size_ = other.size_;
                 allocator_ = other.allocator_;
-                if (!other.data_.empty()) {
-                    allocator_.deallocate(&data_);
-                    data_ = allocator_.allocate(size_);
-                    copy(other.data_, data_);
+                allocator_.deallocate(&data_);
+
+                if (other.empty()) {
+                    return *this;
                 }
+                data_ = allocator_.allocate(other.size());
+                copy(other.data_, data_);
 
                 return *this;
             }
             Allocated_buffer(Allocated_buffer&& other) noexcept
             {
-                if (other.data_.empty()) {
+                if (other.empty()) {
                     return;
                 }
 
-                size_ = other.size_;
                 allocator_ = std::move(other.allocator_);
                 data_ = other.data_;
 
-                other.size_ = 0;
                 other.data_ = {};
             }
             Allocated_buffer& operator=(Allocated_buffer&& other) noexcept
@@ -186,16 +175,10 @@ namespace memoc {
                     return *this;
                 }
 
-                if (other.data_.empty()) {
-                    return *this;
-                }
-
-                size_ = other.size_;
                 allocator_ = std::move(other.allocator_);
                 allocator_.deallocate(&data_);
                 data_ = other.data_;
 
-                other.size_ = 0;
                 other.data_ = {};
 
                 return *this;
@@ -228,7 +211,6 @@ namespace memoc {
             }
 
         private:
-            std::int64_t size_{ 0 };
             Internal_allocator allocator_{};
             Block<void> data_{};
         };
@@ -312,8 +294,12 @@ namespace memoc {
             using Remove_internal_pointer = typename std::remove_pointer_t<U>;
         public:
             Typed_buffer(std::int64_t size = 0, const T* data = nullptr) noexcept
-                : Internal_buffer((size* MEMOC_SSIZEOF(Replace_void<T, std::uint8_t>)) / MEMOC_SSIZEOF(Replace_void<Remove_internal_pointer<decltype(memoc::data(Internal_buffer::block()))>, std::uint8_t>), data)
+                : Internal_buffer(size > 0 ? (size* MEMOC_SSIZEOF(Replace_void<T, std::uint8_t>)) / MEMOC_SSIZEOF(Replace_void<Remove_internal_pointer<decltype(memoc::data(Internal_buffer::block()))>, std::uint8_t>) : size, data)
             {
+                if (Internal_buffer::empty()) {
+                    return;
+                }
+
                 // For non-fundamental type an object construction is required.
                 if (!std::is_fundamental_v<T>) {
                     Block<T> b{ this->block() };
@@ -373,6 +359,8 @@ namespace memoc {
             {
                 return block().data();
             }
+
+
         };
 
         template <Buffer T, typename U = void>

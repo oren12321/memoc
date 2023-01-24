@@ -100,21 +100,21 @@ namespace memoc {
         template <typename T1, typename T2>
         [[nodiscard]] inline bool operator==(const Block<T1>& lhs, const Block<T2>& rhs) noexcept
         {
-            if (empty(lhs) && empty(rhs)) {
+            if (lhs.empty() && rhs.empty()) {
                 return true;
             }
 
-            if (size(lhs) != size(rhs)) {
+            if (lhs.size() != rhs.size()) {
                 return false;
             }
 
-            if (size(lhs) == 0) {
+            if (lhs.size() == 0) {
                 return false;
             }
 
             bool still_equal{ true };
-            for (std::int64_t i = 0; i < size(lhs) && still_equal; ++i) {
-                still_equal &= (data(lhs)[i] == data(rhs)[i]);
+            for (std::int64_t i = 0; i < lhs.size() && still_equal; ++i) {
+                still_equal &= (lhs.data()[i] == rhs.data()[i]);
             }
             return still_equal;
         }
@@ -122,14 +122,14 @@ namespace memoc {
         template <typename T1, typename T2>
         inline std::int64_t copy(const Block<T1>& src, Block<T2> dst, std::int64_t count) noexcept
         {
-            std::int64_t min_size{ size(src) > size(dst) ? size(dst) : size(src) };
+            std::int64_t min_size{ src.size() > dst.size() ? dst.size() : src.size() };
             std::int64_t num_copied{ count > min_size ? min_size : count };
             if (num_copied == 0) {
                 return 0;
             }
 
             for (std::int64_t i = 0; i < num_copied; ++i) {
-                data(dst)[i] = data(src)[i];
+                dst.data()[i] = src.data()[i];
             }
             return num_copied;
         }
@@ -137,19 +137,19 @@ namespace memoc {
         template <typename T1, typename T2>
         inline std::int64_t copy(const Block<T1>& src, Block<T2> dst) noexcept
         {
-            return copy(src, dst, size(src));
+            return copy(src, dst, src.size());
         }
 
         template <typename T1, typename T2>
         inline std::int64_t set(Block<T1> b, const T2& value, std::int64_t count) noexcept
         {
-            std::int64_t num_set{ count > size(b) ? size(b) : count };
+            std::int64_t num_set{ count > b.size() ? b.size() : count };
             if (num_set == 0) {
                 return 0;
             }
 
             for (std::int64_t i = 0; i < num_set; ++i) {
-                data(b)[i] = value;
+                b.data()[i] = value;
             }
             return num_set;
         }
@@ -157,7 +157,7 @@ namespace memoc {
         template <typename T1, typename T2>
         inline std::int64_t set(Block<T1> b, const T2& value) noexcept
         {
-            return set(b, value, size(b));
+            return set(b, value, b.size());
         }
 
         template <>
@@ -202,23 +202,23 @@ namespace memoc {
 
         [[nodiscard]] inline bool operator==(const Block<void>& lhs, const Block<void>& rhs) noexcept
         {
-            if (empty(lhs) && empty(rhs)) {
+            if (lhs.empty() && rhs.empty()) {
                 return true;
             }
 
-            if (size(lhs) != size(rhs)) {
+            if (lhs.size() != rhs.size()) {
                 return false;
             }
 
-            if (size(lhs) == 0) {
+            if (lhs.size() == 0) {
                 return false;
             }
 
-            const std::uint8_t* lhs_ptr{ reinterpret_cast<const std::uint8_t*>(data(lhs)) };
-            const std::uint8_t* rhs_ptr{ reinterpret_cast<const std::uint8_t*>(data(rhs)) };
+            const std::uint8_t* lhs_ptr{ reinterpret_cast<const std::uint8_t*>(lhs.data()) };
+            const std::uint8_t* rhs_ptr{ reinterpret_cast<const std::uint8_t*>(rhs.data()) };
 
             bool still_equal{ true };
-            for (std::int64_t i = 0; i < size(lhs) && still_equal; ++i) {
+            for (std::int64_t i = 0; i < lhs.size() && still_equal; ++i) {
                 still_equal &= (lhs_ptr[i] == rhs_ptr[i]);
             }
             return still_equal;
@@ -227,25 +227,25 @@ namespace memoc {
         template <typename T>
         [[nodiscard]] inline bool operator==(const Block<void>& lhs, const Block<T>& rhs) noexcept
         {
-            return operator==(lhs, Block<void>{MEMOC_SSIZEOF(T)* size(rhs), data(rhs)});
+            return operator==(lhs, Block<void>{MEMOC_SSIZEOF(T)* rhs.size(), rhs.data()});
         }
 
         template <typename T>
         [[nodiscard]] inline bool operator==(const Block<T>& lhs, const Block<void>& rhs) noexcept
         {
-            return operator==(Block<void>{MEMOC_SSIZEOF(T)* size(lhs), data(lhs)}, rhs);
+            return operator==(Block<void>{MEMOC_SSIZEOF(T)* lhs.size(), lhs.data()}, rhs);
         }
 
         inline std::int64_t copy(const Block<void>& src, Block<void> dst, std::int64_t bytes) noexcept
         {
-            std::int64_t min_size{ size(src) > size(dst) ? size(dst) : size(src) };
+            std::int64_t min_size{ src.size() > dst.size() ? dst.size() : src.size() };
             std::int64_t num_copied{ bytes > min_size ? min_size : bytes };
             if (num_copied == 0) {
                 return 0;
             }
 
-            const std::uint8_t* src_ptr{ reinterpret_cast<const std::uint8_t*>(data(src)) };
-            std::uint8_t* dst_ptr{ reinterpret_cast<std::uint8_t*>(data(dst)) };
+            const std::uint8_t* src_ptr{ reinterpret_cast<const std::uint8_t*>(src.data()) };
+            std::uint8_t* dst_ptr{ reinterpret_cast<std::uint8_t*>(dst.data()) };
 
             for (std::int64_t i = 0; i < num_copied; ++i) {
                 dst_ptr[i] = src_ptr[i];
@@ -255,43 +255,43 @@ namespace memoc {
 
         inline std::int64_t copy(const Block<void>& src, Block<void> dst) noexcept
         {
-            return copy(src, dst, size(src));
+            return copy(src, dst, src.size());
         }
 
         template <typename T>
         inline std::int64_t copy(const Block<void>& src, Block<T> dst, std::int64_t bytes) noexcept
         {
-            return copy(src, Block<void>{MEMOC_SSIZEOF(T)* size(dst), data(dst)}, bytes);
+            return copy(src, Block<void>{MEMOC_SSIZEOF(T)* dst.size(), dst.data()}, bytes);
         }
 
         template <typename T>
         inline std::int64_t copy(const Block<void>& src, Block<T> dst) noexcept
         {
-            return copy(src, Block<void>{MEMOC_SSIZEOF(T)* size(dst), data(dst)}, size(src));
+            return copy(src, Block<void>{MEMOC_SSIZEOF(T)* dst.size(), dst.data()}, src.size());
         }
 
         template <typename T>
         inline std::int64_t copy(const Block<T>& src, Block<void> dst, std::int64_t bytes) noexcept
         {
-            return copy(Block<void>{MEMOC_SSIZEOF(T)* size(src), data(src)}, dst, bytes);
+            return copy(Block<void>{MEMOC_SSIZEOF(T)* src.size(), src.data()}, dst, bytes);
         }
 
         template <typename T>
         inline std::int64_t copy(const Block<T>& src, Block<void> dst) noexcept
         {
-            return copy(Block<void>{MEMOC_SSIZEOF(T)* size(src), data(src)}, dst, MEMOC_SSIZEOF(T)* size(src));
+            return copy(Block<void>{MEMOC_SSIZEOF(T)* src.size(), src.data()}, dst, MEMOC_SSIZEOF(T)* src.size());
         }
 
         template <typename T>
         inline std::int64_t set(Block<void> b, const T& value, std::int64_t count) noexcept
         {
-            std::int64_t block_size_by_type{ size(b) / MEMOC_SSIZEOF(T) };
+            std::int64_t block_size_by_type{ b.size() / MEMOC_SSIZEOF(T) };
             std::int64_t num_set{ count > block_size_by_type ? block_size_by_type : count };
             if (num_set == 0) {
                 return 0;
             }
 
-            T* ptr{ reinterpret_cast<T*>(data(b)) };
+            T* ptr{ reinterpret_cast<T*>(b.data()) };
             for (std::int64_t i = 0; i < num_set; ++i) {
                 ptr[i] = value;
             }
@@ -301,7 +301,7 @@ namespace memoc {
         template <typename T>
         inline std::int64_t set(Block<void> b, const T& value) noexcept
         {
-            return set(b, value, size(b) / MEMOC_SSIZEOF(T));
+            return set(b, value, b.size() / MEMOC_SSIZEOF(T));
         }
     }
 
