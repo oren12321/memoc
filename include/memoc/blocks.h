@@ -118,6 +118,14 @@ namespace memoc {
         template <typename T1, typename T2>
         inline std::int64_t copy(const Block<T1>& src, Block<T2> dst, std::int64_t count) noexcept
         {
+            if (count == 0) {
+                return 0;
+            }
+
+            if (src.empty() || dst.empty()) {
+                return 0;
+            }
+
             std::int64_t min_size{ src.size() > dst.size() ? dst.size() : src.size() };
             std::int64_t num_copied{ count > min_size ? min_size : count };
             if (num_copied == 0) {
@@ -221,9 +229,25 @@ namespace memoc {
             return still_equal;
         }
 
-        inline std::int64_t copy(const Block<void>& src, Block<void> dst, std::int64_t bytes) noexcept
+        template <typename T1, typename T2>
+            requires (std::is_same_v<void, T1> || std::is_same_v<void, T2>)
+        inline std::int64_t copy(const Block<T1>& src, Block<T2> dst, std::int64_t bytes) noexcept
         {
-            std::int64_t min_size{ src.size() > dst.size() ? dst.size() : src.size() };
+            if (bytes == 0) {
+                return 0;
+            }
+
+            if (src.empty() || dst.empty()) {
+                return 0;
+            }
+
+            constexpr const std::int64_t T1_size = MEMOC_SSIZEOF(std::conditional_t<std::is_same_v<void, T1>, std::uint8_t, T1>);
+            constexpr const std::int64_t T2_size = MEMOC_SSIZEOF(std::conditional_t<std::is_same_v<void, T2>, std::uint8_t, T2>);
+
+            const std::int64_t src_bytes_size = src.size() * T1_size;
+            const std::int64_t dst_bytes_size = dst.size() * T2_size;
+
+            std::int64_t min_size{ src_bytes_size > dst_bytes_size ? dst_bytes_size : src_bytes_size };
             std::int64_t num_copied{ bytes > min_size ? min_size : bytes };
             if (num_copied == 0) {
                 return 0;
@@ -238,33 +262,12 @@ namespace memoc {
             return num_copied;
         }
 
-        inline std::int64_t copy(const Block<void>& src, Block<void> dst) noexcept
+        template <typename T1, typename T2>
+            requires (std::is_same_v<void, T1> || std::is_same_v<void, T2>)
+        inline std::int64_t copy(const Block<T1>& src, Block<T2> dst) noexcept
         {
-            return copy(src, dst, src.size());
-        }
-
-        template <typename T>
-        inline std::int64_t copy(const Block<void>& src, Block<T> dst, std::int64_t bytes) noexcept
-        {
-            return copy(src, Block<void>{MEMOC_SSIZEOF(T)* dst.size(), dst.data()}, bytes);
-        }
-
-        template <typename T>
-        inline std::int64_t copy(const Block<void>& src, Block<T> dst) noexcept
-        {
-            return copy(src, Block<void>{MEMOC_SSIZEOF(T)* dst.size(), dst.data()}, src.size());
-        }
-
-        template <typename T>
-        inline std::int64_t copy(const Block<T>& src, Block<void> dst, std::int64_t bytes) noexcept
-        {
-            return copy(Block<void>{MEMOC_SSIZEOF(T)* src.size(), src.data()}, dst, bytes);
-        }
-
-        template <typename T>
-        inline std::int64_t copy(const Block<T>& src, Block<void> dst) noexcept
-        {
-            return copy(Block<void>{MEMOC_SSIZEOF(T)* src.size(), src.data()}, dst, MEMOC_SSIZEOF(T)* src.size());
+            constexpr const std::int64_t T1_size = MEMOC_SSIZEOF(std::conditional_t<std::is_same_v<void, T1>, std::uint8_t, T1>);
+            return copy(src, dst, src.size() *  T1_size);
         }
 
         template <typename T>
