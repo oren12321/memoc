@@ -147,6 +147,14 @@ namespace memoc {
         template <typename T1, typename T2>
         inline std::int64_t set(Block<T1> b, const T2& value, std::int64_t count) noexcept
         {
+            if (count == 0) {
+                return 0;
+            }
+
+            if (b.empty()) {
+                return 0;
+            }
+
             std::int64_t num_set{ count > b.size() ? b.size() : count };
             if (num_set == 0) {
                 return 0;
@@ -273,6 +281,14 @@ namespace memoc {
         template <typename T>
         inline std::int64_t set(Block<void> b, const T& value, std::int64_t count) noexcept
         {
+            if (count == 0) {
+                return 0;
+            }
+
+            if (b.empty()) {
+                return 0;
+            }
+
             std::int64_t block_size_by_type{ b.size() / MEMOC_SSIZEOF(T) };
             std::int64_t num_set{ count > block_size_by_type ? block_size_by_type : count };
             if (num_set == 0) {
