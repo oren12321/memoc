@@ -100,16 +100,12 @@ namespace memoc {
         template <typename T1, typename T2>
         [[nodiscard]] inline bool operator==(const Block<T1>& lhs, const Block<T2>& rhs) noexcept
         {
-            if (lhs.empty() && rhs.empty()) {
-                return true;
-            }
-
             if (lhs.size() != rhs.size()) {
                 return false;
             }
 
-            if (lhs.size() == 0) {
-                return false;
+            if (lhs.empty()) {
+                return true;
             }
 
             bool still_equal{ true };
@@ -200,40 +196,29 @@ namespace memoc {
             Pointer p_{ nullptr };
         };
 
-        [[nodiscard]] inline bool operator==(const Block<void>& lhs, const Block<void>& rhs) noexcept
+        template <typename T1, typename T2>
+            requires (std::is_same_v<void, T1> || std::is_same_v<void, T2>)
+        [[nodiscard]] inline bool operator==(const Block<T1>& lhs, const Block<T2>& rhs) noexcept
         {
-            if (lhs.empty() && rhs.empty()) {
+            constexpr const std::int64_t T1_size = MEMOC_SSIZEOF(std::conditional_t<std::is_same_v<void, T1>, std::uint8_t, T1>);
+            constexpr const std::int64_t T2_size = MEMOC_SSIZEOF(std::conditional_t<std::is_same_v<void, T2>, std::uint8_t, T2>);
+
+            if (lhs.size() * T1_size != rhs.size() * T2_size) {
+                return false;
+            }
+
+            if (lhs.empty()) {
                 return true;
-            }
-
-            if (lhs.size() != rhs.size()) {
-                return false;
-            }
-
-            if (lhs.size() == 0) {
-                return false;
             }
 
             const std::uint8_t* lhs_ptr{ reinterpret_cast<const std::uint8_t*>(lhs.data()) };
             const std::uint8_t* rhs_ptr{ reinterpret_cast<const std::uint8_t*>(rhs.data()) };
 
             bool still_equal{ true };
-            for (std::int64_t i = 0; i < lhs.size() && still_equal; ++i) {
+            for (std::int64_t i = 0; i < T1_size && still_equal; ++i) {
                 still_equal &= (lhs_ptr[i] == rhs_ptr[i]);
             }
             return still_equal;
-        }
-
-        template <typename T>
-        [[nodiscard]] inline bool operator==(const Block<void>& lhs, const Block<T>& rhs) noexcept
-        {
-            return operator==(lhs, Block<void>{MEMOC_SSIZEOF(T)* rhs.size(), rhs.data()});
-        }
-
-        template <typename T>
-        [[nodiscard]] inline bool operator==(const Block<T>& lhs, const Block<void>& rhs) noexcept
-        {
-            return operator==(Block<void>{MEMOC_SSIZEOF(T)* lhs.size(), lhs.data()}, rhs);
         }
 
         inline std::int64_t copy(const Block<void>& src, Block<void> dst, std::int64_t bytes) noexcept
