@@ -42,7 +42,7 @@ namespace memoc {
         };
 
         template <std::int64_t Stack_size = 2>
-        class Stack_buffer {
+        class Stack_buffer final {
             static_assert(Stack_size > 0);
         public:
             Stack_buffer(std::int64_t size = 0, const void* data = nullptr)
@@ -94,7 +94,7 @@ namespace memoc {
                 other.data_ = {};
                 return *this;
             }
-            virtual ~Stack_buffer() = default;
+            ~Stack_buffer() = default;
 
             [[nodiscard]] Block<void> block() const noexcept
             {
@@ -122,7 +122,7 @@ namespace memoc {
         };
 
         template <Allocator Internal_allocator>
-        class Allocated_buffer {
+        class Allocated_buffer final {
         public:
             Allocated_buffer(std::int64_t size = 0, const void* data = nullptr)
             {
@@ -183,7 +183,7 @@ namespace memoc {
 
                 return *this;
             }
-            virtual ~Allocated_buffer() noexcept
+            ~Allocated_buffer() noexcept
             {
                 if (!data_.empty()) {
                     allocator_.deallocate(data_);
@@ -216,31 +216,30 @@ namespace memoc {
         };
 
         template <Buffer Primary, Buffer Fallback>
-        class Fallback_buffer
-            : private Primary
-            // For efficiency should be buffer with lazy initialization
-            , private Fallback {
+        class Fallback_buffer final {
         public:
             Fallback_buffer(std::int64_t size = 0, const void* data = nullptr)
+                : memory_()
             {
                 try {
-                    *(static_cast<Primary*>(this)) = Primary(size, data);
+                    primary_ = Primary(size, data);
                     use_primary_ = true;
                 }
                 catch (...) {
-                    *(static_cast<Fallback*>(this)) = Fallback(size, data);
+                    fallback_ = Fallback(size, data);
                     use_primary_ = false;
                 }
             }
 
             Fallback_buffer(const Fallback_buffer& other)
+                : memory_()
             {
                 use_primary_ = other.use_primary_;
                 if (use_primary_) {
-                    Primary::operator=(other);
+                    primary_ = other.primary_;
                 }
                 else {
-                    Fallback::operator=(other);
+                    fallback_ = other.fallback_;
                 }
             }
             Fallback_buffer operator=(const Fallback_buffer& other)
@@ -250,20 +249,21 @@ namespace memoc {
                 }
                 use_primary_ = other.use_primary_;
                 if (use_primary_) {
-                    Primary::operator=(other);
+                    primary_ = other.primary_;
                     return *this;
                 }
-                Fallback::operator=(other);
+                fallback_ = other.fallback_;
                 return *this;
             }
             Fallback_buffer(Fallback_buffer&& other) noexcept
+                : memory_()
             {
                 use_primary_ = other.use_primary_;
                 if (use_primary_) {
-                    Primary::operator=(std::move(other));
+                    primary_ = std::move(other.primary_);
                 }
                 else {
-                    Fallback::operator=(std::move(other));
+                    fallback_ = std::move(other.fallback_);
                 }
             }
             Fallback_buffer& operator=(Fallback_buffer&& other) noexcept
@@ -273,41 +273,57 @@ namespace memoc {
                 }
                 use_primary_ = other.use_primary_;
                 if (use_primary_) {
-                    Primary::operator=(std::move(other));
+                    primary_ = std::move(other.primary_);
                     return *this;
                 }
-                Fallback::operator=(std::move(other));
+                fallback_ = std::move(other.fallback_);
                 return *this;
             }
-            virtual ~Fallback_buffer() = default;
+            ~Fallback_buffer()
+            {
+                if (use_primary_) {
+                    primary_.~Primary();
+                }
+                else {
+                    fallback_.~Fallback();
+                }
+            }
 
             [[nodiscard]] Block<void> block() const noexcept
             {
-                return use_primary_ ? Primary::block() : Fallback::block();
+                return use_primary_ ? primary_.block() : fallback_.block();
             }
 
             [[nodiscard]] bool empty() const noexcept
             {
-                return use_primary_ ? Primary::empty() : Fallback::empty();
+                return use_primary_ ? primary_.empty() : fallback_.empty();
             }
 
             [[nodiscard]] Block<void>::Size_type size() const noexcept
             {
-                return use_primary_ ? Primary::size() : Fallback::size();
+                return use_primary_ ? primary_.size() : fallback_.size();
             }
 
             [[nodiscard]] Block<void>::Pointer data() const noexcept
             {
-                return use_primary_ ? Primary::data() : Fallback::data();
+                return use_primary_ ? primary_.data() : fallback_.data();
             }
 
         private:
+            static constexpr std::int64_t mem_size_ = MEMOC_SSIZEOF(Primary) > MEMOC_SSIZEOF(Fallback) ? MEMOC_SSIZEOF(Primary) : MEMOC_SSIZEOF(Fallback);
+
+            union {
+                Primary primary_;
+                Fallback fallback_;
+                std::uint8_t memory_[mem_size_];
+            };
+
             bool use_primary_{ true };
         };
 
         template <typename T, Buffer Internal_buffer>
             requires (!std::is_reference_v<T>)
-        class Typed_buffer : private Internal_buffer {
+        class Typed_buffer final {
             // If required or internal type is void then sizeof is invalid - replace it with byte size
             template <typename U_src, typename U_dst>
             using Replace_void = std::conditional_t<std::is_same<U_src, void>::value, U_dst, U_src>;
@@ -316,9 +332,9 @@ namespace memoc {
             using Remove_internal_pointer = typename std::remove_pointer_t<U>;
         public:
             Typed_buffer(std::int64_t size = 0, const T* data = nullptr)
-                : Internal_buffer(size > 0 ? (size* MEMOC_SSIZEOF(Replace_void<T, std::uint8_t>)) / MEMOC_SSIZEOF(Replace_void<Remove_internal_pointer<decltype(memoc::data(Internal_buffer::block()))>, std::uint8_t>) : size, data)
+                : internal_(size > 0 ? (size* MEMOC_SSIZEOF(Replace_void<T, std::uint8_t>)) / MEMOC_SSIZEOF(Replace_void<Remove_internal_pointer<decltype(memoc::data(internal_.block()))>, std::uint8_t>) : size, data)
             {
-                if (Internal_buffer::empty()) {
+                if (internal_.empty()) {
                     return;
                 }
 
@@ -338,23 +354,23 @@ namespace memoc {
             }
 
             Typed_buffer(const Typed_buffer& other)
-                : Internal_buffer(other) {}
+                : internal_(other.internal_) {}
             Typed_buffer operator=(const Typed_buffer& other)
             {
                 if (this == &other) {
                     return *this;
                 }
-                Internal_buffer::operator=(other);
+                internal_ = other.internal_;
                 return *this;
             }
             Typed_buffer(Typed_buffer&& other) noexcept
-                : Internal_buffer(std::move(other)) {}
+                : internal_(std::move(other.internal_)) {}
             Typed_buffer& operator=(Typed_buffer&& other) noexcept
             {
                 if (this == &other) {
                     return *this;
                 }
-                Internal_buffer::operator=(std::move(other));
+                internal_ = std::move(other.internal_);
                 return *this;
             }
             virtual ~Typed_buffer() = default;
@@ -362,8 +378,8 @@ namespace memoc {
             [[nodiscard]] Block<T> block() const noexcept
             {
                 return Block<T>{
-                    (Internal_buffer::size() * MEMOC_SSIZEOF(Replace_void<Remove_internal_pointer<decltype(Internal_buffer::data())>, std::uint8_t>)) / MEMOC_SSIZEOF(Replace_void<T, std::uint8_t>),
-                    reinterpret_cast<T*>(Internal_buffer::data())
+                    (internal_.size() * MEMOC_SSIZEOF(Replace_void<Remove_internal_pointer<decltype(internal_.data())>, std::uint8_t>)) / MEMOC_SSIZEOF(Replace_void<T, std::uint8_t>),
+                    reinterpret_cast<T*>(internal_.data())
                 };
             }
 
@@ -382,7 +398,8 @@ namespace memoc {
                 return block().data();
             }
 
-
+        private:
+            Internal_buffer internal_;
         };
 
         template <Buffer T, typename U = void>

@@ -30,7 +30,7 @@ namespace memoc {
     namespace details {
         template <typename T>
             requires (!std::is_reference_v<T>)
-        class Block {
+        class Block final {
         public:
             using Size_type = std::int64_t;
             using Type = T;
@@ -41,7 +41,7 @@ namespace memoc {
             constexpr Block& operator=(const Block&) noexcept = default;
             constexpr Block(Block&&) noexcept = default;
             constexpr Block& operator=(Block&&) noexcept = default;
-            virtual constexpr ~Block() noexcept = default;
+            constexpr ~Block() noexcept = default;
 
             // Do not allow parially empty block
             constexpr Block(Size_type s = 0, Const_pointer p = nullptr) noexcept

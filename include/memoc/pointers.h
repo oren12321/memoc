@@ -27,7 +27,7 @@ namespace memoc {
 		// These class are not thread safe
 		// The behaviour for array, pointer or reference is undefined
 		template <typename T, Allocator Internal_allocator = Malloc_allocator>
-		class Unique_ptr {
+		class Unique_ptr final {
 		public:
 			// Not recommended - ptr should be allocated using Internal_allocator
 			Unique_ptr(T* ptr = nullptr)
@@ -83,7 +83,7 @@ namespace memoc {
 				return *this;
 			}
 
-			virtual ~Unique_ptr() noexcept
+			~Unique_ptr() noexcept
 			{
 				remove_reference();
 			}
@@ -205,7 +205,7 @@ namespace memoc {
 		class Weak_ptr;
 
 		template <typename T, Allocator Internal_allocator = Malloc_allocator>
-		class Shared_ptr {
+		class Shared_ptr final {
 		public:
 			template <typename T_o, Allocator Internal_allocator_o>
 			friend class Weak_ptr;
@@ -342,7 +342,7 @@ namespace memoc {
 				return *this;
 			}
 
-			virtual ~Shared_ptr() noexcept
+			~Shared_ptr() noexcept
 			{
 				remove_reference();
 			}
@@ -547,7 +547,7 @@ namespace memoc {
 
 
 		template <typename T, Allocator Internal_allocator = Malloc_allocator>
-		class Weak_ptr {
+		class Weak_ptr final {
 		public:
 			Weak_ptr() = default;
 
@@ -698,7 +698,7 @@ namespace memoc {
 				return *this;
 			}
 
-			virtual ~Weak_ptr() noexcept
+			~Weak_ptr() noexcept
 			{
 				remove_reference();
 			}
