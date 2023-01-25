@@ -2,6 +2,7 @@
 
 #include <utility>
 #include <limits>
+#include <stdexcept>
 
 #include <memoc/buffers.h>
 #include <memoc/allocators.h>
@@ -20,13 +21,13 @@ TEST(Stack_buffer_test, not_empty_when_initialized_with_valid_size)
     EXPECT_EQ(2, size(buff));
 }
 
-TEST(Stack_buffer_test, empty_when_initialized_with_invalid_size)
+TEST(Stack_buffer_test, throws_exception_when_initialized_with_invalid_size)
 {
     using namespace memoc;
 
-    Stack_buffer buff{ 4 };
+    EXPECT_THROW(Stack_buffer{ 4 }, std::invalid_argument);
 
-    EXPECT_TRUE(empty(buff));
+    //EXPECT_TRUE(empty(buff));
 }
 
 TEST(Stack_buffer_test, is_copyable)
@@ -138,13 +139,13 @@ TEST(Allocated_buffer_test, not_empty_when_initialized_with_valid_size)
     EXPECT_EQ(2, size(buff));
 }
 
-TEST(Allocated_buffer_test, empty_when_initialized_with_invalid_size)
+TEST(Allocated_buffer_test, throws_exception_when_initialized_with_invalid_size)
 {
     using namespace memoc;
 
-    Allocated_buffer<Stack_allocator<2>> buff{ 4 };
+    EXPECT_THROW(Allocated_buffer<Stack_allocator<2>>{ 4 }, std::runtime_error);
 
-    EXPECT_TRUE(empty(buff));
+    //EXPECT_TRUE(empty(buff));
 }
 
 TEST(Allocated_buffer_test, is_copyable)
@@ -268,13 +269,13 @@ TEST(Fallback_buffer_test, uses_the_second_buffer_when_not_empty)
     EXPECT_EQ(4, size(buff));
 }
 
-TEST(Fallback_buffer_test, empty_when_initialized_with_invalid_size_for_both_buffers)
+TEST(Fallback_buffer_test, throws_exception_when_initialized_with_invalid_size_for_both_buffers)
 {
     using namespace memoc;
 
-    Fallback_buffer<Stack_buffer<2>, Allocated_buffer<Stack_allocator<2>>> buff{ 4 };
+    EXPECT_THROW((Fallback_buffer<Stack_buffer<2>, Allocated_buffer<Stack_allocator<2>>>{ 4 }), std::runtime_error);
 
-    EXPECT_TRUE(empty(buff));
+    //EXPECT_TRUE(empty(buff));
 }
 
 // Just for compilation check
@@ -282,9 +283,9 @@ TEST(Fallback_buffer_test, is_copyable)
 {
     using namespace memoc;
 
-    Fallback_buffer<Stack_buffer<2>, Allocated_buffer<Stack_allocator<2>>> buff1{ 4 };
-    Fallback_buffer<Stack_buffer<2>, Allocated_buffer<Stack_allocator<2>>> buff2{ buff1 };
-    Fallback_buffer<Stack_buffer<2>, Allocated_buffer<Stack_allocator<2>>> buff3{ 4 };
+    Fallback_buffer<Stack_buffer<2>, Allocated_buffer<Stack_allocator<4>>> buff1{ 4 };
+    Fallback_buffer<Stack_buffer<2>, Allocated_buffer<Stack_allocator<4>>> buff2{ buff1 };
+    Fallback_buffer<Stack_buffer<2>, Allocated_buffer<Stack_allocator<4>>> buff3{ 4 };
     buff3 = buff2;
 }
 
@@ -293,9 +294,9 @@ TEST(Fallback_buffer_test, is_moveable)
 {
     using namespace memoc;
 
-    Fallback_buffer<Stack_buffer<2>, Allocated_buffer<Stack_allocator<2>>> buff1{ 4 };
-    Fallback_buffer<Stack_buffer<2>, Allocated_buffer<Stack_allocator<2>>> buff2{ std::move(buff1) };
-    Fallback_buffer<Stack_buffer<2>, Allocated_buffer<Stack_allocator<2>>> buff3{ 4 };
+    Fallback_buffer<Stack_buffer<2>, Allocated_buffer<Stack_allocator<4>>> buff1{ 4 };
+    Fallback_buffer<Stack_buffer<2>, Allocated_buffer<Stack_allocator<4>>> buff2{ std::move(buff1) };
+    Fallback_buffer<Stack_buffer<2>, Allocated_buffer<Stack_allocator<4>>> buff3{ 4 };
     buff3 = std::move(buff2);
 }
 

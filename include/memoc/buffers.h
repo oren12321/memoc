@@ -6,6 +6,7 @@
 #include <utility>
 #include <type_traits>
 #include <concepts>
+#include <stdexcept>
 
 #include <erroc/errors.h>
 #include <enumoc/enumoc.h>
@@ -15,6 +16,7 @@
 
 ENUMOC_GENERATE(memoc, Buffer_error,
     invalid_size,
+    allocator_failure,
     unknown);
 
 namespace memoc {
@@ -32,7 +34,7 @@ namespace memoc {
         }&&
             requires (T t, std::int64_t size)
         {
-            {T(size, nullptr)} noexcept;
+            {T(size, nullptr)};
             {t.block()} noexcept -> std::same_as<Block<typename decltype(t.block())::Type>>;
             {t.empty()} noexcept -> std::same_as<bool>;
             {t.size()} noexcept -> std::same_as<typename decltype(t.block())::Size_type>;
@@ -43,11 +45,10 @@ namespace memoc {
         class Stack_buffer {
             static_assert(Stack_size > 0);
         public:
-            Stack_buffer(std::int64_t size = 0, const void* data = nullptr) noexcept
+            Stack_buffer(std::int64_t size = 0, const void* data = nullptr)
             {
-                if (size <= 0 || size > Stack_size) {
-                    return;
-                }
+                ERROC_EXPECT(size >= 0 && size <= Stack_size, std::invalid_argument, "invalid buffer size");
+
                 data_ = { size, memory_ };
                 copy(Block<void>(size, data), data_);
             }
@@ -123,25 +124,24 @@ namespace memoc {
         template <Allocator Internal_allocator>
         class Allocated_buffer {
         public:
-            Allocated_buffer(std::int64_t size = 0, const void* data = nullptr) noexcept
+            Allocated_buffer(std::int64_t size = 0, const void* data = nullptr)
             {
-                if (size <= 0) {
-                    return;
-                }
-                data_ = allocator_.allocate(size);
+                ERROC_EXPECT(size >= 0, std::invalid_argument, "invalid buffer size");
+
+                data_ = allocator_.allocate(size).value();
                 copy(Block<void>(size, data), data_);
             }
 
-            Allocated_buffer(const Allocated_buffer& other) noexcept
+            Allocated_buffer(const Allocated_buffer& other)
             {
                 allocator_ = other.allocator_;
                 if (other.empty()) {
                     return;
                 }
-                data_ = allocator_.allocate(other.size());
+                data_ = allocator_.allocate(other.size()).value();
                 copy(other.data_, data_);
             }
-            Allocated_buffer operator=(const Allocated_buffer& other) noexcept
+            Allocated_buffer operator=(const Allocated_buffer& other)
             {
                 if (this == &other) {
                     return *this;
@@ -153,7 +153,7 @@ namespace memoc {
                 if (other.empty()) {
                     return *this;
                 }
-                data_ = allocator_.allocate(other.size());
+                data_ = allocator_.allocate(other.size()).value();
                 copy(other.data_, data_);
 
                 return *this;
@@ -221,33 +221,61 @@ namespace memoc {
             // For efficiency should be buffer with lazy initialization
             , private Fallback {
         public:
-            Fallback_buffer(std::int64_t size = 0, const void* data = nullptr) noexcept
-                : Primary(size, data)
+            Fallback_buffer(std::int64_t size = 0, const void* data = nullptr)
             {
-                if (Primary::empty()) {
-                    *(dynamic_cast<Fallback*>(this)) = Fallback(size, data);
+                try {
+                    *(static_cast<Primary*>(this)) = Primary(size, data);
+                    use_primary_ = true;
+                }
+                catch (...) {
+                    *(static_cast<Fallback*>(this)) = Fallback(size, data);
+                    use_primary_ = false;
                 }
             }
 
-            Fallback_buffer(const Fallback_buffer& other) noexcept
-                : Primary(other), Fallback(other) {}
-            Fallback_buffer operator=(const Fallback_buffer& other) noexcept
+            Fallback_buffer(const Fallback_buffer& other)
+            {
+                use_primary_ = other.use_primary_;
+                if (use_primary_) {
+                    Primary::operator=(other);
+                }
+                else {
+                    Fallback::operator=(other);
+                }
+            }
+            Fallback_buffer operator=(const Fallback_buffer& other)
             {
                 if (this == &other) {
                     return *this;
                 }
-                Primary::operator=(other);
+                use_primary_ = other.use_primary_;
+                if (use_primary_) {
+                    Primary::operator=(other);
+                    return *this;
+                }
                 Fallback::operator=(other);
                 return *this;
             }
             Fallback_buffer(Fallback_buffer&& other) noexcept
-                : Primary(std::move(other)), Fallback(std::move(other)) {}
+            {
+                use_primary_ = other.use_primary_;
+                if (use_primary_) {
+                    Primary::operator=(std::move(other));
+                }
+                else {
+                    Fallback::operator=(std::move(other));
+                }
+            }
             Fallback_buffer& operator=(Fallback_buffer&& other) noexcept
             {
                 if (this == &other) {
                     return *this;
                 }
-                Primary::operator=(std::move(other));
+                use_primary_ = other.use_primary_;
+                if (use_primary_) {
+                    Primary::operator=(std::move(other));
+                    return *this;
+                }
                 Fallback::operator=(std::move(other));
                 return *this;
             }
@@ -255,32 +283,26 @@ namespace memoc {
 
             [[nodiscard]] Block<void> block() const noexcept
             {
-                if (!Primary::empty()) {
-                    return Primary::block();
-                }
-                return Fallback::block();
+                return use_primary_ ? Primary::block() : Fallback::block();
             }
 
             [[nodiscard]] bool empty() const noexcept
             {
-                return Primary::empty() && Fallback::empty();
+                return use_primary_ ? Primary::empty() : Fallback::empty();
             }
 
             [[nodiscard]] Block<void>::Size_type size() const noexcept
             {
-                if (!Primary::empty()) {
-                    return Primary::size();
-                }
-                return Fallback::size();
+                return use_primary_ ? Primary::size() : Fallback::size();
             }
 
             [[nodiscard]] Block<void>::Pointer data() const noexcept
             {
-                if (!Primary::empty()) {
-                    return Primary::data();
-                }
-                return Fallback::data();
+                return use_primary_ ? Primary::data() : Fallback::data();
             }
+
+        private:
+            bool use_primary_{ true };
         };
 
         template <typename T, Buffer Internal_buffer>
@@ -293,7 +315,7 @@ namespace memoc {
             template <typename U>
             using Remove_internal_pointer = typename std::remove_pointer_t<U>;
         public:
-            Typed_buffer(std::int64_t size = 0, const T* data = nullptr) noexcept
+            Typed_buffer(std::int64_t size = 0, const T* data = nullptr)
                 : Internal_buffer(size > 0 ? (size* MEMOC_SSIZEOF(Replace_void<T, std::uint8_t>)) / MEMOC_SSIZEOF(Replace_void<Remove_internal_pointer<decltype(memoc::data(Internal_buffer::block()))>, std::uint8_t>) : size, data)
             {
                 if (Internal_buffer::empty()) {
@@ -315,9 +337,9 @@ namespace memoc {
                 }
             }
 
-            Typed_buffer(const Typed_buffer& other) noexcept
+            Typed_buffer(const Typed_buffer& other)
                 : Internal_buffer(other) {}
-            Typed_buffer operator=(const Typed_buffer& other) noexcept
+            Typed_buffer operator=(const Typed_buffer& other)
             {
                 if (this == &other) {
                     return *this;
@@ -366,19 +388,18 @@ namespace memoc {
         template <Buffer T, typename U = void>
         [[nodiscard]] inline erroc::Expected<T, Buffer_error> create(std::int64_t size = 0, const typename decltype(T().block())::Type* data = nullptr)
         {
-            if (size < 0) {
+            try {
+                return T(size, data);
+            }
+            catch (const std::invalid_argument&) {
                 return erroc::Unexpected(Buffer_error::invalid_size);
             }
-
-            if (size == 0) {
-                return T();
+            catch (const std::runtime_error&) {
+                return erroc::Unexpected(Buffer_error::allocator_failure);
             }
-
-            T buff(size, data);
-            if (buff.empty()) {
+            catch (...) {
                 return erroc::Unexpected(Buffer_error::unknown);
             }
-            return buff;
         }
 
         template <Buffer T>

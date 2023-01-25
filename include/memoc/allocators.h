@@ -18,6 +18,7 @@
 
 ENUMOC_GENERATE(memoc, Allocator_error,
     invalid_size,
+    out_of_memory,
     unknown);
 
 namespace memoc {
@@ -35,7 +36,7 @@ namespace memoc {
         }&&
             requires (T t, Block<void>::Size_type s, Block<void> b)
         {
-            {t.allocate(s)} noexcept -> std::same_as<Block<void>>;
+            {t.allocate(s)} noexcept -> std::same_as<erroc::Expected<Block<void>, Allocator_error>>;
             {t.deallocate(std::ref(b))} noexcept -> std::same_as<void>;
             {t.owns(std::cref(b))} noexcept -> std::same_as<bool>;
         };
@@ -71,13 +72,13 @@ namespace memoc {
             }
             virtual ~Fallback_allocator() = default;
 
-            [[nodiscard]] Block<void> allocate(Block<void>::Size_type s) noexcept
+            [[nodiscard]] erroc::Expected<Block<void>, Allocator_error> allocate(Block<void>::Size_type s) noexcept
             {
-                Block<void> b = Primary::allocate(s);
-                if (b.empty()) {
-                    b = Fallback::allocate(s);
+                erroc::Expected<Block<void>, Allocator_error> r = Primary::allocate(s);
+                if (!r) {
+                    return Fallback::allocate(s);
                 }
-                return b;
+                return r;
             }
 
             void deallocate(Block<void>& b) noexcept
@@ -96,18 +97,25 @@ namespace memoc {
 
         class Malloc_allocator {
         public:
-            [[nodiscard]] Block<void> allocate(Block<void>::Size_type s) noexcept
+            [[nodiscard]] erroc::Expected<Block<void>, Allocator_error> allocate(Block<void>::Size_type s) noexcept
             {
-                if (s <= 0) {
-                    return { s, nullptr };
+                if (s < 0) {
+                    return erroc::Unexpected(Allocator_error::invalid_size);
                 }
-                return { s, std::malloc(s) };
+                if (s == 0) {
+                    return Block<void>();
+                }
+                Block<void> b(s, std::malloc(s));
+                if (b.empty()) {
+                    return erroc::Unexpected(Allocator_error::unknown);
+                }
+                return b;
             }
 
             void deallocate(Block<void>& b) noexcept
             {
                 std::free(b.data());
-                b = {};
+                b = Block<void>();
             }
 
             [[nodiscard]] bool owns(const Block<void>& b) const noexcept
@@ -149,13 +157,22 @@ namespace memoc {
             }
             virtual ~Stack_allocator() = default;
 
-            [[nodiscard]] Block<void> allocate(Block<void>::Size_type s) noexcept
+            [[nodiscard]] erroc::Expected<Block<void>, Allocator_error> allocate(Block<void>::Size_type s) noexcept
             {
-                auto s1 = align(s);
-                if (p_ + s1 > d_ + Size || !p_ || s <= 0) {
-                    return { 0, nullptr };
+                if (s < 0) {
+                    return erroc::Unexpected(Allocator_error::invalid_size);
                 }
-                Block<void> b = { s, p_ };
+                if (s == 0) {
+                    return Block<void>();
+                }
+                if (!p_) {
+                    return erroc::Unexpected(Allocator_error::unknown);
+                }
+                auto s1 = align(s);
+                if (p_ + s1 > d_ + Size) {
+                    return erroc::Unexpected(Allocator_error::out_of_memory);
+                }
+                Block<void> b(s, p_);
                 p_ += s1;
                 return b;
             }
@@ -236,30 +253,33 @@ namespace memoc {
                     }
                 }
 
-                [[nodiscard]] Block<void> allocate(Block<void>::Size_type s) noexcept
+                [[nodiscard]] erroc::Expected<Block<void>, Allocator_error> allocate(Block<void>::Size_type s) noexcept
                 {
-                    if (s >= Min_size && s <= Max_size && list_size_ > 0) {
-                        Block<void> b = { s, root_ };
+                    if (s >= Min_size && s <= Max_size && list_size_ > 0 && root_) {
+                        Block<void> b(s, root_);
                         root_ = root_->next;
                         --list_size_;
                         return b;
                     }
-                    Block<void> b = { s, Internal_allocator::allocate((s < Min_size || s > Max_size) ? s : Max_size).data() };
-                    return b;
+                    erroc::Expected<Block<void>, Allocator_error> r = Internal_allocator::allocate((s < Min_size || s > Max_size) ? s : Max_size);
+                    if (!r) {
+                        return r;
+                    }
+                    return Block<void>(s, r.value().data());
                 }
 
                 void deallocate(Block<void>& b) noexcept
                 {
                     if (b.size() < Min_size || b.size() > Max_size || list_size_ > Max_list_size) {
                         Block<void> nb{ Max_size, b.data() };
-                        b = {};
+                        b = Block<void>();
                         return Internal_allocator::deallocate(nb);
                     }
                     auto node = reinterpret_cast<Node*>(b.data());
                     node->next = root_;
                     root_ = node;
                     ++list_size_;
-                    b = {};
+                    b = Block<void>();
                 }
 
                 [[nodiscard]] bool owns(const Block<void>& b) const noexcept
@@ -311,11 +331,11 @@ namespace memoc {
 
             [[nodiscard]] T* allocate(std::size_t n)
             {
-                Block<void> b = Internal_allocator::allocate(n * MEMOC_SSIZEOF(T));
-                if (b.empty()) {
+                erroc::Expected<Block<void>, Allocator_error> r = Internal_allocator::allocate(n * MEMOC_SSIZEOF(T));
+                if (!r) {
                     throw std::bad_alloc{};
                 }
-                return reinterpret_cast<T*>(b.data());
+                return reinterpret_cast<T*>(r.value().data());
             }
 
             void deallocate(T* p, std::size_t n) noexcept
@@ -387,9 +407,13 @@ namespace memoc {
                 }
             }
 
-            [[nodiscard]] Block<void> allocate(Block<void>::Size_type s) noexcept
+            [[nodiscard]] erroc::Expected<Block<void>, Allocator_error> allocate(Block<void>::Size_type s) noexcept
             {
-                Block<void> b = Internal_allocator::allocate(s);
+                erroc::Expected<Block<void>, Allocator_error> r = Internal_allocator::allocate(s);
+                if (!r) {
+                    return r;
+                }
+                Block<void> b(r.value());
                 if (!b.empty()) {
                     add_record(b.data(), b.size());
                 }
@@ -438,7 +462,11 @@ namespace memoc {
                     return;
                 }
 
-                Block<void> b1 = Internal_allocator::allocate(MEMOC_SSIZEOF(Record));
+                erroc::Expected<Block<void>, Allocator_error> r = Internal_allocator::allocate(MEMOC_SSIZEOF(Record));
+                if (!r) {
+                    return;
+                }
+                Block<void> b1(r.value());
                 if (b1.empty()) {
                     return;
                 }
@@ -471,7 +499,7 @@ namespace memoc {
         template <Allocator Internal_allocator, std::int64_t id = -1>
         class Shared_allocator {
         public:
-            [[nodiscard]] Block<void> allocate(Block<void>::Size_type s) noexcept
+            [[nodiscard]] erroc::Expected<Block<void>, Allocator_error> allocate(Block<void>::Size_type s) noexcept
             {
                 return allocator_.allocate(s);
             }
@@ -500,19 +528,7 @@ namespace memoc {
         template <Allocator T>
         [[nodiscard]] inline erroc::Expected<Block<void>, Allocator_error> allocate(T& allocator, Block<void>::Size_type size) noexcept
         {
-            if (size < 0) {
-                return erroc::Unexpected(Allocator_error::invalid_size);
-            }
-
-            if (size == 0) {
-                return Block<void>();
-            }
-
-            Block<void> b = allocator.allocate(size);
-            if (b.empty()) {
-                return erroc::Unexpected(Allocator_error::unknown);
-            }
-            return b;
+            return allocator.allocate(size);
         }
 
         template <Allocator T>

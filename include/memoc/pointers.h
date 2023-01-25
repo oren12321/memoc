@@ -7,7 +7,7 @@
 #include <utility>
 
 #include <memoc/allocators.h>
-#include <erroc/errors.h>
+//#include <erroc/errors.h>
 #include <memoc/blocks.h>
 
 namespace memoc {
@@ -191,7 +191,7 @@ namespace memoc {
 		inline Unique_ptr<T, Internal_allocator> make_unique(Args&&... args)
 		{
 			Internal_allocator allocator_{};
-			Block<void> b = allocator_.allocate(MEMOC_SSIZEOF(T));
+			Block<void> b = allocator_.allocate(MEMOC_SSIZEOF(T)).value();
 			T* ptr = memoc::details::construct_at<T>(reinterpret_cast<T*>(b.data()), std::forward<Args>(args)...);
 			return Unique_ptr<T, Internal_allocator>(ptr);
 		}
@@ -212,7 +212,7 @@ namespace memoc {
 
 			// Not recommended - ptr should be allocated using Internal_allocator
 			explicit Shared_ptr(T* ptr = nullptr)
-				: cb_(ptr ? reinterpret_cast<Control_block*>(const_cast<void*>(allocate(allocator_, MEMOC_SSIZEOF(Control_block)).value().data())) : nullptr), ptr_(ptr)
+				: cb_(ptr ? reinterpret_cast<Control_block*>(const_cast<void*>(allocator_.allocate(MEMOC_SSIZEOF(Control_block)).value().data())) : nullptr), ptr_(ptr)
 			{
 				// Using value from allocate API that throws an exception if not available.
 				//ERROC_EXPECT((ptr && cb_) || (!ptr && !cb_), std::runtime_error, "internal memory allocation failed");
@@ -384,7 +384,7 @@ namespace memoc {
 			{
 				remove_reference();
 				if (ptr) {
-					cb_ = reinterpret_cast<Control_block*>(const_cast<void*>(allocate(allocator_, MEMOC_SSIZEOF(Control_block)).value().data()));
+					cb_ = reinterpret_cast<Control_block*>(const_cast<void*>(allocator_.allocate(MEMOC_SSIZEOF(Control_block)).value().data()));
 					// Using value from allocate API that throws an exception if not available.
 					//ERROC_EXPECT(cb_, std::runtime_error, "internal memory allocation failed");
 					memoc::details::construct_at<Control_block>(cb_);
@@ -480,7 +480,7 @@ namespace memoc {
 		inline Shared_ptr<T, Internal_allocator> make_shared(Args&&... args)
 		{
 			Internal_allocator allocator_{};
-			Block<void> b = allocator_.allocate(MEMOC_SSIZEOF(T));
+			Block<void> b = allocator_.allocate(MEMOC_SSIZEOF(T)).value();
 			T* ptr = memoc::details::construct_at<T>(reinterpret_cast<T*>(b.data()), std::forward<Args>(args)...);
 			return Shared_ptr<T, Internal_allocator>(ptr);
 		}

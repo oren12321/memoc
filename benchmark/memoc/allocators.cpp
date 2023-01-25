@@ -48,7 +48,7 @@ BENCHMARK(BM_default_allocator);
 template <class Allocator>
 void perform_allocations(Allocator* alloc, const Test_data& td) {
     for (std::int64_t i : td.choosen_size_indices) {
-        auto b = alloc->allocate(td.allocation_sizes[i]);
+        auto b = alloc->allocate(td.allocation_sizes[i]).value();
         alloc->deallocate(b);
     }
 }

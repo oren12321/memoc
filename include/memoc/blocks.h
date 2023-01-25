@@ -180,7 +180,7 @@ namespace memoc {
             constexpr Block& operator=(const Block&) noexcept = default;
             constexpr Block(Block&&) noexcept = default;
             constexpr Block& operator=(Block&&) noexcept = default;
-            virtual constexpr ~Block() noexcept = default;
+            constexpr ~Block() noexcept = default;
 
             // Do not allow parially empty block
             constexpr Block(Size_type s = 0, Const_pointer p = nullptr) noexcept
