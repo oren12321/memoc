@@ -300,7 +300,7 @@ namespace memoc {
 
         template <typename T, Allocator Internal_allocator>
             requires (!std::is_reference_v<T>)
-        class Stl_adapter_allocator final {
+        class Stl_adapter_allocator {
         public:
             using value_type = T;
 
