@@ -219,7 +219,6 @@ namespace memoc {
         class Fallback_buffer final {
         public:
             Fallback_buffer(std::int64_t size = 0, const void* data = nullptr)
-                : memory_()
             {
                 try {
                     primary_ = Primary(size, data);
@@ -232,7 +231,6 @@ namespace memoc {
             }
 
             Fallback_buffer(const Fallback_buffer& other)
-                : memory_()
             {
                 use_primary_ = other.use_primary_;
                 if (use_primary_) {
@@ -256,7 +254,6 @@ namespace memoc {
                 return *this;
             }
             Fallback_buffer(Fallback_buffer&& other) noexcept
-                : memory_()
             {
                 use_primary_ = other.use_primary_;
                 if (use_primary_) {
@@ -315,7 +312,7 @@ namespace memoc {
             union {
                 Primary primary_;
                 Fallback fallback_;
-                std::uint8_t memory_[mem_size_];
+                std::uint8_t memory_[mem_size_]{ 0 };
             };
 
             bool use_primary_{ true };
