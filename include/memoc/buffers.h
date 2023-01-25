@@ -148,7 +148,7 @@ namespace memoc {
                 }
 
                 allocator_ = other.allocator_;
-                allocator_.deallocate(&data_);
+                allocator_.deallocate(data_);
 
                 if (other.empty()) {
                     return *this;
@@ -176,7 +176,7 @@ namespace memoc {
                 }
 
                 allocator_ = std::move(other.allocator_);
-                allocator_.deallocate(&data_);
+                allocator_.deallocate(data_);
                 data_ = other.data_;
 
                 other.data_ = {};
@@ -186,7 +186,7 @@ namespace memoc {
             virtual ~Allocated_buffer() noexcept
             {
                 if (!data_.empty()) {
-                    allocator_.deallocate(&data_);
+                    allocator_.deallocate(data_);
                 }
             }
 

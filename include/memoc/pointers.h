@@ -153,7 +153,7 @@ namespace memoc {
 				if (ptr_) {
 					memoc::details::destruct_at<T>(ptr_);
 					Block<void> ptr_b = { MEMOC_SSIZEOF(T), const_cast<std::remove_const_t<T>*>(ptr_) };
-					allocator_.deallocate(&ptr_b);
+					allocator_.deallocate(ptr_b);
 					ptr_ = nullptr;
 				}
 			}
@@ -435,13 +435,13 @@ namespace memoc {
 				if (cb_->use_count == 0 && ptr_) {
 					memoc::details::destruct_at<T>(ptr_);
 					Block<void> ptr_b = { MEMOC_SSIZEOF(T), const_cast<std::remove_const_t<T>*>(ptr_) };
-					allocator_.deallocate(&ptr_b);
+					allocator_.deallocate(ptr_b);
 					ptr_ = nullptr;
 				}
 				if (cb_->use_count == 0 && cb_->weak_count == 0) {
 					memoc::details::destruct_at<Control_block>(cb_);
 					Block<void> cb_b = { MEMOC_SSIZEOF(Control_block), cb_ };
-					allocator_.deallocate(&cb_b);
+					allocator_.deallocate(cb_b);
 					cb_ = nullptr;
 				}
 			}
@@ -752,7 +752,7 @@ namespace memoc {
 				if (cb_->use_count == 0 && cb_->weak_count == 0) {
 					memoc::details::destruct_at<Control_block>(cb_);
 					Block<void> cb_b = { MEMOC_SSIZEOF(Control_block), cb_ };
-					allocator_.deallocate(&cb_b);
+					allocator_.deallocate(cb_b);
 					cb_ = nullptr;
 				}
 			}
