@@ -44,12 +44,12 @@ namespace memoc {
         template <Allocator Primary, Allocator Fallback>
         class Fallback_allocator final {
         public:
-            Fallback_allocator() = default;
-            Fallback_allocator(const Fallback_allocator& other) noexcept
+            constexpr Fallback_allocator() = default;
+            constexpr Fallback_allocator(const Fallback_allocator& other) noexcept
                 : primary_(other.primary_), fallback_(other.fallback_)
             {
             }
-            Fallback_allocator operator=(const Fallback_allocator& other) noexcept
+            constexpr Fallback_allocator operator=(const Fallback_allocator& other) noexcept
             {
                 if (this == &other) {
                     return *this;
@@ -58,9 +58,9 @@ namespace memoc {
                 fallback_ = other.fallback_;
                 return *this;
             }
-            Fallback_allocator(Fallback_allocator&& other) noexcept
+            constexpr Fallback_allocator(Fallback_allocator&& other) noexcept
                 : primary_(std::move(other.primary_)), fallback_(std::move(other.fallback_)) {}
-            Fallback_allocator& operator=(Fallback_allocator&& other) noexcept
+            constexpr Fallback_allocator& operator=(Fallback_allocator&& other) noexcept
             {
                 if (this == &other) {
                     return *this;
@@ -69,9 +69,9 @@ namespace memoc {
                 fallback_ = std::move(other.fallback_);
                 return *this;
             }
-            ~Fallback_allocator() = default;
+            constexpr ~Fallback_allocator() = default;
 
-            [[nodiscard]] erroc::Expected<Block<void>, Allocator_error> allocate(Block<void>::Size_type s) noexcept
+            [[nodiscard]] constexpr erroc::Expected<Block<void>, Allocator_error> allocate(Block<void>::Size_type s) noexcept
             {
                 if (erroc::Expected<Block<void>, Allocator_error> r = primary_.allocate(s)) {
                     return r;
@@ -79,7 +79,7 @@ namespace memoc {
                 return fallback_.allocate(s);
             }
 
-            void deallocate(Block<void>& b) noexcept
+            constexpr void deallocate(Block<void>& b) noexcept
             {
                 if (primary_.owns(b)) {
                     return primary_.deallocate(b);
@@ -87,7 +87,7 @@ namespace memoc {
                 fallback_.deallocate(b);
             }
 
-            [[nodiscard]] bool owns(const Block<void>& b) const noexcept
+            [[nodiscard]] constexpr bool owns(const Block<void>& b) const noexcept
             {
                 return primary_.owns(b) || fallback_.owns(b);
             }
@@ -99,7 +99,7 @@ namespace memoc {
 
         class Malloc_allocator final {
         public:
-            [[nodiscard]] erroc::Expected<Block<void>, Allocator_error> allocate(Block<void>::Size_type s) noexcept
+            [[nodiscard]] constexpr erroc::Expected<Block<void>, Allocator_error> allocate(Block<void>::Size_type s) noexcept
             {
                 if (s < 0) {
                     return erroc::Unexpected(Allocator_error::invalid_size);
@@ -120,7 +120,7 @@ namespace memoc {
                 b = Block<void>();
             }
 
-            [[nodiscard]] bool owns(const Block<void>& b) const noexcept
+            [[nodiscard]] constexpr bool owns(const Block<void>& b) const noexcept
             {
                 return b.data();
             }
@@ -130,10 +130,10 @@ namespace memoc {
         class Stack_allocator final {
             static_assert(Size > 1 && Size % 2 == 0);
         public:
-            Stack_allocator() = default;
-            Stack_allocator(const Stack_allocator& other) noexcept
+            constexpr Stack_allocator() = default;
+            constexpr Stack_allocator(const Stack_allocator& other) noexcept
                 : p_(d_) {}
-            Stack_allocator operator=(const Stack_allocator& other) noexcept
+            constexpr Stack_allocator operator=(const Stack_allocator& other) noexcept
             {
                 if (this == &other) {
                     return *this;
@@ -142,12 +142,12 @@ namespace memoc {
                 p_ = d_;
                 return *this;
             }
-            Stack_allocator(Stack_allocator&& other) noexcept
+            constexpr Stack_allocator(Stack_allocator&& other) noexcept
                 : p_(d_)
             {
                 other.p_ = nullptr;
             }
-            Stack_allocator& operator=(Stack_allocator&& other) noexcept
+            constexpr Stack_allocator& operator=(Stack_allocator&& other) noexcept
             {
                 if (this == &other) {
                     return *this;
@@ -157,9 +157,9 @@ namespace memoc {
                 other.p_ = nullptr;
                 return *this;
             }
-            virtual ~Stack_allocator() = default;
+            constexpr ~Stack_allocator() = default;
 
-            [[nodiscard]] erroc::Expected<Block<void>, Allocator_error> allocate(Block<void>::Size_type s) noexcept
+            [[nodiscard]] constexpr erroc::Expected<Block<void>, Allocator_error> allocate(Block<void>::Size_type s) noexcept
             {
                 if (s < 0) {
                     return erroc::Unexpected(Allocator_error::invalid_size);
@@ -179,7 +179,7 @@ namespace memoc {
                 return b;
             }
 
-            void deallocate(Block<void>& b) noexcept
+            constexpr void deallocate(Block<void>& b) noexcept
             {
                 if (b.data() == p_ - align(b.size())) {
                     p_ = reinterpret_cast<std::uint8_t*>(b.data());
@@ -187,13 +187,13 @@ namespace memoc {
                 b = {};
             }
 
-            [[nodiscard]] bool owns(const Block<void>& b) const noexcept
+            [[nodiscard]] constexpr bool owns(const Block<void>& b) const noexcept
             {
                 return b.data() >= d_ && b.data() < d_ + Size;
             }
 
         private:
-            Block<void>::Size_type align(Block<void>::Size_type s)
+            constexpr Block<void>::Size_type align(Block<void>::Size_type s)
             {
                 return s % 2 == 0 ? s : s + 1;
             }
@@ -210,10 +210,10 @@ namespace memoc {
             static_assert(Max_size > 1 && Max_size % 2 == 0);
             static_assert(Max_list_size > 0);
             public:
-                Free_list_allocator() = default;
-                Free_list_allocator(const Free_list_allocator& other) noexcept
+                constexpr Free_list_allocator() = default;
+                constexpr Free_list_allocator(const Free_list_allocator& other) noexcept
                     : internal_(other.internal_), root_(nullptr), list_size_(0) {}
-                Free_list_allocator operator=(const Free_list_allocator& other) noexcept
+                constexpr Free_list_allocator operator=(const Free_list_allocator& other) noexcept
                 {
                     if (this == &other) {
                         return *this;
@@ -224,13 +224,13 @@ namespace memoc {
                     list_size_ = 0;
                     return *this;
                 }
-                Free_list_allocator(Free_list_allocator&& other) noexcept
+                constexpr Free_list_allocator(Free_list_allocator&& other) noexcept
                     : internal_(std::move(other.internal_)), root_(other.root_), list_size_(other.list_size_)
                 {
                     other.root_ = nullptr;
                     other.list_size_ = 0;
                 }
-                Free_list_allocator& operator=(Free_list_allocator&& other) noexcept
+                constexpr Free_list_allocator& operator=(Free_list_allocator&& other) noexcept
                 {
                     if (this == &other) {
                         return *this;
@@ -244,7 +244,7 @@ namespace memoc {
                     return *this;
                 }
                 // Responsible to release the saved memory blocks
-                ~Free_list_allocator() noexcept
+                constexpr ~Free_list_allocator() noexcept
                 {
                     for (std::int64_t i = 0; i < list_size_; ++i) {
                         Node* n = root_;
@@ -254,7 +254,7 @@ namespace memoc {
                     }
                 }
 
-                [[nodiscard]] erroc::Expected<Block<void>, Allocator_error> allocate(Block<void>::Size_type s) noexcept
+                [[nodiscard]] constexpr erroc::Expected<Block<void>, Allocator_error> allocate(Block<void>::Size_type s) noexcept
                 {
                     if (s >= Min_size && s <= Max_size && list_size_ > 0 && root_) {
                         Block<void> b(s, root_);
@@ -269,7 +269,7 @@ namespace memoc {
                     return Block<void>(s, r.value().data());
                 }
 
-                void deallocate(Block<void>& b) noexcept
+                constexpr void deallocate(Block<void>& b) noexcept
                 {
                     if (b.size() < Min_size || b.size() > Max_size || list_size_ > Max_list_size) {
                         Block<void> nb{ Max_size, b.data() };
@@ -283,7 +283,7 @@ namespace memoc {
                     b = Block<void>();
                 }
 
-                [[nodiscard]] bool owns(const Block<void>& b) const noexcept
+                [[nodiscard]] constexpr bool owns(const Block<void>& b) const noexcept
                 {
                     return (b.size() >= Min_size && b.size() <= Max_size) || internal_.owns(b);
                 }
@@ -304,10 +304,10 @@ namespace memoc {
         public:
             using value_type = T;
 
-            Stl_adapter_allocator() = default;
-            Stl_adapter_allocator(const Stl_adapter_allocator& other) noexcept
+            constexpr Stl_adapter_allocator() = default;
+            constexpr Stl_adapter_allocator(const Stl_adapter_allocator& other) noexcept
                 : internal_(other.internal_) {}
-            Stl_adapter_allocator operator=(const Stl_adapter_allocator& other) noexcept
+            constexpr Stl_adapter_allocator operator=(const Stl_adapter_allocator& other) noexcept
             {
                 if (this == &other) {
                     return *this;
@@ -315,9 +315,9 @@ namespace memoc {
                 internal_ = other.internal_;
                 return *this;
             }
-            Stl_adapter_allocator(Stl_adapter_allocator&& other) noexcept
+            constexpr Stl_adapter_allocator(Stl_adapter_allocator&& other) noexcept
                 : internal_(std::move(other.internal_)) {}
-            Stl_adapter_allocator& operator=(Stl_adapter_allocator&& other) noexcept
+            constexpr Stl_adapter_allocator& operator=(Stl_adapter_allocator&& other) noexcept
             {
                 if (this == &other) {
                     return *this;
@@ -325,13 +325,13 @@ namespace memoc {
                 internal_ = std::move(other.internal_);
                 return *this;
             }
-            ~Stl_adapter_allocator() = default;
+            constexpr ~Stl_adapter_allocator() = default;
 
             template <typename U>
                 requires (!std::is_reference_v<U>)
             constexpr Stl_adapter_allocator(const Stl_adapter_allocator<U, Internal_allocator>&) noexcept {}
 
-            [[nodiscard]] T* allocate(std::size_t n)
+            [[nodiscard]] constexpr T* allocate(std::size_t n)
             {
                 erroc::Expected<Block<void>, Allocator_error> r = internal_.allocate(n * MEMOC_SSIZEOF(T));
                 if (!r) {
@@ -340,7 +340,7 @@ namespace memoc {
                 return reinterpret_cast<T*>(r.value().data());
             }
 
-            void deallocate(T* p, std::size_t n) noexcept
+            constexpr void deallocate(T* p, std::size_t n) noexcept
             {
                 Block<void> b = { safe_64_unsigned_to_signed_cast(n) * MEMOC_SSIZEOF(T), reinterpret_cast<void*>(p) };
                 internal_.deallocate(b);
@@ -361,15 +361,15 @@ namespace memoc {
                 Record* next{ nullptr };
             };
 
-            Stats_allocator() = default;
-            Stats_allocator(const Stats_allocator& other) noexcept
+            constexpr Stats_allocator() = default;
+            constexpr Stats_allocator(const Stats_allocator& other) noexcept
                 : internal_(other.internal_)
             {
                 for (Record* r = other.root_; r != nullptr; r = r->next) {
                     add_record(r->request_address, r->amount - MEMOC_SSIZEOF(Record), r->time);
                 }
             }
-            Stats_allocator operator=(const Stats_allocator& other) noexcept
+            constexpr Stats_allocator operator=(const Stats_allocator& other) noexcept
             {
                 if (this == &other) {
                     return *this;
@@ -380,13 +380,13 @@ namespace memoc {
                 }
                 return *this;
             }
-            Stats_allocator(Stats_allocator&& other) noexcept
+            constexpr Stats_allocator(Stats_allocator&& other) noexcept
                 : internal_(std::move(other.internal_)), number_of_records_(other.number_of_records_), total_allocated_(other.total_allocated_), root_(other.root_), tail_(other.tail_)
             {
                 other.number_of_records_ = other.total_allocated_ = 0;
                 other.root_ = other.tail_ = nullptr;
             }
-            Stats_allocator& operator=(Stats_allocator&& other) noexcept
+            constexpr Stats_allocator& operator=(Stats_allocator&& other) noexcept
             {
                 if (this == &other) {
                     return *this;
@@ -400,7 +400,7 @@ namespace memoc {
                 other.root_ = other.tail_ = nullptr;
                 return *this;
             }
-            virtual ~Stats_allocator() noexcept
+            constexpr ~Stats_allocator() noexcept
             {
                 Record* c = root_;
                 while (c) {
@@ -411,7 +411,7 @@ namespace memoc {
                 }
             }
 
-            [[nodiscard]] erroc::Expected<Block<void>, Allocator_error> allocate(Block<void>::Size_type s) noexcept
+            [[nodiscard]] constexpr erroc::Expected<Block<void>, Allocator_error> allocate(Block<void>::Size_type s) noexcept
             {
                 erroc::Expected<Block<void>, Allocator_error> r = internal_.allocate(s);
                 if (!r) {
@@ -424,7 +424,7 @@ namespace memoc {
                 return b;
             }
 
-            void deallocate(Block<void>& b) noexcept
+            void constexpr deallocate(Block<void>& b) noexcept
             {
                 Block<void> bc{ b };
                 internal_.deallocate(b);
@@ -433,25 +433,25 @@ namespace memoc {
                 }
             }
 
-            [[nodiscard]] bool owns(const Block<void>& b) const noexcept
+            [[nodiscard]] constexpr bool owns(const Block<void>& b) const noexcept
             {
                 return internal_.owns(b);
             }
 
-            const Record* stats_list() const noexcept {
+            constexpr const Record* stats_list() const noexcept {
                 return root_;
             }
 
-            std::int64_t stats_list_size() const noexcept {
+            constexpr std::int64_t stats_list_size() const noexcept {
                 return number_of_records_;
             }
 
-            Block<void>::Size_type total_allocated() const noexcept {
+            constexpr Block<void>::Size_type total_allocated() const noexcept {
                 return total_allocated_;
             }
 
         private:
-            void add_record(void* p, Block<void>::Size_type a, std::chrono::time_point<std::chrono::system_clock> time = std::chrono::system_clock::now()) {
+            constexpr void add_record(void* p, Block<void>::Size_type a, std::chrono::time_point<std::chrono::system_clock> time = std::chrono::system_clock::now()) {
                 if (number_of_records_ >= Number_of_records) {
                     tail_->next = root_;
                     root_ = root_->next;
@@ -505,17 +505,17 @@ namespace memoc {
         template <Allocator Internal_allocator, std::int64_t id = -1>
         class Shared_allocator final {
         public:
-            [[nodiscard]] erroc::Expected<Block<void>, Allocator_error> allocate(Block<void>::Size_type s) noexcept
+            [[nodiscard]] constexpr erroc::Expected<Block<void>, Allocator_error> allocate(Block<void>::Size_type s) noexcept
             {
                 return allocator_.allocate(s);
             }
 
-            void deallocate(Block<void>& b) noexcept
+            constexpr void deallocate(Block<void>& b) noexcept
             {
                 allocator_.deallocate(b);
             }
 
-            [[nodiscard]] bool owns(const Block<void>& b) const noexcept
+            [[nodiscard]] constexpr bool owns(const Block<void>& b) const noexcept
             {
                 return allocator_.owns(b);
             }
@@ -526,25 +526,25 @@ namespace memoc {
         // Allocators API
 
         template <Allocator T>
-        [[nodiscard]] inline T create() noexcept
+        [[nodiscard]] inline constexpr T create() noexcept
         {
             return T();
         }
 
         template <Allocator T>
-        [[nodiscard]] inline erroc::Expected<Block<void>, Allocator_error> allocate(T& allocator, Block<void>::Size_type size) noexcept
+        [[nodiscard]] inline constexpr erroc::Expected<Block<void>, Allocator_error> allocate(T& allocator, Block<void>::Size_type size) noexcept
         {
             return allocator.allocate(size);
         }
 
         template <Allocator T>
-        inline void deallocate(T& allocator, Block<void>& block) noexcept
+        inline constexpr void deallocate(T& allocator, Block<void>& block) noexcept
         {
             allocator.deallocate(block);
         }
 
         template <Allocator T>
-        [[nodiscard]] inline bool owns(const T& allocator, const Block<void>& block) noexcept
+        [[nodiscard]] inline constexpr bool owns(const T& allocator, const Block<void>& block) noexcept
         {
             return allocator.owns(block);
         }

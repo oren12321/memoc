@@ -13,13 +13,13 @@
 namespace memoc {
 	namespace details {
 		template <typename T, typename ...Args>
-		T* construct_at(T* dst_address, Args&&... args)
+		inline constexpr T* construct_at(T* dst_address, Args&&... args)
 		{
 			return new (dst_address) T(std::forward<Args>(args)...);
 		}
 
 		template <typename T>
-		void destruct_at(T* dst_address)
+		constexpr void destruct_at(T* dst_address)
 		{
 			dst_address->~T();
 		}
@@ -30,7 +30,7 @@ namespace memoc {
 		class Unique_ptr final {
 		public:
 			// Not recommended - ptr should be allocated using Internal_allocator
-			Unique_ptr(T* ptr = nullptr)
+			constexpr Unique_ptr(T* ptr = nullptr)
 				: ptr_(ptr) {}
 
 			template <typename T_o>
@@ -42,19 +42,19 @@ namespace memoc {
 			Unique_ptr& operator=(const Unique_ptr& other) noexcept = delete;
 
 			template <typename T_o>
-			Unique_ptr(Unique_ptr<T_o, Internal_allocator>&& other) noexcept
+			constexpr Unique_ptr(Unique_ptr<T_o, Internal_allocator>&& other) noexcept
 				: allocator_(other.allocator_), ptr_(other.ptr_)
 			{
 				other.ptr_ = nullptr;
 			}
-			Unique_ptr(Unique_ptr&& other) noexcept
+			constexpr Unique_ptr(Unique_ptr&& other) noexcept
 				: allocator_(other.allocator_), ptr_(other.ptr_)
 			{
 				other.ptr_ = nullptr;
 			}
 
 			template <typename T_o>
-			Unique_ptr& operator=(Unique_ptr<T_o, Internal_allocator>&& other) noexcept
+			constexpr Unique_ptr& operator=(Unique_ptr<T_o, Internal_allocator>&& other) noexcept
 			{
 				if (this == &other) {
 					return *this;
@@ -68,7 +68,7 @@ namespace memoc {
 				other.ptr_ = nullptr;
 				return *this;
 			}
-			Unique_ptr& operator=(Unique_ptr&& other) noexcept
+			constexpr Unique_ptr& operator=(Unique_ptr&& other) noexcept
 			{
 				if (this == &other) {
 					return *this;
@@ -83,38 +83,38 @@ namespace memoc {
 				return *this;
 			}
 
-			~Unique_ptr() noexcept
+			constexpr ~Unique_ptr() noexcept
 			{
 				remove_reference();
 			}
 
-			T* get() const noexcept
+			[[nodiscard]] constexpr T* get() const noexcept
 			{
 				return ptr_;
 			}
 
-			T* operator->() const noexcept
+			[[nodiscard]] constexpr T* operator->() const noexcept
 			{
 				return ptr_;
 			}
 
-			T& operator*() const noexcept
+			[[nodiscard]] constexpr T& operator*() const noexcept
 			{
 				return *(ptr_);
 			}
 
-			operator bool() const noexcept
+			[[nodiscard]] constexpr operator bool() const noexcept
 			{
 				return ptr_;
 			}
 
-			void reset() noexcept
+			constexpr void reset() noexcept
 			{
 				remove_reference();
 				ptr_ = nullptr;
 			}
 
-			T* release() noexcept
+			[[nodiscard]] constexpr T* release() noexcept
 			{
 				T* tmp_ptr = ptr_;
 				ptr_ = nullptr;
@@ -122,7 +122,7 @@ namespace memoc {
 			}
 
 			template <typename T_o>
-			void reset(T_o* ptr) noexcept
+			constexpr void reset(T_o* ptr) noexcept
 			{
 				if (!ptr) {
 					reset();
@@ -135,19 +135,19 @@ namespace memoc {
 			friend class Unique_ptr;
 
 			template <typename T_o, Allocator Internal_allocator_o>
-			friend bool operator==(const Unique_ptr<T_o, Internal_allocator_o>& lhs, const Unique_ptr<T_o, Internal_allocator_o>& rhs);
+			friend constexpr bool operator==(const Unique_ptr<T_o, Internal_allocator_o>& lhs, const Unique_ptr<T_o, Internal_allocator_o>& rhs);
 
 			template <typename T_o, Allocator Internal_allocator_o>
-			friend std::strong_ordering operator<=>(const Unique_ptr<T_o, Internal_allocator_o>& lhs, const Unique_ptr<T_o, Internal_allocator_o>& rhs);
+			friend constexpr std::strong_ordering operator<=>(const Unique_ptr<T_o, Internal_allocator_o>& lhs, const Unique_ptr<T_o, Internal_allocator_o>& rhs);
 
 			template <typename T_o, Allocator Internal_allocator_o>
-			friend bool operator==(const Unique_ptr<T_o, Internal_allocator_o>& lhs, std::nullptr_t);
+			friend constexpr bool operator==(const Unique_ptr<T_o, Internal_allocator_o>& lhs, std::nullptr_t);
 
 			template <typename T_o, Allocator Internal_allocator_o>
-			friend std::strong_ordering operator<=>(const Unique_ptr<T_o, Internal_allocator_o>& lhs, std::nullptr_t);
+			friend constexpr std::strong_ordering operator<=>(const Unique_ptr<T_o, Internal_allocator_o>& lhs, std::nullptr_t);
 
 		private:
-			void remove_reference()
+			constexpr void remove_reference()
 			{
 				// Check if there's an object in use
 				if (ptr_) {
@@ -163,32 +163,32 @@ namespace memoc {
 		};
 
 		template <typename T, Allocator Internal_allocator>
-		inline bool operator==(const Unique_ptr<T, Internal_allocator>& lhs, const Unique_ptr<T, Internal_allocator>& rhs)
+		[[nodiscard]] inline constexpr bool operator==(const Unique_ptr<T, Internal_allocator>& lhs, const Unique_ptr<T, Internal_allocator>& rhs)
 		{
 			return lhs.ptr_ == rhs.ptr_;
 		}
 
 		template <typename T, Allocator Internal_allocator>
-		inline std::strong_ordering operator<=>(const Unique_ptr<T, Internal_allocator>& lhs, const Unique_ptr<T, Internal_allocator>& rhs)
+		[[nodiscard]] inline constexpr std::strong_ordering operator<=>(const Unique_ptr<T, Internal_allocator>& lhs, const Unique_ptr<T, Internal_allocator>& rhs)
 		{
 			return std::compare_three_way{}(lhs.ptr_, rhs.ptr_);
 		}
 
 		template <typename T, Allocator Internal_allocator>
-		inline bool operator==(const Unique_ptr<T, Internal_allocator>& lhs, std::nullptr_t)
+		[[nodiscard]] inline constexpr bool operator==(const Unique_ptr<T, Internal_allocator>& lhs, std::nullptr_t)
 		{
 			return !lhs;
 		}
 
 		template <typename T, Allocator Internal_allocator>
-		inline std::strong_ordering operator<=>(const Unique_ptr<T, Internal_allocator>& lhs, std::nullptr_t)
+		[[nodiscard]] inline constexpr std::strong_ordering operator<=>(const Unique_ptr<T, Internal_allocator>& lhs, std::nullptr_t)
 		{
 			return std::compare_three_way{}(lhs.ptr_, nullptr);
 		}
 
 
 		template <typename T, Allocator Internal_allocator = Malloc_allocator, typename ...Args>
-		inline Unique_ptr<T, Internal_allocator> make_unique(Args&&... args)
+		[[nodiscard]] inline constexpr Unique_ptr<T, Internal_allocator> make_unique(Args&&... args)
 		{
 			Internal_allocator allocator_{};
 			Block<void> b = allocator_.allocate(MEMOC_SSIZEOF(T)).value();
@@ -211,7 +211,7 @@ namespace memoc {
 			friend class Weak_ptr;
 
 			// Not recommended - ptr should be allocated using Internal_allocator
-			explicit Shared_ptr(T* ptr = nullptr)
+			constexpr explicit Shared_ptr(T* ptr = nullptr)
 				: cb_(ptr ? reinterpret_cast<Control_block*>(const_cast<void*>(allocator_.allocate(MEMOC_SSIZEOF(Control_block)).value().data())) : nullptr), ptr_(ptr)
 			{
 				// Using value from allocate API that throws an exception if not available.
@@ -224,14 +224,14 @@ namespace memoc {
 			}
 
 			template <typename T_o>
-			Shared_ptr(const Shared_ptr<T_o, Internal_allocator>& other) noexcept
+			constexpr Shared_ptr(const Shared_ptr<T_o, Internal_allocator>& other) noexcept
 				: allocator_(other.allocator_), cb_(other.cb_), ptr_(other.ptr_)
 			{
 				if (other.ptr_ && other.cb_) {
 					++cb_->use_count;
 				}
 			}
-			Shared_ptr(const Shared_ptr& other) noexcept
+			constexpr Shared_ptr(const Shared_ptr& other) noexcept
 				: allocator_(other.allocator_), cb_(other.cb_), ptr_(other.ptr_)
 			{
 				if (other.ptr_ && other.cb_) {
@@ -242,7 +242,7 @@ namespace memoc {
 			// Should not be used directly
 			// If used directly, user should release 'ptr'
 			template <typename T_o>
-			Shared_ptr(const Shared_ptr<T_o, Internal_allocator>& other, T* ptr) noexcept
+			constexpr Shared_ptr(const Shared_ptr<T_o, Internal_allocator>& other, T* ptr) noexcept
 				: allocator_(other.allocator_), cb_(other.cb_), ptr_(ptr)
 			{
 				if (other.ptr_ && other.cb_) {
@@ -251,7 +251,7 @@ namespace memoc {
 			}
 
 			template <typename T_o>
-			Shared_ptr& operator=(const Shared_ptr<T_o, Internal_allocator>& other) noexcept
+			constexpr Shared_ptr& operator=(const Shared_ptr<T_o, Internal_allocator>& other) noexcept
 			{
 				if (this == &other) {
 					return *this;
@@ -268,7 +268,7 @@ namespace memoc {
 				}
 				return *this;
 			}
-			Shared_ptr& operator=(const Shared_ptr& other) noexcept
+			constexpr Shared_ptr& operator=(const Shared_ptr& other) noexcept
 			{
 				if (this == &other) {
 					return *this;
@@ -287,13 +287,13 @@ namespace memoc {
 			}
 
 			template <typename T_o>
-			Shared_ptr(Shared_ptr<T_o, Internal_allocator>&& other)
+			constexpr Shared_ptr(Shared_ptr<T_o, Internal_allocator>&& other) noexcept
 				: allocator_(other.allocator_), cb_(other.cb_), ptr_(other.ptr_)
 			{
 				other.cb_ = nullptr;
 				other.ptr_ = nullptr;
 			}
-			Shared_ptr(Shared_ptr&& other)
+			constexpr Shared_ptr(Shared_ptr&& other) noexcept
 				: allocator_(other.allocator_), cb_(other.cb_), ptr_(other.ptr_)
 			{
 				other.cb_ = nullptr;
@@ -301,7 +301,7 @@ namespace memoc {
 			}
 
 			template <typename T_o>
-			Shared_ptr(Shared_ptr<T_o, Internal_allocator>&& other, T* ptr)
+			constexpr Shared_ptr(Shared_ptr<T_o, Internal_allocator>&& other, T* ptr) noexcept
 				: allocator_(other.allocator_), cb_(other.cb_), ptr_(ptr)
 			{
 				other.cb_ = nullptr;
@@ -309,7 +309,7 @@ namespace memoc {
 			}
 
 			template <typename T_o>
-			Shared_ptr& operator=(Shared_ptr<T_o, Internal_allocator>&& other)
+			constexpr Shared_ptr& operator=(Shared_ptr<T_o, Internal_allocator>&& other) noexcept
 			{
 				if (this == &other) {
 					return *this;
@@ -325,7 +325,7 @@ namespace memoc {
 				other.ptr_ = nullptr;
 				return *this;
 			}
-			Shared_ptr& operator=(Shared_ptr&& other)
+			constexpr Shared_ptr& operator=(Shared_ptr&& other) noexcept
 			{
 				if (this == &other) {
 					return *this;
@@ -342,37 +342,37 @@ namespace memoc {
 				return *this;
 			}
 
-			~Shared_ptr() noexcept
+			constexpr ~Shared_ptr() noexcept
 			{
 				remove_reference();
 			}
 
-			std::int64_t use_count() const noexcept
+			[[nodiscard]] constexpr std::int64_t use_count() const noexcept
 			{
 				return cb_ ? cb_->use_count : 0;
 			}
 
-			T* get() const noexcept
+			[[nodiscard]] constexpr T* get() const noexcept
 			{
 				return ptr_;
 			}
 
-			T* operator->() const noexcept
+			[[nodiscard]] constexpr T* operator->() const noexcept
 			{
 				return ptr_;
 			}
 
-			T& operator*() const noexcept
+			[[nodiscard]] constexpr T& operator*() const noexcept
 			{
 				return *(ptr_);
 			}
 
-			explicit operator bool() const noexcept
+			[[nodiscard]] constexpr explicit operator bool() const noexcept
 			{
 				return ptr_;
 			}
 
-			void reset()
+			constexpr void reset() noexcept
 			{
 				remove_reference();
 				cb_ = nullptr;
@@ -380,7 +380,7 @@ namespace memoc {
 			}
 
 			template <typename T_o>
-			void reset(T_o* ptr)
+			constexpr void reset(T_o* ptr)
 			{
 				remove_reference();
 				if (ptr) {
@@ -398,11 +398,11 @@ namespace memoc {
 			}
 
 			template <typename T_o>
-			Shared_ptr(Unique_ptr<T_o, Internal_allocator>&& other)
+			constexpr Shared_ptr(Unique_ptr<T_o, Internal_allocator>&& other) noexcept
 				: Shared_ptr<T_o, Internal_allocator>(other.release()) {}
 
 			template <typename T_o>
-			Shared_ptr& operator=(Unique_ptr<T_o, Internal_allocator>&& other) noexcept
+			constexpr Shared_ptr& operator=(Unique_ptr<T_o, Internal_allocator>&& other) noexcept
 			{
 				reset(other.release());
 				return *this;
@@ -412,19 +412,19 @@ namespace memoc {
 			friend class Shared_ptr;
 
 			template <typename T_o, Allocator Internal_allocator_o>
-			friend bool operator==(const Shared_ptr<T_o, Internal_allocator_o>& lhs, const Shared_ptr<T_o, Internal_allocator_o>& rhs);
+			friend constexpr bool operator==(const Shared_ptr<T_o, Internal_allocator_o>& lhs, const Shared_ptr<T_o, Internal_allocator_o>& rhs) noexcept;
 
 			template <typename T_o, Allocator Internal_allocator_o>
-			friend std::strong_ordering operator<=>(const Shared_ptr<T_o, Internal_allocator_o>& lhs, const Shared_ptr<T_o, Internal_allocator_o>& rhs);
+			friend constexpr std::strong_ordering operator<=>(const Shared_ptr<T_o, Internal_allocator_o>& lhs, const Shared_ptr<T_o, Internal_allocator_o>& rhs) noexcept;
 
 			template <typename T_o, Allocator Internal_allocator_o>
-			friend bool operator==(const Shared_ptr<T_o, Internal_allocator_o>& lhs, std::nullptr_t);
+			friend constexpr bool operator==(const Shared_ptr<T_o, Internal_allocator_o>& lhs, std::nullptr_t) noexcept;
 
 			template <typename T_o, Allocator Internal_allocator_o>
-			friend std::strong_ordering operator<=>(const Shared_ptr<T_o, Internal_allocator_o>& lhs, std::nullptr_t);
+			friend constexpr std::strong_ordering operator<=>(const Shared_ptr<T_o, Internal_allocator_o>& lhs, std::nullptr_t) noexcept;
 
 		private:
-			void remove_reference()
+			constexpr void remove_reference() noexcept
 			{
 				if (!ptr_ && !cb_) {
 					return;
@@ -452,32 +452,32 @@ namespace memoc {
 		};
 
 		template <typename T, Allocator Internal_allocator>
-		inline bool operator==(const Shared_ptr<T, Internal_allocator>& lhs, const Shared_ptr<T, Internal_allocator>& rhs)
+		[[nodiscard]] inline constexpr bool operator==(const Shared_ptr<T, Internal_allocator>& lhs, const Shared_ptr<T, Internal_allocator>& rhs) noexcept
 		{
 			return lhs.ptr_ == rhs.ptr_;
 		}
 
 		template <typename T, Allocator Internal_allocator>
-		inline std::strong_ordering operator<=>(const Shared_ptr<T, Internal_allocator>& lhs, const Shared_ptr<T, Internal_allocator>& rhs)
+		[[nodiscard]] inline constexpr std::strong_ordering operator<=>(const Shared_ptr<T, Internal_allocator>& lhs, const Shared_ptr<T, Internal_allocator>& rhs) noexcept
 		{
 			return std::compare_three_way{}(lhs.ptr_, rhs.ptr_);
 		}
 
 		template <typename T, Allocator Internal_allocator>
-		inline bool operator==(const Shared_ptr<T, Internal_allocator>& lhs, std::nullptr_t)
+		[[nodiscard]] inline constexpr bool operator==(const Shared_ptr<T, Internal_allocator>& lhs, std::nullptr_t) noexcept
 		{
 			return !lhs;
 		}
 
 		template <typename T, Allocator Internal_allocator>
-		inline std::strong_ordering operator<=>(const Shared_ptr<T, Internal_allocator>& lhs, std::nullptr_t)
+		[[nodiscard]] inline constexpr std::strong_ordering operator<=>(const Shared_ptr<T, Internal_allocator>& lhs, std::nullptr_t) noexcept
 		{
 			return std::compare_three_way{}(lhs.ptr_, nullptr);
 		}
 
 
 		template <typename T, Allocator Internal_allocator = Malloc_allocator, typename ...Args>
-		inline Shared_ptr<T, Internal_allocator> make_shared(Args&&... args)
+		[[nodiscard]] inline constexpr Shared_ptr<T, Internal_allocator> make_shared(Args&&... args)
 		{
 			Internal_allocator allocator_{};
 			Block<void> b = allocator_.allocate(MEMOC_SSIZEOF(T)).value();
@@ -486,21 +486,21 @@ namespace memoc {
 		}
 
 		template <typename T, typename U, Allocator Internal_allocator = Malloc_allocator>
-		inline Shared_ptr<T, Internal_allocator> static_pointer_cast(const Shared_ptr<U, Internal_allocator>& other) noexcept
+		[[nodiscard]] inline constexpr Shared_ptr<T, Internal_allocator> static_pointer_cast(const Shared_ptr<U, Internal_allocator>& other) noexcept
 		{
 			T* p = static_cast<T*>(other.get());
 			return Shared_ptr<T, Internal_allocator>(other, p);
 		}
 
 		template <typename T, typename U, Allocator Internal_allocator = Malloc_allocator>
-		inline Shared_ptr<T, Internal_allocator> static_pointer_cast(Shared_ptr<U, Internal_allocator>&& other) noexcept
+		[[nodiscard]] inline constexpr Shared_ptr<T, Internal_allocator> static_pointer_cast(Shared_ptr<U, Internal_allocator>&& other) noexcept
 		{
 			T* p = static_cast<T*>(other.get());
 			return Shared_ptr<T, Internal_allocator>(std::move(other), p);
 		}
 
 		template <typename T, typename U, Allocator Internal_allocator = Malloc_allocator>
-		inline Shared_ptr<T, Internal_allocator> dynamic_pointer_cast(const Shared_ptr<U, Internal_allocator>& other) noexcept
+		[[nodiscard]] inline constexpr Shared_ptr<T, Internal_allocator> dynamic_pointer_cast(const Shared_ptr<U, Internal_allocator>& other) noexcept
 		{
 			if (T* p = dynamic_cast<T*>(other.get())) {
 				return Shared_ptr<T, Internal_allocator>(other, p);
@@ -509,7 +509,7 @@ namespace memoc {
 		}
 
 		template <typename T, typename U, Allocator Internal_allocator = Malloc_allocator>
-		inline Shared_ptr<T, Internal_allocator> dynamic_pointer_cast(Shared_ptr<U, Internal_allocator>&& other) noexcept
+		[[nodiscard]] inline constexpr Shared_ptr<T, Internal_allocator> dynamic_pointer_cast(Shared_ptr<U, Internal_allocator>&& other) noexcept
 		{
 			if (T* p = dynamic_cast<T*>(other.get())) {
 				return Shared_ptr<T, Internal_allocator>(std::move(other), p);
@@ -518,28 +518,28 @@ namespace memoc {
 		}
 
 		template <typename T, typename U, Allocator Internal_allocator = Malloc_allocator>
-		inline Shared_ptr<T, Internal_allocator> const_pointer_cast(const Shared_ptr<U, Internal_allocator>& other) noexcept
+		[[nodiscard]] inline constexpr Shared_ptr<T, Internal_allocator> const_pointer_cast(const Shared_ptr<U, Internal_allocator>& other) noexcept
 		{
 			T* p = const_cast<T*>(other.get());
 			return Shared_ptr<T, Internal_allocator>(other, p);
 		}
 
 		template <typename T, typename U, Allocator Internal_allocator = Malloc_allocator>
-		inline Shared_ptr<T, Internal_allocator> const_pointer_cast(Shared_ptr<U, Internal_allocator>&& other) noexcept
+		[[nodiscard]] inline constexpr Shared_ptr<T, Internal_allocator> const_pointer_cast(Shared_ptr<U, Internal_allocator>&& other) noexcept
 		{
 			T* p = const_cast<T*>(other.get());
 			return Shared_ptr<T, Internal_allocator>(std::move(other), p);
 		}
 
 		template <typename T, typename U, Allocator Internal_allocator = Malloc_allocator>
-		inline Shared_ptr<T, Internal_allocator> reinterpret_pointer_cast(const Shared_ptr<U, Internal_allocator>& other) noexcept
+		[[nodiscard]] inline constexpr Shared_ptr<T, Internal_allocator> reinterpret_pointer_cast(const Shared_ptr<U, Internal_allocator>& other) noexcept
 		{
 			T* p = reinterpret_cast<T*>(other.get());
 			return Shared_ptr<T, Internal_allocator>(other, p);
 		}
 
 		template <typename T, typename U, Allocator Internal_allocator = Malloc_allocator>
-		inline Shared_ptr<T, Internal_allocator> reinterpret_pointer_cast(Shared_ptr<U, Internal_allocator>&& other) noexcept
+		[[nodiscard]] inline constexpr Shared_ptr<T, Internal_allocator> reinterpret_pointer_cast(Shared_ptr<U, Internal_allocator>&& other) noexcept
 		{
 			T* p = reinterpret_cast<T*>(other.get());
 			return Shared_ptr<T, Internal_allocator>(std::move(other), p);
@@ -549,17 +549,17 @@ namespace memoc {
 		template <typename T, Allocator Internal_allocator = Malloc_allocator>
 		class Weak_ptr final {
 		public:
-			Weak_ptr() = default;
+			constexpr Weak_ptr() = default;
 
 			template <typename T_o>
-			Weak_ptr(const Shared_ptr<T_o, Internal_allocator>& other) noexcept
+			constexpr Weak_ptr(const Shared_ptr<T_o, Internal_allocator>& other) noexcept
 				: allocator_(other.allocator_), cb_(other.cb_), ptr_(other.ptr_)
 			{
 				if (cb_) {
 					++cb_->weak_count;
 				}
 			}
-			Weak_ptr(const Shared_ptr<T, Internal_allocator>& other) noexcept
+			constexpr Weak_ptr(const Shared_ptr<T, Internal_allocator>& other) noexcept
 				: allocator_(other.allocator_), cb_(other.cb_), ptr_(other.ptr_)
 			{
 				if (cb_) {
@@ -567,7 +567,7 @@ namespace memoc {
 				}
 			}
 			template <typename T_o>
-			Weak_ptr& operator=(const Shared_ptr<T_o, Internal_allocator>& other) noexcept
+			constexpr Weak_ptr& operator=(const Shared_ptr<T_o, Internal_allocator>& other) noexcept
 			{
 				allocator_ = other.allocator_;
 				cb_ = other.cb_;
@@ -578,7 +578,7 @@ namespace memoc {
 				}
 				return *this;
 			}
-			Weak_ptr& operator=(const Shared_ptr<T, Internal_allocator>& other) noexcept
+			constexpr Weak_ptr& operator=(const Shared_ptr<T, Internal_allocator>& other) noexcept
 			{
 				allocator_ = other.allocator_;
 				cb_ = other.cb_;
@@ -591,14 +591,14 @@ namespace memoc {
 			}
 
 			template <typename T_o>
-			Weak_ptr(const Weak_ptr<T_o, Internal_allocator>& other) noexcept
+			constexpr Weak_ptr(const Weak_ptr<T_o, Internal_allocator>& other) noexcept
 				: allocator_(other.allocator_), cb_(other.cb_), ptr_(other.ptr_)
 			{
 				if (cb_) {
 					++cb_->weak_count;
 				}
 			}
-			Weak_ptr(const Weak_ptr& other) noexcept
+			constexpr Weak_ptr(const Weak_ptr& other) noexcept
 				: allocator_(other.allocator_), cb_(other.cb_), ptr_(other.ptr_)
 			{
 				if (cb_) {
@@ -607,7 +607,7 @@ namespace memoc {
 			}
 
 			template <typename T_o>
-			Weak_ptr& operator=(const Weak_ptr<T_o, Internal_allocator>& other) noexcept
+			constexpr Weak_ptr& operator=(const Weak_ptr<T_o, Internal_allocator>& other) noexcept
 			{
 				if (this == &other) {
 					return *this;
@@ -624,7 +624,7 @@ namespace memoc {
 				}
 				return *this;
 			}
-			Weak_ptr& operator=(const Weak_ptr& other) noexcept
+			constexpr Weak_ptr& operator=(const Weak_ptr& other) noexcept
 			{
 				if (this == &other) {
 					return *this;
@@ -643,13 +643,13 @@ namespace memoc {
 			}
 
 			template <typename T_o>
-			Weak_ptr(Weak_ptr<T_o, Internal_allocator>&& other) noexcept
+			constexpr Weak_ptr(Weak_ptr<T_o, Internal_allocator>&& other) noexcept
 				: allocator_(other.allocator_), cb_(other.cb_), ptr_(other.ptr_)
 			{
 				other.cb_ = nullptr;
 				other.ptr_ = nullptr;
 			}
-			Weak_ptr(Weak_ptr&& other) noexcept
+			constexpr Weak_ptr(Weak_ptr&& other) noexcept
 				: allocator_(other.allocator_), cb_(other.cb_), ptr_(other.ptr_)
 			{
 				other.cb_ = nullptr;
@@ -657,7 +657,7 @@ namespace memoc {
 			}
 
 			template <typename T_o>
-			Weak_ptr(Weak_ptr<T_o, Internal_allocator>&& other, T* ptr) noexcept
+			constexpr Weak_ptr(Weak_ptr<T_o, Internal_allocator>&& other, T* ptr) noexcept
 				: allocator_(other.allocator_), cb_(other.cb_), ptr_(ptr)
 			{
 				other.cb_ = nullptr;
@@ -665,7 +665,7 @@ namespace memoc {
 			}
 
 			template <typename T_o>
-			Weak_ptr& operator=(Weak_ptr<T_o, Internal_allocator>&& other) noexcept
+			constexpr Weak_ptr& operator=(Weak_ptr<T_o, Internal_allocator>&& other) noexcept
 			{
 				if (this == &other) {
 					return *this;
@@ -681,7 +681,7 @@ namespace memoc {
 				other.ptr_ = nullptr;
 				return *this;
 			}
-			Weak_ptr& operator=(Weak_ptr&& other) noexcept
+			constexpr Weak_ptr& operator=(Weak_ptr&& other) noexcept
 			{
 				if (this == &other) {
 					return *this;
@@ -698,22 +698,22 @@ namespace memoc {
 				return *this;
 			}
 
-			~Weak_ptr() noexcept
+			constexpr ~Weak_ptr() noexcept
 			{
 				remove_reference();
 			}
 
-			std::int64_t use_count() const noexcept
+			[[nodiscard]] constexpr std::int64_t use_count() const noexcept
 			{
 				return cb_ ? cb_->use_count : 0;
 			}
 
-			bool expired() const noexcept
+			[[nodiscard]] constexpr bool expired() const noexcept
 			{
 				return use_count() == 0;
 			}
 
-			void reset() noexcept
+			constexpr void reset() noexcept
 			{
 				remove_reference();
 				cb_ = nullptr;
@@ -723,7 +723,7 @@ namespace memoc {
 			template <typename T_o, Allocator Internal_allocator_o>
 			friend class Shared_ptr;
 
-			Shared_ptr<T, Internal_allocator> lock()
+			[[nodiscard]] constexpr Shared_ptr<T, Internal_allocator> lock() noexcept
 			{
 				Shared_ptr<T, Internal_allocator> sp{ nullptr };
 				if (!cb_) {
@@ -738,7 +738,7 @@ namespace memoc {
 			}
 
 		private:
-			void remove_reference()
+			constexpr void remove_reference() noexcept
 			{
 				if (cb_ && !cb_->use_count) {
 					ptr_ = nullptr;
