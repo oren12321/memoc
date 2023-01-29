@@ -382,17 +382,17 @@ namespace memoc {
 
             [[nodiscard]] constexpr bool empty() const noexcept
             {
-                return block().empty();
+                return internal_.size() <= 0;
             }
 
             [[nodiscard]] constexpr Block<T>::Size_type size() const noexcept
             {
-                return block().size();
+                return (internal_.size() * internal_bytes_size_) / type_bytes_size_;
             }
 
             [[nodiscard]] constexpr Block<T>::Pointer data() const noexcept
             {
-                return block().data();
+                return reinterpret_cast<T*>(internal_.data());
             }
 
         private:
