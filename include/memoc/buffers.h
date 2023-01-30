@@ -371,7 +371,16 @@ namespace memoc {
                 internal_ = std::move(other.internal_);
                 return *this;
             }
-            constexpr ~Typed_buffer() = default;
+            constexpr ~Typed_buffer()
+            {
+                // For non-fundamental type an object destruction is required.
+                if constexpr (!std::is_fundamental_v<T>) {
+                    Block<T> b{ this->block() };
+                    for (std::int64_t i = 0; i < memoc::size(b); ++i) {
+                        memoc::details::destruct_at<T>(reinterpret_cast<T*>(&(b[i])));
+                    }
+                }
+            }
 
             [[nodiscard]] constexpr Block<T> block() const noexcept
             {
