@@ -44,8 +44,8 @@ namespace memoc {
             constexpr ~Block() noexcept = default;
 
             // Do not allow parially empty block
-            constexpr Block(Size_type s = 0, Const_pointer p = nullptr) noexcept
-                : s_(p ? (s > 0 ? s : 0) : 0), p_(s > 0 ? const_cast<Pointer>(p) : nullptr)
+            constexpr Block(Size_type s = 0, Const_pointer p = nullptr, std::int64_t hint = std::numeric_limits<std::int64_t>::min()) noexcept
+                : s_(p ? (s > 0 ? s : 0) : 0), p_(s > 0 ? const_cast<Pointer>(p) : nullptr), hint_(hint)
             {
             }
 
@@ -74,9 +74,15 @@ namespace memoc {
                 return p_[offset];
             }
 
+            [[nodiscard]] constexpr std::int64_t hint() const noexcept
+            {
+                return hint_;
+            }
+
         private:
             Size_type s_{ 0 };
             Pointer p_{ nullptr };
+            std::int64_t hint_{ std::numeric_limits<std::int64_t>::min() };
         };
 
         template <typename T>
@@ -183,8 +189,8 @@ namespace memoc {
             constexpr ~Block() noexcept = default;
 
             // Do not allow parially empty block
-            constexpr Block(Size_type s = 0, Const_pointer p = nullptr) noexcept
-                : s_(p ? (s > 0 ? s : 0) : 0), p_(s > 0 ? const_cast<Pointer>(p) : nullptr)
+            constexpr Block(Size_type s = 0, Const_pointer p = nullptr, std::int64_t hint = std::numeric_limits<std::int64_t>::min()) noexcept
+                : s_(p ? (s > 0 ? s : 0) : 0), p_(s > 0 ? const_cast<Pointer>(p) : nullptr), hint_(hint)
             {
             }
 
@@ -203,9 +209,15 @@ namespace memoc {
                 return p_;
             }
 
+            [[nodiscard]] constexpr std::int64_t hint() const noexcept
+            {
+                return hint_;
+            }
+
         private:
             Size_type s_{ 0 };
             Pointer p_{ nullptr };
+            std::int64_t hint_{ std::numeric_limits<std::int64_t>::min() };
         };
 
         template <typename T1, typename T2>

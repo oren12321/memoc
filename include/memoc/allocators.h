@@ -84,7 +84,9 @@ namespace memoc {
                 if (primary_.owns(b)) {
                     return primary_.deallocate(b);
                 }
-                fallback_.deallocate(b);
+                else if(fallback_.owns(b)) {
+                    fallback_.deallocate(b);
+                }
             }
 
             [[nodiscard]] constexpr bool owns(const Block<void>& b) const noexcept
@@ -97,6 +99,17 @@ namespace memoc {
             Fallback fallback_;
         };
 
+        [[nodiscard]] constexpr std::int64_t encode(const char* str) noexcept {
+            const char* p = str;
+            std::uint64_t code = 0;
+            while (!*p == '\0' && code < std::numeric_limits<std::int64_t>::max()) {
+                std::uint64_t char_code = static_cast<std::uint64_t>(*p++);
+                code |= char_code;
+                code <<= (sizeof(*p) * 8);
+            }
+            return static_cast<std::int64_t>(code);
+        }
+
         class Malloc_allocator final {
         public:
             [[nodiscard]] constexpr erroc::Expected<Block<void>, Allocator_error> allocate(Block<void>::Size_type s) noexcept
@@ -107,7 +120,7 @@ namespace memoc {
                 if (s == 0) {
                     return Block<void>();
                 }
-                Block<void> b(s, std::malloc(s));
+                Block<void> b(s, std::malloc(s), uuid_);
                 if (b.empty()) {
                     return erroc::Unexpected(Allocator_error::unknown);
                 }
@@ -122,8 +135,11 @@ namespace memoc {
 
             [[nodiscard]] constexpr bool owns(const Block<void>& b) const noexcept
             {
-                return b.data();
+                return b.data() && b.hint() == uuid_;
             }
+
+        private:
+            constexpr static std::int64_t uuid_ = encode("095deb2c-f51a-4193-b177-d6d686087c72");
         };
 
         template <Block<void>::Size_type Size>
@@ -249,7 +265,7 @@ namespace memoc {
                     for (std::int64_t i = 0; i < list_size_; ++i) {
                         Node* n = root_;
                         root_ = root_->next;
-                        Block<void> b{ Max_size, n };
+                        Block<void> b{ Max_size, n, n->hint };
                         internal_.deallocate(b);
                     }
                 }
@@ -257,7 +273,7 @@ namespace memoc {
                 [[nodiscard]] constexpr erroc::Expected<Block<void>, Allocator_error> allocate(Block<void>::Size_type s) noexcept
                 {
                     if (s >= Min_size && s <= Max_size && list_size_ > 0 && root_) {
-                        Block<void> b(s, root_);
+                        Block<void> b(s, root_, root_->hint);
                         root_ = root_->next;
                         --list_size_;
                         return b;
@@ -266,17 +282,18 @@ namespace memoc {
                     if (!r) {
                         return r;
                     }
-                    return Block<void>(s, r.value().data());
+                    return Block<void>(s, r.value().data(), r.value().hint());
                 }
 
                 constexpr void deallocate(Block<void>& b) noexcept
                 {
                     if (b.size() < Min_size || b.size() > Max_size || list_size_ > Max_list_size) {
-                        Block<void> nb{ Max_size, b.data() };
+                        Block<void> nb{ Max_size, b.data(), b.hint() };
                         b = Block<void>();
                         return internal_.deallocate(nb);
                     }
-                    auto node = reinterpret_cast<Node*>(b.data());
+                    Node* node = reinterpret_cast<Node*>(b.data());
+                    node->hint - b.hint();
                     node->next = root_;
                     root_ = node;
                     ++list_size_;
@@ -291,6 +308,7 @@ namespace memoc {
                 Internal_allocator internal_;
 
                 struct Node {
+                    std::int64_t hint{ std::numeric_limits<std::int64_t>::min() };
                     Node* next{ nullptr };
                 };
 
