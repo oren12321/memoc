@@ -44,32 +44,32 @@ namespace memoc {
         template <Allocator Primary, Allocator Fallback>
         class Fallback_allocator final {
         public:
-            constexpr Fallback_allocator() = default;
-            constexpr Fallback_allocator(const Fallback_allocator& other) noexcept
-                : primary_(other.primary_), fallback_(other.fallback_)
-            {
-            }
-            constexpr Fallback_allocator operator=(const Fallback_allocator& other) noexcept
-            {
-                if (this == &other) {
-                    return *this;
-                }
-                primary_ = other.primary_;
-                fallback_ = other.fallback_;
-                return *this;
-            }
-            constexpr Fallback_allocator(Fallback_allocator&& other) noexcept
-                : primary_(std::move(other.primary_)), fallback_(std::move(other.fallback_)) {}
-            constexpr Fallback_allocator& operator=(Fallback_allocator&& other) noexcept
-            {
-                if (this == &other) {
-                    return *this;
-                }
-                primary_ = std::move(other.primary_);
-                fallback_ = std::move(other.fallback_);
-                return *this;
-            }
-            constexpr ~Fallback_allocator() = default;
+            //constexpr Fallback_allocator() = default;
+            //constexpr Fallback_allocator(const Fallback_allocator& other) noexcept
+            //    : primary_(other.primary_), fallback_(other.fallback_)
+            //{
+            //}
+            //constexpr Fallback_allocator operator=(const Fallback_allocator& other) noexcept
+            //{
+            //    if (this == &other) {
+            //        return *this;
+            //    }
+            //    primary_ = other.primary_;
+            //    fallback_ = other.fallback_;
+            //    return *this;
+            //}
+            //constexpr Fallback_allocator(Fallback_allocator&& other) noexcept
+            //    : primary_(std::move(other.primary_)), fallback_(std::move(other.fallback_)) {}
+            //constexpr Fallback_allocator& operator=(Fallback_allocator&& other) noexcept
+            //{
+            //    if (this == &other) {
+            //        return *this;
+            //    }
+            //    primary_ = std::move(other.primary_);
+            //    fallback_ = std::move(other.fallback_);
+            //    return *this;
+            //}
+            //constexpr ~Fallback_allocator() = default;
 
             [[nodiscard]] constexpr erroc::Expected<Block<void>, Allocator_error> allocate(Block<void>::Size_type s) noexcept
             {
@@ -142,39 +142,63 @@ namespace memoc {
             constexpr static std::int64_t uuid_ = encode("095deb2c-f51a-4193-b177-d6d686087c72");
         };
 
-        template <Block<void>::Size_type Size>
-        class Stack_allocator final {
-            static_assert(Size > 1 && Size % 2 == 0);
+        template <std::int64_t Stacks_count, Block<void>::Size_type Buffer_size>
+        class Default_stacks_manager {
+            static_assert(Stacks_count > 0);
+            static_assert(Buffer_size > 1 && Buffer_size % 2 == 0);
         public:
-            constexpr Stack_allocator() = default;
-            constexpr Stack_allocator(const Stack_allocator& other) noexcept
-                : p_(d_) {}
-            constexpr Stack_allocator operator=(const Stack_allocator& other) noexcept
-            {
-                if (this == &other) {
-                    return *this;
+            constexpr Default_stacks_manager() noexcept {
+                if (!initialized_) {
+                    for (std::int64_t i = 0; i < Stacks_count; ++i) {
+                        ptrs_[i] = buffers_[i];
+                    }
+                    initialized_ = true;
                 }
+            }
 
-                p_ = d_;
-                return *this;
-            }
-            constexpr Stack_allocator(Stack_allocator&& other) noexcept
-                : p_(d_)
+            [[nodiscard]] constexpr void* stack_malloc(Block<void>::Size_type s) noexcept
             {
-                other.p_ = nullptr;
-            }
-            constexpr Stack_allocator& operator=(Stack_allocator&& other) noexcept
-            {
-                if (this == &other) {
-                    return *this;
+                for (std::int64_t i = 0; i < Stacks_count; ++i) {
+                    if (Buffer_size - (ptrs_[i] - buffers_[i]) >= s) {
+                        void* tmp = ptrs_[i];
+                        ptrs_[i] += s;
+                        return tmp;
+                    }
                 }
-
-                p_ = d_;
-                other.p_ = nullptr;
-                return *this;
+                return nullptr;
             }
-            constexpr ~Stack_allocator() = default;
 
+            constexpr void stack_free(void* p, Block<void>::Size_type s) noexcept
+            {
+                for (std::int64_t i = 0; i < Stacks_count; ++i) {
+                    if (p == ptrs_[i] - s) {
+                        ptrs_[i] = reinterpret_cast<std::uint8_t*>(p);
+                        break;
+                    }
+                }
+            }
+
+            [[nodiscard]] constexpr bool stack_owns(void* p) const noexcept
+            {
+                for (std::int64_t i = 0; i < Stacks_count; ++i) {
+                    const std::uint8_t* lp = reinterpret_cast<const std::uint8_t*>(p);
+                    if (lp >= buffers_[i] && lp < buffers_[i] + Buffer_size) {
+                        return true;
+                    }
+                }
+                return false;
+            }
+
+        private:
+            inline static std::uint8_t buffers_[Stacks_count][Buffer_size];
+            inline static std::uint8_t* ptrs_[Stacks_count];
+
+            inline static bool initialized_{ false };
+        };
+
+        template <typename Stacks_manager = Default_stacks_manager<16, 128>>
+        class Stack_allocator final {
+        public:
             [[nodiscard]] constexpr erroc::Expected<Block<void>, Allocator_error> allocate(Block<void>::Size_type s) noexcept
             {
                 if (s < 0) {
@@ -183,29 +207,22 @@ namespace memoc {
                 if (s == 0) {
                     return Block<void>();
                 }
-                if (!p_) {
-                    return erroc::Unexpected(Allocator_error::unknown);
-                }
-                auto s1 = align(s);
-                if (p_ + s1 > d_ + Size) {
+                void* p = sm_.stack_malloc(align(s));
+                if (!p) {
                     return erroc::Unexpected(Allocator_error::out_of_memory);
                 }
-                Block<void> b(s, p_);
-                p_ += s1;
-                return b;
+                return Block<void>(s, p);
             }
 
             constexpr void deallocate(Block<void>& b) noexcept
             {
-                if (b.data() == p_ - align(b.size())) {
-                    p_ = reinterpret_cast<std::uint8_t*>(b.data());
-                }
+                sm_.stack_free(b.data(), b.size());
                 b = {};
             }
 
             [[nodiscard]] constexpr bool owns(const Block<void>& b) const noexcept
             {
-                return b.data() >= d_ && b.data() < d_ + Size;
+                return sm_.stack_owns(b.data());
             }
 
         private:
@@ -214,8 +231,7 @@ namespace memoc {
                 return s % 2 == 0 ? s : s + 1;
             }
 
-            std::uint8_t d_[Size] = { 0 };
-            std::uint8_t* p_{ d_ };
+            Stacks_manager sm_{};
         };
 
         template <
