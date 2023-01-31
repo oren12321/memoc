@@ -293,7 +293,7 @@ namespace memoc {
                         return internal_.deallocate(nb);
                     }
                     Node* node = reinterpret_cast<Node*>(b.data());
-                    node->hint - b.hint();
+                    node->hint = b.hint();
                     node->next = root_;
                     root_ = node;
                     ++list_size_;
