@@ -115,12 +115,30 @@ namespace memoc {
             constexpr static std::int64_t uuid_ = encode_string("095deb2c-f51a-4193-b177-d6d686087c72");
         };
 
+        template <class T>
+        concept Stack_memory =
+            requires
+        {
+            std::is_default_constructible_v<T>;
+            std::is_copy_constructible_v<T>;
+            std::is_copy_assignable_v<T>;
+            std::is_move_constructible_v<T>;
+            std::is_move_assignable_v<T>;
+            std::is_destructible_v<T>;
+        }&&
+            requires (T t, Block<void>::Size_type s, void* p)
+        {
+            {t.stack_malloc(s)} noexcept -> std::same_as<void*>;
+            {t.stack_free(p, s)} noexcept -> std::same_as<void>;
+            {t.stack_owns(p)} noexcept -> std::same_as<bool>;
+        };
+
         template <std::int64_t Stacks_count, Block<void>::Size_type Buffer_size>
-        class Default_stacks_manager final {
+        class Default_stack_memory final {
             static_assert(Stacks_count > 0);
             static_assert(Buffer_size > 1 && Buffer_size % 2 == 0);
         public:
-            constexpr Default_stacks_manager() noexcept {
+            constexpr Default_stack_memory() noexcept {
                 if (!initialized_) {
                     for (std::int64_t i = 0; i < Stacks_count; ++i) {
                         ptrs_[i] = buffers_[i];
@@ -169,7 +187,7 @@ namespace memoc {
             inline static bool initialized_{ false };
         };
 
-        template <typename Stacks_manager = Default_stacks_manager<16, 128>>
+        template <Stack_memory Internal_stack_memory = Default_stack_memory<16, 128>>
         class Stack_allocator final {
         public:
             [[nodiscard]] constexpr erroc::Expected<Block<void>, Allocator_error> allocate(Block<void>::Size_type s) noexcept
@@ -204,7 +222,7 @@ namespace memoc {
                 return s % 2 == 0 ? s : s + 1;
             }
 
-            Stacks_manager sm_{};
+            Internal_stack_memory sm_{};
         };
 
         template <
