@@ -44,33 +44,6 @@ namespace memoc {
         template <Allocator Primary, Allocator Fallback>
         class Fallback_allocator final {
         public:
-            //constexpr Fallback_allocator() = default;
-            //constexpr Fallback_allocator(const Fallback_allocator& other) noexcept
-            //    : primary_(other.primary_), fallback_(other.fallback_)
-            //{
-            //}
-            //constexpr Fallback_allocator operator=(const Fallback_allocator& other) noexcept
-            //{
-            //    if (this == &other) {
-            //        return *this;
-            //    }
-            //    primary_ = other.primary_;
-            //    fallback_ = other.fallback_;
-            //    return *this;
-            //}
-            //constexpr Fallback_allocator(Fallback_allocator&& other) noexcept
-            //    : primary_(std::move(other.primary_)), fallback_(std::move(other.fallback_)) {}
-            //constexpr Fallback_allocator& operator=(Fallback_allocator&& other) noexcept
-            //{
-            //    if (this == &other) {
-            //        return *this;
-            //    }
-            //    primary_ = std::move(other.primary_);
-            //    fallback_ = std::move(other.fallback_);
-            //    return *this;
-            //}
-            //constexpr ~Fallback_allocator() = default;
-
             [[nodiscard]] constexpr erroc::Expected<Block<void>, Allocator_error> allocate(Block<void>::Size_type s) noexcept
             {
                 if (erroc::Expected<Block<void>, Allocator_error> r = primary_.allocate(s)) {
@@ -99,7 +72,7 @@ namespace memoc {
             Fallback fallback_;
         };
 
-        [[nodiscard]] constexpr std::int64_t encode(const char* str) noexcept {
+        [[nodiscard]] constexpr std::int64_t encode_string(const char* str) noexcept {
             const char* p = str;
             std::uint64_t code = 0;
             while (!*p == '\0' && code < std::numeric_limits<std::int64_t>::max()) {
@@ -139,11 +112,11 @@ namespace memoc {
             }
 
         private:
-            constexpr static std::int64_t uuid_ = encode("095deb2c-f51a-4193-b177-d6d686087c72");
+            constexpr static std::int64_t uuid_ = encode_string("095deb2c-f51a-4193-b177-d6d686087c72");
         };
 
         template <std::int64_t Stacks_count, Block<void>::Size_type Buffer_size>
-        class Default_stacks_manager {
+        class Default_stacks_manager final {
             static_assert(Stacks_count > 0);
             static_assert(Buffer_size > 1 && Buffer_size % 2 == 0);
         public:
