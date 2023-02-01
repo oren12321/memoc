@@ -216,7 +216,7 @@ namespace memoc {
 
             constexpr void deallocate(Block<void>& b) noexcept
             {
-                sm_.stack_free(b.data(), b.size());
+                sm_.stack_free(b.data(), align(b.size()));
                 b = {};
             }
 
