@@ -217,7 +217,7 @@ namespace memoc {
             }
 
         private:
-            constexpr Block<void>::Size_type align(Block<void>::Size_type s)
+            static constexpr Block<void>::Size_type align(Block<void>::Size_type s)
             {
                 return s % 2 == 0 ? s : s + 1;
             }
