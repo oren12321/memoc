@@ -30,7 +30,7 @@ namespace memoc {
                 ERROC_EXPECT(size >= 0, std::invalid_argument, "invalid buffer size");
 
                 Block<void> tmp = allocator_.allocate(size * MEMOC_SSIZEOF(T)).value();
-                data_ = Block<T>(size, reinterpret_cast<T*>(tmp.data()));
+                data_ = Block<T>(size, reinterpret_cast<T*>(tmp.data()), tmp.hint());
 
                 // For non-fundamental type an object construction is required.
                 if constexpr (std::is_fundamental_v<T>) {
@@ -56,7 +56,7 @@ namespace memoc {
                 }
                 {
                     Block<void> tmp = allocator_.allocate(other.data_.size() * MEMOC_SSIZEOF(T)).value();
-                    data_ = Block<T>(tmp.size() / MEMOC_SSIZEOF(T), reinterpret_cast<T*>(tmp.data()));
+                    data_ = Block<T>(tmp.size() / MEMOC_SSIZEOF(T), reinterpret_cast<T*>(tmp.data()), tmp.hint());
                 }
                 copy(other.data_, data_);
             }
@@ -68,7 +68,7 @@ namespace memoc {
 
                 allocator_ = other.allocator_;
                 {
-                    Block<void> tmp(data_.size() * MEMOC_SSIZEOF(T), reinterpret_cast<void*>(data_.data()));
+                    Block<void> tmp(data_.size() * MEMOC_SSIZEOF(T), reinterpret_cast<void*>(data_.data()), data_.hint());
                     allocator_.deallocate(tmp);
                     data_ = {};
                 }
@@ -78,7 +78,7 @@ namespace memoc {
                 }
                 {
                     Block<void> tmp = allocator_.allocate(other.data_.size() * MEMOC_SSIZEOF(T)).value();
-                    data_ = Block<T>(tmp.size() / MEMOC_SSIZEOF(T), reinterpret_cast<T*>(tmp.data()));
+                    data_ = Block<T>(tmp.size() / MEMOC_SSIZEOF(T), reinterpret_cast<T*>(tmp.data()), tmp.hint());
                 }
                 copy(other.data_, data_);
 
@@ -103,7 +103,7 @@ namespace memoc {
 
                 allocator_ = std::move(other.allocator_);
                 {
-                    Block<void> tmp(data_.size() * MEMOC_SSIZEOF(T), reinterpret_cast<void*>(data_.data()));
+                    Block<void> tmp(data_.size() * MEMOC_SSIZEOF(T), reinterpret_cast<void*>(data_.data()), data_.hint());
                     allocator_.deallocate(tmp);
                 }
                 data_ = other.data_;
@@ -123,7 +123,7 @@ namespace memoc {
                     }
 
                     {
-                        Block<void> tmp(data_.size() * MEMOC_SSIZEOF(T), reinterpret_cast<void*>(data_.data()));
+                        Block<void> tmp(data_.size() * MEMOC_SSIZEOF(T), reinterpret_cast<void*>(data_.data()), data_.hint());
                         allocator_.deallocate(tmp);
                         data_ = {};
                     }
