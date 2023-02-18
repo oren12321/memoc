@@ -547,32 +547,6 @@ namespace memoc {
         private:
             inline static Internal_allocator allocator_{};
         };
-
-        // Allocators API
-
-        template <Allocator T>
-        [[nodiscard]] inline constexpr T create() noexcept
-        {
-            return T();
-        }
-
-        template <Allocator T>
-        [[nodiscard]] inline constexpr erroc::Expected<Block<void>, Allocator_error> allocate(T& allocator, Block<void>::Size_type size) noexcept
-        {
-            return allocator.allocate(size);
-        }
-
-        template <Allocator T>
-        inline constexpr void deallocate(T& allocator, Block<void>& block) noexcept
-        {
-            allocator.deallocate(block);
-        }
-
-        template <Allocator T>
-        [[nodiscard]] inline constexpr bool owns(const T& allocator, const Block<void>& block) noexcept
-        {
-            return allocator.owns(block);
-        }
     }
 
     using details::Allocator;
@@ -584,10 +558,6 @@ namespace memoc {
     using details::Stack_allocator;
     using details::Stats_allocator;
     using details::Stl_adapter_allocator;
-    using details::create;
-    using details::allocate;
-    using details::deallocate;
-    using details::owns;
 }
 
 #endif // MEMOC_ALLOCATORS_H

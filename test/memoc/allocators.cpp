@@ -670,7 +670,7 @@ TEST_F(Fallback_allocator_test, DISABLED_is_moveable)
 class Any_allocator_test : public ::testing::Test {
 protected:
     using Allocator = memoc::Malloc_allocator;
-    Allocator allocator_{ memoc::create<Allocator>() };
+    Allocator allocator_{ /*memoc::create<Allocator>()*/ };
 };
 
 TEST_F(Any_allocator_test, allocate_free_and_give_owning_indication_for_successfull_allocation)
@@ -679,13 +679,13 @@ TEST_F(Any_allocator_test, allocate_free_and_give_owning_indication_for_successf
 
     const Block<void>::Size_type s{ 1 };
 
-    Block<void> b = allocate(allocator_, s).value();
+    Block<void> b = allocator_.allocate(s).value();
     EXPECT_NE(nullptr, b.data());
     EXPECT_EQ(1, b.size());
 
-    EXPECT_TRUE(owns(allocator_, b));
+    EXPECT_TRUE(allocator_.owns(b));
 
-    deallocate(allocator_, b);
+    allocator_.deallocate(b);
     EXPECT_TRUE(b.empty());
 }
 
@@ -694,7 +694,7 @@ TEST_F(Any_allocator_test, fails_when_allocation_size_is_negative_or_when_not_in
     using namespace memoc;
 
     const Block<void>::Size_type negative_size{ -1 };
-    EXPECT_EQ(Allocator_error::invalid_size, allocate(allocator_, negative_size).error());
+    EXPECT_EQ(Allocator_error::invalid_size, allocator_.allocate(negative_size).error());
 
     // Comment in order to prevent address-sanitizer error in Linux.
     //const Block<void>::Size_type not_in_range_size{ std::numeric_limits<Block<void>::Size_type>::max() };
@@ -707,7 +707,7 @@ TEST_F(Any_allocator_test, returns_empty_non_owned_block_when_size_is_zero)
 
     const Block<void>::Size_type zero_size{ 0 };
 
-    Block<void> b = allocate(allocator_, zero_size).value();
+    Block<void> b = allocator_.allocate(zero_size).value();
     EXPECT_TRUE(b.empty());
-    EXPECT_FALSE(owns(allocator_, b));
+    EXPECT_FALSE(allocator_.owns(b));
 }
