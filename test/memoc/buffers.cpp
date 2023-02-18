@@ -20,9 +20,9 @@ TEST(Stack_buffer_test, not_empty_when_initialized_with_valid_size)
 
     Buffer<void, Test_stack_allocator<2>> buff{ 2 };
 
-    EXPECT_FALSE(empty(buff));
-    EXPECT_NE(nullptr, data(buff));
-    EXPECT_EQ(2, size(buff));
+    EXPECT_FALSE(buff.empty());
+    EXPECT_NE(nullptr, buff.data());
+    EXPECT_EQ(2, buff.size());
 }
 
 TEST(Stack_buffer_test, throws_exception_when_initialized_with_invalid_size)
@@ -31,7 +31,7 @@ TEST(Stack_buffer_test, throws_exception_when_initialized_with_invalid_size)
 
     EXPECT_THROW((Buffer<void, Test_stack_allocator<2>>{ 4 }), std::runtime_error);
 
-    //EXPECT_TRUE(empty(buff));
+    //EXPECT_TRUE(buff.empty());
 }
 
 TEST(Stack_buffer_test, DISABLED_is_copyable)
@@ -41,26 +41,26 @@ TEST(Stack_buffer_test, DISABLED_is_copyable)
     Buffer<void, Test_stack_allocator<2>> buff1{ 2 };
     Buffer<void, Test_stack_allocator<2>> buff2{ buff1 };
 
-    EXPECT_FALSE(empty(buff1));
-    EXPECT_NE(nullptr, data(buff1));
-    EXPECT_EQ(2, size(buff1));
+    EXPECT_FALSE(buff1.empty());
+    EXPECT_NE(nullptr, buff1.data());
+    EXPECT_EQ(2, buff1.size());
 
-    EXPECT_FALSE(empty(buff2));
-    EXPECT_NE(nullptr, data(buff2));
-    EXPECT_EQ(2, size(buff2));
+    EXPECT_FALSE(buff2.empty());
+    EXPECT_NE(nullptr, buff2.data());
+    EXPECT_EQ(2, buff2.size());
 
-    EXPECT_NE(data(buff1), data(buff2));
-    EXPECT_EQ(size(buff1), size(buff2));
+    EXPECT_NE(buff1.data(), buff2.data());
+    EXPECT_EQ(buff1.size(), buff2.size());
 
     Buffer<void, Test_stack_allocator<2>> buff3{ 2 };
     buff3 = buff2;
 
-    EXPECT_FALSE(empty(buff3));
-    EXPECT_NE(nullptr, data(buff3));
-    EXPECT_EQ(2, size(buff3));
+    EXPECT_FALSE(buff3.empty());
+    EXPECT_NE(nullptr, buff3.data());
+    EXPECT_EQ(2, buff3.size());
 
-    EXPECT_NE(data(buff2), data(buff3));
-    EXPECT_EQ(size(buff2), size(buff3));
+    EXPECT_NE(buff2.data(), buff3.data());
+    EXPECT_EQ(buff2.size(), buff3.size());
 }
 
 TEST(Stack_buffer_test, DISABLED_is_moveable)
@@ -70,22 +70,22 @@ TEST(Stack_buffer_test, DISABLED_is_moveable)
     Buffer<void, Test_stack_allocator<2>> buff1{ 2 };
     Buffer<void, Test_stack_allocator<2>> buff2{ std::move(buff1) };
 
-    EXPECT_TRUE(empty(buff1));
+    EXPECT_TRUE(buff1.empty());
 
-    EXPECT_FALSE(empty(buff2));
-    EXPECT_NE(nullptr, data(buff2));
-    EXPECT_EQ(2, size(buff2));
+    EXPECT_FALSE(buff2.empty());
+    EXPECT_NE(nullptr, buff2.data());
+    EXPECT_EQ(2, buff2.size());
 
-    EXPECT_NE(data(buff1), data(buff2));
-    EXPECT_NE(size(buff1), size(buff2));
+    EXPECT_NE(buff1.data(), buff2.data());
+    EXPECT_NE(buff1.size(), buff2.size());
 
     Buffer<void, Test_stack_allocator<2>> buff3{ 2 };
     buff3 = std::move(buff2);
 
-    EXPECT_TRUE(empty(buff2));
+    EXPECT_TRUE(buff2.empty());
 
-    EXPECT_NE(data(buff2), data(buff3));
-    EXPECT_NE(size(buff2), size(buff3));
+    EXPECT_NE(buff2.data(), buff3.data());
+    EXPECT_NE(buff2.size(), buff3.size());
 }
 
 TEST(Stack_buffer_test, can_be_initalized_with_data)
@@ -96,36 +96,36 @@ TEST(Stack_buffer_test, can_be_initalized_with_data)
 
     Buffer<int, Test_stack_allocator<2 * MEMOC_SSIZEOF(int)>> buff1{ 2, values };
 
-    EXPECT_FALSE(empty(buff1));
-    EXPECT_NE(nullptr, data(buff1));
-    EXPECT_EQ(2, size(buff1));
+    EXPECT_FALSE(buff1.empty());
+    EXPECT_NE(nullptr, buff1.data());
+    EXPECT_EQ(2, buff1.size());
 
-    int* data1 = data(buff1);
+    int* data1 = buff1.data();
     EXPECT_EQ(values[0], data1[0]);
     EXPECT_EQ(values[1], data1[1]);
 
     //Buffer<int, Test_stack_allocator<2 * MEMOC_SSIZEOF(int)>> copy1{buff1};
 
-    //EXPECT_FALSE(empty(copy1));
-    //EXPECT_NE(nullptr, data(copy1));
-    //EXPECT_EQ(2, size(copy1));
+    //EXPECT_FALSE(copy1.empty());
+    //EXPECT_NE(nullptr, copy1.data());
+    //EXPECT_EQ(2, copy1.size());
 
-    //EXPECT_NE(data(buff1), data(copy1));
-    //EXPECT_EQ(size(buff1), size(copy1));
+    //EXPECT_NE(buff1.data(), copy1.data());
+    //EXPECT_EQ(buff1.size(), copy1.size());
 
-    //int* copy_data1 = data(copy1);
+    //int* copy_data1 = copy1.data();
     //EXPECT_EQ(values[0], copy_data1[0]);
     //EXPECT_EQ(values[1], copy_data1[1]);
 
     //Buffer<int, Test_stack_allocator<2 * MEMOC_SSIZEOF(int)>> moved1{std::move(buff1)};
 
-    //EXPECT_TRUE(empty(buff1));
+    //EXPECT_TRUE(buff1.empty());
 
-    //EXPECT_FALSE(empty(moved1));
-    //EXPECT_NE(nullptr, data(moved1));
-    //EXPECT_EQ(2, size(moved1));
+    //EXPECT_FALSE(moved1.empty());
+    //EXPECT_NE(nullptr, moved1.data());
+    //EXPECT_EQ(2, moved1.size());
 
-    //int* moved_data1 = data(moved1);
+    //int* moved_data1 = moved1.data();
     //EXPECT_EQ(values[0], moved_data1[0]);
     //EXPECT_EQ(values[1], moved_data1[1]);
 }
@@ -138,9 +138,9 @@ TEST(Allocated_buffer_test, not_empty_when_initialized_with_valid_size)
 
     Buffer<void, Malloc_allocator> buff{ 2 };
 
-    EXPECT_FALSE(empty(buff));
-    EXPECT_NE(nullptr, data(buff));
-    EXPECT_EQ(2, size(buff));
+    EXPECT_FALSE(buff.empty());
+    EXPECT_NE(nullptr, buff.data());
+    EXPECT_EQ(2, buff.size());
 }
 
 TEST(Allocated_buffer_test, throws_exception_when_initialized_with_invalid_size)
@@ -149,7 +149,7 @@ TEST(Allocated_buffer_test, throws_exception_when_initialized_with_invalid_size)
 
     EXPECT_THROW((Buffer<void, Test_stack_allocator<2>>{ 4 }), std::runtime_error);
 
-    //EXPECT_TRUE(empty(buff));
+    //EXPECT_TRUE(buff.empty());
 }
 
 TEST(Allocated_buffer_test, is_copyable)
@@ -159,26 +159,26 @@ TEST(Allocated_buffer_test, is_copyable)
     Buffer<void, Malloc_allocator> buff1{ 2 };
     Buffer<void, Malloc_allocator> buff2{ buff1 };
 
-    EXPECT_FALSE(empty(buff1));
-    EXPECT_NE(nullptr, data(buff1));
-    EXPECT_EQ(2, size(buff1));
+    EXPECT_FALSE(buff1.empty());
+    EXPECT_NE(nullptr, buff1.data());
+    EXPECT_EQ(2, buff1.size());
 
-    EXPECT_FALSE(empty(buff2));
-    EXPECT_NE(nullptr, data(buff2));
-    EXPECT_EQ(2, size(buff2));
+    EXPECT_FALSE(buff2.empty());
+    EXPECT_NE(nullptr, buff2.data());
+    EXPECT_EQ(2, buff2.size());
 
-    EXPECT_NE(data(buff1), data(buff2));
-    EXPECT_EQ(size(buff1), size(buff2));
+    EXPECT_NE(buff1.data(), buff2.data());
+    EXPECT_EQ(buff1.size(), buff2.size());
 
     Buffer<void, Malloc_allocator> buff3{ 2 };
     buff3 = buff2;
 
-    EXPECT_FALSE(empty(buff3));
-    EXPECT_NE(nullptr, data(buff3));
-    EXPECT_EQ(2, size(buff3));
+    EXPECT_FALSE(buff3.empty());
+    EXPECT_NE(nullptr, buff3.data());
+    EXPECT_EQ(2, buff3.size());
 
-    EXPECT_NE(data(buff2), data(buff3));
-    EXPECT_EQ(size(buff2), size(buff3));
+    EXPECT_NE(buff2.data(), buff3.data());
+    EXPECT_EQ(buff2.size(), buff3.size());
 }
 
 TEST(Allocated_buffer_test, is_moveable)
@@ -188,22 +188,22 @@ TEST(Allocated_buffer_test, is_moveable)
     Buffer<void, Malloc_allocator> buff1{ 2 };
     Buffer<void, Malloc_allocator> buff2{ std::move(buff1) };
 
-    EXPECT_TRUE(empty(buff1));
+    EXPECT_TRUE(buff1.empty());
 
-    EXPECT_FALSE(empty(buff2));
-    EXPECT_NE(nullptr, data(buff2));
-    EXPECT_EQ(2, size(buff2));
+    EXPECT_FALSE(buff2.empty());
+    EXPECT_NE(nullptr, buff2.data());
+    EXPECT_EQ(2, buff2.size());
 
-    EXPECT_NE(data(buff1), data(buff2));
-    EXPECT_NE(size(buff1), size(buff2));
+    EXPECT_NE(buff1.data(), buff2.data());
+    EXPECT_NE(buff1.size(), buff2.size());
 
     Buffer<void, Malloc_allocator> buff3{ 2 };
     buff3 = std::move(buff2);
 
-    EXPECT_TRUE(empty(buff2));
+    EXPECT_TRUE(buff2.empty());
 
-    EXPECT_NE(data(buff2), data(buff3));
-    EXPECT_NE(size(buff2), size(buff3));
+    EXPECT_NE(buff2.data(), buff3.data());
+    EXPECT_NE(buff2.size(), buff3.size());
 }
 
 TEST(Allocated_buffer_test, can_be_initalized_with_data)
@@ -214,36 +214,36 @@ TEST(Allocated_buffer_test, can_be_initalized_with_data)
 
     Buffer<int, Malloc_allocator> buff1{ 2, values };
 
-    EXPECT_FALSE(empty(buff1));
-    EXPECT_NE(nullptr, data(buff1));
-    EXPECT_EQ(2, size(buff1));
+    EXPECT_FALSE(buff1.empty());
+    EXPECT_NE(nullptr, buff1.data());
+    EXPECT_EQ(2, buff1.size());
 
-    int* data1 = data(buff1);
+    int* data1 = buff1.data();
     EXPECT_EQ(values[0], data1[0]);
     EXPECT_EQ(values[1], data1[1]);
 
     Buffer<int, Malloc_allocator> copy1{buff1};
 
-    EXPECT_FALSE(empty(copy1));
-    EXPECT_NE(nullptr, data(copy1));
-    EXPECT_EQ(2, size(copy1));
+    EXPECT_FALSE(copy1.empty());
+    EXPECT_NE(nullptr, copy1.data());
+    EXPECT_EQ(2, copy1.size());
 
-    EXPECT_NE(data(buff1), data(copy1));
-    EXPECT_EQ(size(buff1), size(copy1));
+    EXPECT_NE(buff1.data(), copy1.data());
+    EXPECT_EQ(buff1.size(), copy1.size());
 
-    int* copy_data1 = data(copy1);
+    int* copy_data1 = copy1.data();
     EXPECT_EQ(values[0], copy_data1[0]);
     EXPECT_EQ(values[1], copy_data1[1]);
 
     Buffer<int, Malloc_allocator> moved1{std::move(buff1)};
 
-    EXPECT_TRUE(empty(buff1));
+    EXPECT_TRUE(buff1.empty());
 
-    EXPECT_FALSE(empty(moved1));
-    EXPECT_NE(nullptr, data(moved1));
-    EXPECT_EQ(2, size(moved1));
+    EXPECT_FALSE(moved1.empty());
+    EXPECT_NE(nullptr, moved1.data());
+    EXPECT_EQ(2, moved1.size());
 
-    int* moved_data1 = data(moved1);
+    int* moved_data1 = moved1.data();
     EXPECT_EQ(values[0], moved_data1[0]);
     EXPECT_EQ(values[1], moved_data1[1]);
 }
@@ -256,9 +256,9 @@ TEST(Fallback_buffer_test, uses_the_first_buffer_when_not_empty)
 
     Buffer<void, Fallback_allocator<Test_stack_allocator<2>, Malloc_allocator>> buff{ 2 };
 
-    EXPECT_FALSE(empty(buff));
-    EXPECT_NE(nullptr, data(buff));
-    EXPECT_EQ(2, size(buff));
+    EXPECT_FALSE(buff.empty());
+    EXPECT_NE(nullptr, buff.data());
+    EXPECT_EQ(2, buff.size());
 }
 
 TEST(Fallback_buffer_test, uses_the_second_buffer_when_not_empty)
@@ -268,9 +268,9 @@ TEST(Fallback_buffer_test, uses_the_second_buffer_when_not_empty)
     // Required size invalid for first allocator
     Buffer<void, Fallback_allocator<Test_stack_allocator<2>, Malloc_allocator>> buff{ 4 };
 
-    EXPECT_FALSE(empty(buff));
-    EXPECT_NE(nullptr, data(buff));
-    EXPECT_EQ(4, size(buff));
+    EXPECT_FALSE(buff.empty());
+    EXPECT_NE(nullptr, buff.data());
+    EXPECT_EQ(4, buff.size());
 }
 
 TEST(Fallback_buffer_test, throws_exception_when_initialized_with_invalid_size_for_both_buffers)
@@ -279,7 +279,7 @@ TEST(Fallback_buffer_test, throws_exception_when_initialized_with_invalid_size_f
 
     EXPECT_THROW((Buffer<void, Fallback_allocator<Test_stack_allocator<2>, Test_stack_allocator<2>>>{ 4 }), std::runtime_error);
 
-    //EXPECT_TRUE(empty(buff));
+    //EXPECT_TRUE(buff.empty());
 }
 
 // Just for compilation check
@@ -312,65 +312,65 @@ TEST(Fallback_buffer_test, can_be_initalized_with_data)
 
     Buffer<int, Fallback_allocator<Test_stack_allocator<2 * MEMOC_SSIZEOF(int)>, Malloc_allocator>> buff1{ 2, values };
 
-    EXPECT_FALSE(empty(buff1));
-    EXPECT_NE(nullptr, data(buff1));
-    EXPECT_EQ(2, size(buff1));
+    EXPECT_FALSE(buff1.empty());
+    EXPECT_NE(nullptr, buff1.data());
+    EXPECT_EQ(2, buff1.size());
 
-    int* data1 = data(buff1);
+    int* data1 = buff1.data();
     EXPECT_EQ(values[0], data1[0]);
     EXPECT_EQ(values[1], data1[1]);
 
     Buffer<int, Fallback_allocator<Test_stack_allocator<2 * MEMOC_SSIZEOF(int)>, Malloc_allocator>> copy1{ buff1 };
 
-    EXPECT_FALSE(empty(copy1));
-    EXPECT_NE(nullptr, data(copy1));
-    EXPECT_EQ(2, size(copy1));
+    EXPECT_FALSE(copy1.empty());
+    EXPECT_NE(nullptr, copy1.data());
+    EXPECT_EQ(2, copy1.size());
 
-    int* copy_data1 = data(copy1);
+    int* copy_data1 = copy1.data();
     EXPECT_EQ(values[0], copy_data1[0]);
     EXPECT_EQ(values[1], copy_data1[1]);
 
     Buffer<int, Fallback_allocator<Test_stack_allocator<2 * MEMOC_SSIZEOF(int)>, Malloc_allocator>> moved1{ std::move(buff1) };
 
-    EXPECT_TRUE(empty(buff1));
+    EXPECT_TRUE(buff1.empty());
 
-    EXPECT_FALSE(empty(moved1));
-    EXPECT_NE(nullptr, data(moved1));
-    EXPECT_EQ(2, size(moved1));
+    EXPECT_FALSE(moved1.empty());
+    EXPECT_NE(nullptr, moved1.data());
+    EXPECT_EQ(2, moved1.size());
 
-    int* moved_data1 = data(moved1);
+    int* moved_data1 = moved1.data();
     EXPECT_EQ(values[0], moved_data1[0]);
     EXPECT_EQ(values[1], moved_data1[1]);
 
     Buffer<void, Fallback_allocator<Test_stack_allocator<2>, Malloc_allocator>> buff2{ 2 * MEMOC_SSIZEOF(int), values };
 
-    EXPECT_FALSE(empty(buff2));
-    EXPECT_NE(nullptr, data(buff2));
-    EXPECT_EQ(2 * MEMOC_SSIZEOF(int), size(buff2));
+    EXPECT_FALSE(buff2.empty());
+    EXPECT_NE(nullptr, buff2.data());
+    EXPECT_EQ(2 * MEMOC_SSIZEOF(int), buff2.size());
 
-    int* data2 = reinterpret_cast<int*>(data(buff2));
+    int* data2 = reinterpret_cast<int*>(buff2.data());
     EXPECT_EQ(values[0], data2[0]);
     EXPECT_EQ(values[1], data2[1]);
 
     Buffer<void, Fallback_allocator<Test_stack_allocator<2>, Malloc_allocator>> copy2{ buff2 };
 
-    EXPECT_FALSE(empty(copy2));
-    EXPECT_NE(nullptr, data(copy2));
-    EXPECT_EQ(2 * MEMOC_SSIZEOF(int), size(copy2));
+    EXPECT_FALSE(copy2.empty());
+    EXPECT_NE(nullptr, copy2.data());
+    EXPECT_EQ(2 * MEMOC_SSIZEOF(int), copy2.size());
 
-    int* copy_data2 = reinterpret_cast<int*>(data(copy2));
+    int* copy_data2 = reinterpret_cast<int*>(copy2.data());
     EXPECT_EQ(values[0], copy_data2[0]);
     EXPECT_EQ(values[1], copy_data2[1]);
 
     Buffer<void, Fallback_allocator<Test_stack_allocator<2>, Malloc_allocator>> moved2{ std::move(buff2) };
 
-    EXPECT_TRUE(empty(buff2));
+    EXPECT_TRUE(buff2.empty());
 
-    EXPECT_FALSE(empty(moved2));
-    EXPECT_NE(nullptr, data(moved2));
-    EXPECT_EQ(2 * MEMOC_SSIZEOF(int), size(moved2));
+    EXPECT_FALSE(moved2.empty());
+    EXPECT_NE(nullptr, moved2.data());
+    EXPECT_EQ(2 * MEMOC_SSIZEOF(int), moved2.size());
 
-    int* moved_data2 = reinterpret_cast<int*>(data(moved2));
+    int* moved_data2 = reinterpret_cast<int*>(moved2.data());
     EXPECT_EQ(values[0], moved_data2[0]);
     EXPECT_EQ(values[1], moved_data2[1]);
 }
@@ -385,9 +385,9 @@ TEST(Typed_buffer_test, can_be_initialized_with_fundamental_data_type)
 
     Buffer<int, Malloc_allocator> buff{2, values };
 
-    EXPECT_FALSE(empty(buff));
+    EXPECT_FALSE(buff.empty());
 
-    Block b = block(buff);
+    Block b = buff.block();
 
     EXPECT_NE(nullptr, b.data());
     EXPECT_EQ(2, b.size());
@@ -411,9 +411,9 @@ TEST(Typed_buffer_test, can_be_initialized_with_custom_data_type)
 
     Buffer<S, Malloc_allocator> buff1{ 2, s };
 
-    EXPECT_FALSE(empty(buff1));
+    EXPECT_FALSE(buff1.empty());
 
-    Block b1 = block(buff1);
+    Block b1 = buff1.block();
 
     EXPECT_NE(nullptr, b1.data());
     EXPECT_EQ(2, b1.size());
@@ -425,7 +425,7 @@ TEST(Typed_buffer_test, can_be_initialized_with_custom_data_type)
 
     Buffer<std::string, Test_stack_allocator<256>> buff2{ 2, data2 };
 
-    Block b2 = block(buff2);
+    Block b2 = buff2.block();
 
     EXPECT_EQ(data2[0], b2.data()[0]);
     EXPECT_EQ(data2[1], b2.data()[1]);
@@ -438,7 +438,7 @@ TEST(Any_buffer_test, creation_via_create_function)
     using namespace memoc;
 
     Buffer empty_buffer = create_buffer<void>().value();
-    EXPECT_TRUE(empty(empty_buffer));
+    EXPECT_TRUE(empty_buffer.empty());
 
     Buffer_error buffer_with_invalid_size = create_buffer<void>(-1).error();
     EXPECT_EQ(Buffer_error::invalid_size, buffer_with_invalid_size);
@@ -448,14 +448,14 @@ TEST(Any_buffer_test, creation_via_create_function)
     //EXPECT_EQ(Buffer_error::unknown, buffer_with_unknown_failure);
 
     Buffer buffer_with_no_data = create_buffer<void>(2).value();
-    EXPECT_FALSE(empty(buffer_with_no_data));
-    EXPECT_EQ(2, size(buffer_with_no_data));
-    EXPECT_NE(nullptr, data(buffer_with_no_data));
+    EXPECT_FALSE(buffer_with_no_data.empty());
+    EXPECT_EQ(2, buffer_with_no_data.size());
+    EXPECT_NE(nullptr, buffer_with_no_data.data());
 
     int values[]{ 150, 151 };
     Buffer<int> buffer_with_data = create_buffer<int>(2, values).value();
-    EXPECT_FALSE(empty(buffer_with_data));
-    EXPECT_EQ(2, size(buffer_with_data));
-    EXPECT_NE(nullptr, data(buffer_with_data));
-    EXPECT_EQ(150, data(buffer_with_data)[0]); EXPECT_EQ(151, data(buffer_with_data)[1]);
+    EXPECT_FALSE(buffer_with_data.empty());
+    EXPECT_EQ(2, buffer_with_data.size());
+    EXPECT_NE(nullptr, buffer_with_data.data());
+    EXPECT_EQ(150, buffer_with_data.data()[0]); EXPECT_EQ(151, buffer_with_data.data()[1]);
 }

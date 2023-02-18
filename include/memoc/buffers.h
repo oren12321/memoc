@@ -30,19 +30,19 @@ namespace memoc {
                 ERROC_EXPECT(size >= 0, std::invalid_argument, "invalid buffer size");
 
                 Block<void> tmp = allocator_.allocate(size * MEMOC_SSIZEOF(T)).value();
-                data_ = Block<T>(size, reinterpret_cast<T*>(tmp.data()), tmp.hint());
+                block_ = Block<T>(size, reinterpret_cast<T*>(tmp.data()), tmp.hint());
 
                 // For non-fundamental type an object construction is required.
                 if constexpr (std::is_fundamental_v<T>) {
-                    copy(Block<T>(size, data), data_);
+                    copy(Block<T>(size, data), block_);
                 }
                 else {
-                    for (std::int64_t i = 0; i < data_.size(); ++i) {
-                        memoc::details::construct_at<T>(&(data_[i]));
+                    for (std::int64_t i = 0; i < block_.size(); ++i) {
+                        memoc::details::construct_at<T>(&(block_[i]));
                     }
                     if (data) {
-                        for (std::int64_t i = 0; i < data_.size(); ++i) {
-                            data_[i] = data[i];
+                        for (std::int64_t i = 0; i < block_.size(); ++i) {
+                            block_[i] = data[i];
                         }
                     }
                 }
@@ -55,10 +55,10 @@ namespace memoc {
                     return;
                 }
                 {
-                    Block<void> tmp = allocator_.allocate(other.data_.size() * MEMOC_SSIZEOF(T)).value();
-                    data_ = Block<T>(tmp.size() / MEMOC_SSIZEOF(T), reinterpret_cast<T*>(tmp.data()), tmp.hint());
+                    Block<void> tmp = allocator_.allocate(other.block_.size() * MEMOC_SSIZEOF(T)).value();
+                    block_ = Block<T>(tmp.size() / MEMOC_SSIZEOF(T), reinterpret_cast<T*>(tmp.data()), tmp.hint());
                 }
-                copy(other.data_, data_);
+                copy(other.block_, block_);
             }
             constexpr Buffer operator=(const Buffer& other)
             {
@@ -68,19 +68,19 @@ namespace memoc {
 
                 allocator_ = other.allocator_;
                 {
-                    Block<void> tmp(data_.size() * MEMOC_SSIZEOF(T), reinterpret_cast<void*>(data_.data()), data_.hint());
+                    Block<void> tmp(block_.size() * MEMOC_SSIZEOF(T), reinterpret_cast<void*>(block_.data()), block_.hint());
                     allocator_.deallocate(tmp);
-                    data_ = {};
+                    block_ = {};
                 }
 
                 if (other.empty()) {
                     return *this;
                 }
                 {
-                    Block<void> tmp = allocator_.allocate(other.data_.size() * MEMOC_SSIZEOF(T)).value();
-                    data_ = Block<T>(tmp.size() / MEMOC_SSIZEOF(T), reinterpret_cast<T*>(tmp.data()), tmp.hint());
+                    Block<void> tmp = allocator_.allocate(other.block_.size() * MEMOC_SSIZEOF(T)).value();
+                    block_ = Block<T>(tmp.size() / MEMOC_SSIZEOF(T), reinterpret_cast<T*>(tmp.data()), tmp.hint());
                 }
-                copy(other.data_, data_);
+                copy(other.block_, block_);
 
                 return *this;
             }
@@ -91,9 +91,9 @@ namespace memoc {
                 }
 
                 allocator_ = std::move(other.allocator_);
-                data_ = other.data_;
+                block_ = other.block_;
 
-                other.data_ = {};
+                other.block_ = {};
             }
             constexpr Buffer& operator=(Buffer&& other) noexcept
             {
@@ -103,56 +103,56 @@ namespace memoc {
 
                 allocator_ = std::move(other.allocator_);
                 {
-                    Block<void> tmp(data_.size() * MEMOC_SSIZEOF(T), reinterpret_cast<void*>(data_.data()), data_.hint());
+                    Block<void> tmp(block_.size() * MEMOC_SSIZEOF(T), reinterpret_cast<void*>(block_.data()), block_.hint());
                     allocator_.deallocate(tmp);
                 }
-                data_ = other.data_;
+                block_ = other.block_;
 
-                other.data_ = {};
+                other.block_ = {};
 
                 return *this;
             }
             constexpr ~Buffer() noexcept
             {
-                if (!data_.empty()) {
+                if (!block_.empty()) {
                     // For non-fundamental type an object destruction is required.
                     if constexpr (!std::is_fundamental_v<T>) {
-                        for (std::int64_t i = 0; i < data_.size(); ++i) {
-                            memoc::details::destruct_at<T>(&(data_[i]));
+                        for (std::int64_t i = 0; i < block_.size(); ++i) {
+                            memoc::details::destruct_at<T>(&(block_[i]));
                         }
                     }
 
                     {
-                        Block<void> tmp(data_.size() * MEMOC_SSIZEOF(T), reinterpret_cast<void*>(data_.data()), data_.hint());
+                        Block<void> tmp(block_.size() * MEMOC_SSIZEOF(T), reinterpret_cast<void*>(block_.data()), block_.hint());
                         allocator_.deallocate(tmp);
-                        data_ = {};
+                        block_ = {};
                     }
                 }
             }
 
             [[nodiscard]] constexpr Block<T> block() const noexcept
             {
-                return data_;
+                return block_;
             }
 
             [[nodiscard]] constexpr bool empty() const noexcept
             {
-                return data_.empty();
+                return block_.empty();
             }
 
             [[nodiscard]] constexpr Block<T>::Size_type size() const noexcept
             {
-                return data_.size();
+                return block_.size();
             }
 
             [[nodiscard]] constexpr Block<T>::Pointer data() const noexcept
             {
-                return data_.data();
+                return block_.data();
             }
 
         private:
             Internal_allocator allocator_{};
-            Block<T> data_{};
+            Block<T> block_{};
         };
 
         template <Allocator Internal_allocator>
@@ -162,8 +162,8 @@ namespace memoc {
             {
                 ERROC_EXPECT(size >= 0, std::invalid_argument, "invalid buffer size");
 
-                data_ = allocator_.allocate(size).value();
-                copy(Block<void>(size, data), data_);
+                block_ = allocator_.allocate(size).value();
+                copy(Block<void>(size, data), block_);
             }
 
             constexpr Buffer(const Buffer& other)
@@ -172,8 +172,8 @@ namespace memoc {
                 if (other.empty()) {
                     return;
                 }
-                data_ = allocator_.allocate(other.size()).value();
-                copy(other.data_, data_);
+                block_ = allocator_.allocate(other.size()).value();
+                copy(other.block_, block_);
             }
             constexpr Buffer operator=(const Buffer& other)
             {
@@ -182,13 +182,13 @@ namespace memoc {
                 }
 
                 allocator_ = other.allocator_;
-                allocator_.deallocate(data_);
+                allocator_.deallocate(block_);
 
                 if (other.empty()) {
                     return *this;
                 }
-                data_ = allocator_.allocate(other.size()).value();
-                copy(other.data_, data_);
+                block_ = allocator_.allocate(other.size()).value();
+                copy(other.block_, block_);
 
                 return *this;
             }
@@ -199,9 +199,9 @@ namespace memoc {
                 }
 
                 allocator_ = std::move(other.allocator_);
-                data_ = other.data_;
+                block_ = other.block_;
 
-                other.data_ = {};
+                other.block_ = {};
             }
             constexpr Buffer& operator=(Buffer&& other) noexcept
             {
@@ -210,43 +210,43 @@ namespace memoc {
                 }
 
                 allocator_ = std::move(other.allocator_);
-                allocator_.deallocate(data_);
-                data_ = other.data_;
+                allocator_.deallocate(block_);
+                block_ = other.block_;
 
-                other.data_ = {};
+                other.block_ = {};
 
                 return *this;
             }
             constexpr ~Buffer() noexcept
             {
-                if (!data_.empty()) {
-                    allocator_.deallocate(data_);
+                if (!block_.empty()) {
+                    allocator_.deallocate(block_);
                 }
             }
 
             [[nodiscard]] constexpr Block<void> block() const noexcept
             {
-                return data_;
+                return block_;
             }
 
             [[nodiscard]] constexpr bool empty() const noexcept
             {
-                return data_.empty();
+                return block_.empty();
             }
 
             [[nodiscard]] constexpr Block<void>::Size_type size() const noexcept
             {
-                return data_.size();
+                return block_.size();
             }
 
             [[nodiscard]] constexpr Block<void>::Pointer data() const noexcept
             {
-                return data_.data();
+                return block_.data();
             }
 
         private:
             Internal_allocator allocator_{};
-            Block<void> data_{};
+            Block<void> block_{};
         };
 
         template <typename T, Allocator Internal_allocator = Malloc_allocator>
@@ -265,38 +265,11 @@ namespace memoc {
                 return erroc::Unexpected(Buffer_error::unknown);
             }
         }
-
-        template <typename T = void, Allocator Internal_allocator = Malloc_allocator>
-        [[nodiscard]] inline constexpr bool empty(const Buffer<T, Internal_allocator>& buffer) noexcept
-        {
-            return buffer.empty();
-        }
-
-        template <typename T = void, Allocator Internal_allocator = Malloc_allocator>
-        [[nodiscard]] inline constexpr auto size(const Buffer<T, Internal_allocator>& buffer) noexcept
-        {
-            return buffer.size();
-        }
-
-        template <typename T = void, Allocator Internal_allocator = Malloc_allocator>
-        [[nodiscard]] inline constexpr auto block(const Buffer<T, Internal_allocator>& buffer) noexcept
-        {
-            return buffer.block();
-        }
-
-        template <typename T = void, Allocator Internal_allocator = Malloc_allocator>
-        [[nodiscard]] inline constexpr auto data(const Buffer<T, Internal_allocator>& buffer) noexcept
-        {
-            return buffer.data();
-        }
     }
 
     using details::Buffer;
+
     using details::create_buffer;
-    using details::empty;
-    using details::size;
-    using details::block;
-    using details::data;
 }
 
 #endif // MEMOC_BUFFERS_H
