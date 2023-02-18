@@ -18,14 +18,14 @@ TEST(Block_test, is_empty_when_deafult_initalized_or_when_initialized_partially_
 
     Block<void> b{};
 
-    EXPECT_EQ(nullptr, data(b));
-    EXPECT_EQ(0, size(b));
-    EXPECT_TRUE(empty(b));
+    EXPECT_EQ(nullptr, b.data());
+    EXPECT_EQ(0, b.size());
+    EXPECT_TRUE(b.empty());
 
     const std::uint8_t buffer[]{ 0 };
-    EXPECT_FALSE(empty(Block<void>{ 1, buffer }));
-    EXPECT_TRUE(empty(Block<void>{ 1, nullptr }));
-    EXPECT_TRUE(empty(Block<void>{ 0, buffer }));
+    EXPECT_FALSE((Block<void>{ 1, buffer }.empty()));
+    EXPECT_TRUE((Block<void>{ 1, nullptr }.empty()));
+    EXPECT_TRUE((Block<void>{ 0, buffer }.empty()));
 }
 
 TEST(Block_test, can_be_of_specific_type)
@@ -35,12 +35,12 @@ TEST(Block_test, can_be_of_specific_type)
     const int values[]{ 1 };
     Block<int> b{ 1, values };
 
-    EXPECT_NE(nullptr, data(b));
-    EXPECT_EQ(1, size(b));
-    EXPECT_FALSE(empty(b));
+    EXPECT_NE(nullptr, b.data());
+    EXPECT_EQ(1, b.size());
+    EXPECT_FALSE(b.empty());
     EXPECT_EQ(1, b[0]);
 
-    bool valid_buffer_type = std::is_same<int, typename std::remove_pointer<decltype(data(b))>::type>();
+    bool valid_buffer_type = std::is_same<int, typename std::remove_pointer<decltype(b.data())>::type>();
     EXPECT_TRUE(valid_buffer_type);
 }
 
@@ -81,14 +81,14 @@ TEST(Block_test, can_be_copied_to_another_block)
     Block<int> db1{ 5, data3 };
 
     EXPECT_EQ(4, copy(sb1, db1, 4));
-    EXPECT_EQ((Block<int>{4, data(db1)}), (Block<int>{4, data(sb1)}));
+    EXPECT_EQ((Block<int>{4, db1.data()}), (Block<int>{4, sb1.data()}));
 
     EXPECT_EQ(5, copy(sb2, db1));
     EXPECT_EQ(db1, sb1);
 
-    EXPECT_EQ(20, copy(Block<void>{MEMOC_SSIZEOF(double)* size(sb2), data(sb2)}, db1));
+    EXPECT_EQ(20, copy(Block<void>{MEMOC_SSIZEOF(double)* sb2.size(), sb2.data()}, db1));
     EXPECT_NE(db1, sb1);
-    EXPECT_NE(db1, (Block{ 5, data(sb2) }));
+    EXPECT_NE(db1, (Block{ 5, sb2.data() }));
 }
 
 TEST(Block_test, can_be_set_by_value)
@@ -100,18 +100,18 @@ TEST(Block_test, can_be_set_by_value)
 
     EXPECT_EQ(5, set(b, 1));
     for (std::int64_t i = 0; i < 5; ++i) {
-        EXPECT_EQ(1, data(b)[i]);
+        EXPECT_EQ(1, b.data()[i]);
     }
 
     EXPECT_EQ(5, set(b, 0));
     for (std::int64_t i = 0; i < 5; ++i) {
-        EXPECT_EQ(0, data(b)[i]);
+        EXPECT_EQ(0, b.data()[i]);
     }
 
-    Block<void> bv{ size(b) * MEMOC_SSIZEOF(int), data(b) };
+    Block<void> bv{ b.size() * MEMOC_SSIZEOF(int), b.data() };
 
     EXPECT_EQ(20, set(bv, std::uint8_t{ 1 }));
     for (std::int64_t i = 0; i < 5; ++i) {
-        EXPECT_EQ(16843009, data(b)[i]);
+        EXPECT_EQ(16843009, b.data()[i]);
     }
 }

@@ -389,11 +389,11 @@ TEST(Typed_buffer_test, can_be_initialized_with_fundamental_data_type)
 
     Block b = block(buff);
 
-    EXPECT_NE(nullptr, data(b));
-    EXPECT_EQ(2, size(b));
+    EXPECT_NE(nullptr, b.data());
+    EXPECT_EQ(2, b.size());
 
-    EXPECT_EQ(values[0], data(b)[0]);
-    EXPECT_EQ(values[1], data(b)[1]);
+    EXPECT_EQ(values[0], b.data()[0]);
+    EXPECT_EQ(values[1], b.data()[1]);
 }
 
 TEST(Typed_buffer_test, can_be_initialized_with_custom_data_type)
@@ -415,11 +415,11 @@ TEST(Typed_buffer_test, can_be_initialized_with_custom_data_type)
 
     Block b1 = block(buff1);
 
-    EXPECT_NE(nullptr, data(b1));
-    EXPECT_EQ(2, size(b1));
+    EXPECT_NE(nullptr, b1.data());
+    EXPECT_EQ(2, b1.size());
 
-    EXPECT_EQ(s[0].a, data(b1)[0].a); EXPECT_EQ(s[0].b, data(b1)[0].b);
-    EXPECT_EQ(s[1].a, data(b1)[1].a); EXPECT_EQ(s[1].b, data(b1)[1].b);
+    EXPECT_EQ(s[0].a, b1.data()[0].a); EXPECT_EQ(s[0].b, b1.data()[0].b);
+    EXPECT_EQ(s[1].a, b1.data()[1].a); EXPECT_EQ(s[1].b, b1.data()[1].b);
 
     std::string data2[2]{ "first string", "second string" };
 
@@ -427,8 +427,8 @@ TEST(Typed_buffer_test, can_be_initialized_with_custom_data_type)
 
     Block b2 = block(buff2);
 
-    EXPECT_EQ(data2[0], data(b2)[0]);
-    EXPECT_EQ(data2[1], data(b2)[1]);
+    EXPECT_EQ(data2[0], b2.data()[0]);
+    EXPECT_EQ(data2[1], b2.data()[1]);
 }
 
 // Buffer API tests

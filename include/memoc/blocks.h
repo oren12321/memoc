@@ -45,13 +45,13 @@ namespace memoc {
 
             // Do not allow parially empty block
             constexpr Block(Size_type s = 0, Const_pointer p = nullptr, std::int64_t hint = std::numeric_limits<std::int64_t>::min()) noexcept
-                : s_(p ? (s > 0 ? s : 0) : 0), p_(s > 0 ? const_cast<Pointer>(p) : nullptr), hint_(hint)
+                : s_(s), p_(const_cast<Pointer>(p)), hint_(hint)
             {
             }
 
             [[nodiscard]] constexpr bool empty() const noexcept
             {
-                return !s_ && !p_;
+                return !s_ || !p_;
             }
 
             [[nodiscard]] constexpr Size_type size() const noexcept
@@ -85,34 +85,16 @@ namespace memoc {
             std::int64_t hint_{ std::numeric_limits<std::int64_t>::min() };
         };
 
-        template <typename T>
-        [[nodiscard]] inline constexpr bool empty(const Block<T>& b) noexcept
-        {
-            return b.empty();
-        }
-
-        template <typename T>
-        [[nodiscard]] inline constexpr std::int64_t size(const Block<T>& b) noexcept
-        {
-            return b.size();
-        }
-
-        template <typename T>
-        [[nodiscard]] constexpr Block<T>::Pointer data(const Block<T>& b) noexcept
-        {
-            return b.data();
-        }
-
         template <typename T1, typename T2>
         [[nodiscard]] inline constexpr bool operator==(const Block<T1>& lhs, const Block<T2>& rhs) noexcept
         {
+            if (lhs.empty() && rhs.empty()) {
+                return true;
+            }
+
             const std::int64_t lhs_size{ lhs.size() };
             if (lhs_size != rhs.size()) {
                 return false;
-            }
-
-            if (lhs.empty()) {
-                return true;
             }
 
             for (std::int64_t i = 0; i < lhs_size; ++i) {
@@ -190,13 +172,13 @@ namespace memoc {
 
             // Do not allow parially empty block
             constexpr Block(Size_type s = 0, Const_pointer p = nullptr, std::int64_t hint = std::numeric_limits<std::int64_t>::min()) noexcept
-                : s_(p ? (s > 0 ? s : 0) : 0), p_(s > 0 ? const_cast<Pointer>(p) : nullptr), hint_(hint)
+                : s_(s), p_(const_cast<Pointer>(p)), hint_(hint)
             {
             }
 
             [[nodiscard]] constexpr bool empty() const noexcept
             {
-                return !s_ && !p_;
+                return !s_ || !p_;
             }
 
             [[nodiscard]] constexpr Size_type size() const noexcept
@@ -224,15 +206,15 @@ namespace memoc {
             requires (std::is_same_v<void, T1> || std::is_same_v<void, T2>)
         [[nodiscard]] inline constexpr bool operator==(const Block<T1>& lhs, const Block<T2>& rhs) noexcept
         {
+            if (lhs.empty() && rhs.empty()) {
+                return true;
+            }
+
             constexpr const std::int64_t T1_size = MEMOC_SSIZEOF(std::conditional_t<std::is_same_v<void, T1>, std::uint8_t, T1>);
             constexpr const std::int64_t T2_size = MEMOC_SSIZEOF(std::conditional_t<std::is_same_v<void, T2>, std::uint8_t, T2>);
 
             if (lhs.size() * T1_size != rhs.size() * T2_size) {
                 return false;
-            }
-
-            if (lhs.empty()) {
-                return true;
             }
 
             const std::uint8_t* lhs_ptr{ reinterpret_cast<const std::uint8_t*>(lhs.data()) };
@@ -315,9 +297,6 @@ namespace memoc {
 
     using details::Block;
 
-    using details::empty;
-    using details::size;
-    using details::data;
     using details::copy;
     using details::set;
 }
