@@ -317,11 +317,11 @@ namespace memoc {
             Block<void> block_{};
         };
 
-        template <typename T, Allocator Internal_allocator = Malloc_allocator>
-        [[nodiscard]] inline constexpr erroc::Expected<Buffer<T, Internal_allocator>, Buffer_error> create_buffer(std::int64_t size = 0, const T* data = nullptr)
+        template <typename T, Allocator Internal_allocator = Malloc_allocator, std::int64_t Prioritized_stack_size = 0>
+        [[nodiscard]] inline constexpr erroc::Expected<Buffer<T, Internal_allocator, Prioritized_stack_size>, Buffer_error> create_buffer(std::int64_t size = 0, const T* data = nullptr)
         {
             try {
-                return Buffer<T, Internal_allocator>(size, data);
+                return Buffer<T, Internal_allocator, Prioritized_stack_size>(size, data);
             }
             catch (const std::invalid_argument&) {
                 return erroc::Unexpected(Buffer_error::invalid_size);
