@@ -21,7 +21,7 @@ ENUMOC_GENERATE(memoc, Buffer_error,
 
 namespace memoc {
     namespace details { 
-        template <typename T, Allocator Internal_allocator = Malloc_allocator>
+        template <typename T, Allocator Internal_allocator = Malloc_allocator, std::int64_t Prioritized_stack_size = 0>
             requires (!std::is_reference_v<T>)
         class Buffer final {
         public:
@@ -29,8 +29,13 @@ namespace memoc {
             {
                 ERROC_EXPECT(size >= 0, std::invalid_argument, "invalid buffer size");
 
-                Block<void> tmp = allocator_.allocate(size * MEMOC_SSIZEOF(T)).value();
-                block_ = Block<T>(size, reinterpret_cast<T*>(tmp.data()), tmp.hint());
+                if (size <= Prioritized_stack_size) {
+                    block_ = Block<T>(size, reinterpret_cast<T*>(stack_memory_));
+                }
+                else {
+                    Block<void> tmp = allocator_.allocate(size * MEMOC_SSIZEOF(T)).value();
+                    block_ = Block<T>(size, reinterpret_cast<T*>(tmp.data()), tmp.hint());
+                }
 
                 // For non-fundamental type an object construction is required.
                 if constexpr (std::is_fundamental_v<T>) {
@@ -54,7 +59,11 @@ namespace memoc {
                 if (other.empty()) {
                     return;
                 }
-                {
+
+                if (other.block_.size() <= Prioritized_stack_size) {
+                    block_ = Block<T>(other.block_.size(), reinterpret_cast<T*>(stack_memory_));
+                }
+                else {
                     Block<void> tmp = allocator_.allocate(other.block_.size() * MEMOC_SSIZEOF(T)).value();
                     block_ = Block<T>(tmp.size() / MEMOC_SSIZEOF(T), reinterpret_cast<T*>(tmp.data()), tmp.hint());
                 }
@@ -67,16 +76,20 @@ namespace memoc {
                 }
 
                 allocator_ = other.allocator_;
-                {
+                if (block_.size() > Prioritized_stack_size) {
                     Block<void> tmp(block_.size() * MEMOC_SSIZEOF(T), reinterpret_cast<void*>(block_.data()), block_.hint());
                     allocator_.deallocate(tmp);
-                    block_ = {};
                 }
+                block_ = {};
 
                 if (other.empty()) {
                     return *this;
                 }
-                {
+
+                if (other.size() <= Prioritized_stack_size) {
+                    block_ = Block<T>(other.size(), reinterpret_cast<T*>(stack_memory_));
+                }
+                else {
                     Block<void> tmp = allocator_.allocate(other.block_.size() * MEMOC_SSIZEOF(T)).value();
                     block_ = Block<T>(tmp.size() / MEMOC_SSIZEOF(T), reinterpret_cast<T*>(tmp.data()), tmp.hint());
                 }
@@ -91,7 +104,13 @@ namespace memoc {
                 }
 
                 allocator_ = std::move(other.allocator_);
-                block_ = other.block_;
+                if (other.size() > Prioritized_stack_size) {
+                    block_ = other.block_;
+                }
+                else {
+                    block_ = Block<T>(other.block_.size(), reinterpret_cast<T*>(stack_memory_));
+                    copy(other.block_, block_);
+                }
 
                 other.block_ = {};
             }
@@ -102,11 +121,18 @@ namespace memoc {
                 }
 
                 allocator_ = std::move(other.allocator_);
-                {
+                if (block_.size() > Prioritized_stack_size) {
                     Block<void> tmp(block_.size() * MEMOC_SSIZEOF(T), reinterpret_cast<void*>(block_.data()), block_.hint());
                     allocator_.deallocate(tmp);
                 }
-                block_ = other.block_;
+
+                if (other.size() > Prioritized_stack_size) {
+                    block_ = other.block_;
+                }
+                else {
+                    block_ = Block<T>(other.block_.size(), reinterpret_cast<T*>(stack_memory_));
+                    copy(other.block_, block_);
+                }
 
                 other.block_ = {};
 
@@ -122,11 +148,11 @@ namespace memoc {
                         }
                     }
 
-                    {
+                    if (block_.size() > Prioritized_stack_size) {
                         Block<void> tmp(block_.size() * MEMOC_SSIZEOF(T), reinterpret_cast<void*>(block_.data()), block_.hint());
                         allocator_.deallocate(tmp);
-                        block_ = {};
                     }
+                    block_ = {};
                 }
             }
 
@@ -152,17 +178,26 @@ namespace memoc {
 
         private:
             Internal_allocator allocator_{};
+
+            inline static constexpr const std::int64_t stack_memory_size_ = Prioritized_stack_size * MEMOC_SSIZEOF(T);
+            std::uint8_t stack_memory_[Prioritized_stack_size == 0 ? 1 : stack_memory_size_];
+
             Block<T> block_{};
         };
 
-        template <Allocator Internal_allocator>
-        class Buffer<void, Internal_allocator> final {
+        template <Allocator Internal_allocator, std::int64_t Prioritized_stack_size>
+        class Buffer<void, Internal_allocator, Prioritized_stack_size> final {
         public:
             constexpr Buffer(std::int64_t size = 0, const void* data = nullptr)
             {
                 ERROC_EXPECT(size >= 0, std::invalid_argument, "invalid buffer size");
 
-                block_ = allocator_.allocate(size).value();
+                if (size <= Prioritized_stack_size) {
+                    block_ = Block<void>(size, stack_memory_);
+                }
+                else {
+                    block_ = allocator_.allocate(size).value();
+                }
                 copy(Block<void>(size, data), block_);
             }
 
@@ -172,7 +207,13 @@ namespace memoc {
                 if (other.empty()) {
                     return;
                 }
-                block_ = allocator_.allocate(other.size()).value();
+
+                if (other.size() > Prioritized_stack_size) {
+                    block_ = allocator_.allocate(other.size()).value();
+                }
+                else {
+                    block_ = Block<void>(other.size(), stack_memory_);
+                }
                 copy(other.block_, block_);
             }
             constexpr Buffer operator=(const Buffer& other)
@@ -182,12 +223,20 @@ namespace memoc {
                 }
 
                 allocator_ = other.allocator_;
-                allocator_.deallocate(block_);
+                if (block_.size() > Prioritized_stack_size) {
+                    allocator_.deallocate(block_);
+                }
 
                 if (other.empty()) {
                     return *this;
                 }
-                block_ = allocator_.allocate(other.size()).value();
+
+                if (other.size() > Prioritized_stack_size) {
+                    block_ = allocator_.allocate(other.size()).value();
+                }
+                else {
+                    block_ = Block<void>(other.size(), stack_memory_);
+                }
                 copy(other.block_, block_);
 
                 return *this;
@@ -199,7 +248,13 @@ namespace memoc {
                 }
 
                 allocator_ = std::move(other.allocator_);
-                block_ = other.block_;
+                if (other.size() > Prioritized_stack_size) {
+                    block_ = other.block_;
+                }
+                else {
+                    block_ = Block<void>(other.size(), stack_memory_);
+                    copy(other.block_, block_);
+                }
 
                 other.block_ = {};
             }
@@ -210,8 +265,17 @@ namespace memoc {
                 }
 
                 allocator_ = std::move(other.allocator_);
-                allocator_.deallocate(block_);
-                block_ = other.block_;
+                if (block_.size() > Prioritized_stack_size) {
+                    allocator_.deallocate(block_);
+                }
+
+                if (other.size() > Prioritized_stack_size) {
+                    block_ = other.block_;
+                }
+                else {
+                    block_ = Block<void>(other.size(), stack_memory_);
+                    copy(other.block_, block_);
+                }
 
                 other.block_ = {};
 
@@ -219,9 +283,10 @@ namespace memoc {
             }
             constexpr ~Buffer() noexcept
             {
-                if (!block_.empty()) {
+                if (!block_.empty() && block_.size() > Prioritized_stack_size) {
                     allocator_.deallocate(block_);
                 }
+                block_ = {};
             }
 
             [[nodiscard]] constexpr Block<void> block() const noexcept
@@ -246,6 +311,9 @@ namespace memoc {
 
         private:
             Internal_allocator allocator_{};
+
+            std::uint8_t stack_memory_[Prioritized_stack_size == 0 ? 1 : Prioritized_stack_size];
+
             Block<void> block_{};
         };
 

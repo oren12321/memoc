@@ -547,6 +547,23 @@ namespace memoc {
         private:
             inline static Internal_allocator allocator_{};
         };
+
+        class Null_allocator final {
+        public:
+            [[nodiscard]] constexpr erroc::Expected<Block<void>, Allocator_error> allocate(Block<void>::Size_type s) noexcept
+            {
+                return Block<void>();
+            }
+
+            constexpr void deallocate(Block<void>& b) noexcept
+            {
+            }
+
+            [[nodiscard]] constexpr bool owns(const Block<void>& b) const noexcept
+            {
+                return false;
+            }
+        };
     }
 
     using details::Allocator;
@@ -555,6 +572,7 @@ namespace memoc {
     using details::Malloc_allocator;
     using details::Malloc_allocator;
     using details::Shared_allocator;
+    using details::Null_allocator;
     using details::Stack_allocator;
     using details::Stats_allocator;
     using details::Stl_adapter_allocator;

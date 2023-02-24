@@ -612,6 +612,28 @@ TEST_F(Shared_allocator_test, DISABLED_not_saves_state_between_instances_when_id
     EXPECT_NE(reinterpret_cast<std::uint8_t*>(b1.data()) + aligned_size, b2.data());
 }
 
+// Null_allocator tests
+
+class Null_allocator_test : public ::testing::Test {
+protected:
+    using Allocator = memoc::Null_allocator;
+    Allocator allocator_{};
+};
+
+TEST_F(Null_allocator_test, allocates_an_empty_block_have_empty_deallocation_and_not_owning_a_block)
+{
+    using namespace memoc;
+
+    Block<void> b = allocator_.allocate(128).value();
+
+    EXPECT_TRUE(b.empty());
+    EXPECT_FALSE(allocator_.owns(b));
+
+    allocator_.deallocate(b);
+
+    EXPECT_TRUE(b.empty());
+}
+
 // Fallback_allocator tests
 
 class Fallback_allocator_test : public ::testing::Test {
