@@ -134,11 +134,11 @@ namespace memoc {
         };
 
         template <std::int64_t Stacks_count, Block<void>::Size_type Buffer_size>
-        class Default_stack_memory final {
+        class Default_global_stack_memory final {
             static_assert(Stacks_count > 0);
             static_assert(Buffer_size > 1 && Buffer_size % 2 == 0);
         public:
-            constexpr Default_stack_memory() noexcept {
+            constexpr Default_global_stack_memory() noexcept {
                 if (!initialized_) {
                     for (std::int64_t i = 0; i < Stacks_count; ++i) {
                         ptrs_[i] = buffers_[i];
@@ -187,7 +187,7 @@ namespace memoc {
             inline static bool initialized_{ false };
         };
 
-        template <Stack_memory Internal_stack_memory = Default_stack_memory<16, 128>>
+        template <Stack_memory Internal_stack_memory = Default_global_stack_memory<16, 128>>
         class Stack_allocator final {
         public:
             [[nodiscard]] constexpr erroc::Expected<Block<void>, Allocator_error> allocate(Block<void>::Size_type s) noexcept

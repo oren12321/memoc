@@ -12,7 +12,7 @@
 // Stack_buffer tests
 
 template <memoc::Block<void>::Size_type Size>
-using Test_stack_allocator = memoc::Stack_allocator<memoc::details::Default_stack_memory<1, Size>>;
+using Test_stack_allocator = memoc::Stack_allocator<memoc::details::Default_global_stack_memory<1, Size>>;
 
 TEST(Stack_buffer_test, not_empty_when_initialized_with_valid_size)
 {

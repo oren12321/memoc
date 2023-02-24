@@ -90,7 +90,7 @@ BENCHMARK(BM_malloc_allocator_shared);
 
 static void BM_stack_allocator(benchmark::State& state)
 {
-    memoc::Stack_allocator<memoc::details::Default_stack_memory<1, 64 * 64>> alloc{};
+    memoc::Stack_allocator<memoc::details::Default_global_stack_memory<1, 64 * 64>> alloc{};
     auto td = test_data<16, 64, 64>();
 
     for (auto _ : state) {
@@ -117,7 +117,7 @@ static void BM_hybrid_allocator(benchmark::State& state)
     using namespace memoc;
 
     Fallback_allocator<
-        Stack_allocator<memoc::details::Default_stack_memory<1, 16 * 16>>,
+        Stack_allocator<memoc::details::Default_global_stack_memory<1, 16 * 16>>,
         Free_list_allocator<Malloc_allocator, 16, 64, 16>> alloc{};
     auto td = test_data<16, 64, 64>();
 
@@ -152,7 +152,7 @@ static void BM_stl_adapter_allocator(benchmark::State& state)
     using namespace memoc;
 
     using Allocator = Stl_adapter_allocator<int, Fallback_allocator<
-        Stack_allocator<memoc::details::Default_stack_memory<1, 16 * 16>>,
+        Stack_allocator<memoc::details::Default_global_stack_memory<1, 16 * 16>>,
         Free_list_allocator<Malloc_allocator, 16, 64, 16>>>;
 
     for (auto _ : state) {

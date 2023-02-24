@@ -61,7 +61,7 @@ protected:
     static constexpr std::int64_t count_ = 1;
     static constexpr memoc::Block<void>::Size_type size_ = 16;
 
-    using Allocator = memoc::Stack_allocator<memoc::details::Default_stack_memory<count_, size_>>;
+    using Allocator = memoc::Stack_allocator<memoc::details::Default_global_stack_memory<count_, size_>>;
     Allocator allocator_{};
 };
 
@@ -574,7 +574,7 @@ class Shared_allocator_test : public ::testing::Test {
 protected:
     static constexpr std::int64_t count_ = 1;
     static constexpr memoc::Block<void>::Size_type size_ = 16;
-    using Parent = memoc::Stack_allocator<memoc::details::Default_stack_memory<count_, size_>>;
+    using Parent = memoc::Stack_allocator<memoc::details::Default_global_stack_memory<count_, size_>>;
 
     using Allocator_default = memoc::Shared_allocator<Parent>;
 
@@ -618,7 +618,7 @@ class Fallback_allocator_test : public ::testing::Test {
 protected:
     static constexpr std::int64_t count_ = 1;
     static constexpr memoc::Block<void>::Size_type size_ = 16;
-    using Primary = memoc::Stack_allocator<memoc::details::Default_stack_memory<count_, size_>>;
+    using Primary = memoc::Stack_allocator<memoc::details::Default_global_stack_memory<count_, size_>>;
     using Fallback = memoc::Malloc_allocator;
 
     using Allocator = memoc::Fallback_allocator<Primary, Fallback>;
