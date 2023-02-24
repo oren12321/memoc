@@ -431,6 +431,96 @@ TEST(Typed_buffer_test, can_be_initialized_with_custom_data_type)
     EXPECT_EQ(data2[1], b2.data()[1]);
 }
 
+TEST(Null_allocator_void_buffer_test, can_be_used_with_stack_prioritization)
+{
+    using namespace memoc;
+
+    {
+        Buffer<void, Null_allocator, 2> buff{ 4 };
+        EXPECT_TRUE(buff.empty());
+    }
+
+    {
+        const int data[1]{ 0x01020304 };
+
+        Buffer<void, Null_allocator, 4> buff{ 4, data };
+        EXPECT_FALSE(buff.empty());
+        EXPECT_EQ(4, buff.size());
+        EXPECT_EQ(0x01020304, *(reinterpret_cast<int*>(buff.data())));
+
+        Buffer<void, Null_allocator, 4> copy1{ buff };
+        EXPECT_FALSE(copy1.empty());
+        EXPECT_EQ(4, copy1.size());
+        EXPECT_EQ(0x01020304, *(reinterpret_cast<int*>(copy1.data())));
+        EXPECT_NE(buff.data(), copy1.data());
+
+        Buffer<void, Null_allocator, 4> copy2;
+        copy2 = buff;
+        EXPECT_FALSE(copy2.empty());
+        EXPECT_EQ(4, copy2.size());
+        EXPECT_EQ(0x01020304, *(reinterpret_cast<int*>(copy2.data())));
+        EXPECT_NE(buff.data(), copy2.data());
+
+        Buffer<void, Null_allocator, 4> moved1{ std::move(copy1) };
+        EXPECT_FALSE(moved1.empty());
+        EXPECT_EQ(4, moved1.size());
+        EXPECT_EQ(0x01020304, *(reinterpret_cast<int*>(moved1.data())));
+        EXPECT_TRUE(copy1.empty());
+
+        Buffer<void, Null_allocator, 4> moved2;
+        moved2 = std::move(copy2);
+        EXPECT_FALSE(moved2.empty());
+        EXPECT_EQ(4, moved2.size());
+        EXPECT_EQ(0x01020304, *(reinterpret_cast<int*>(moved2.data())));
+        EXPECT_TRUE(copy2.empty());
+    }
+}
+
+TEST(Null_allocator_typed_buffer_test, can_be_used_with_stack_prioritization)
+{
+    using namespace memoc;
+
+    {
+        Buffer<int, Null_allocator, 1> buff{ 2 };
+        EXPECT_TRUE(buff.empty());
+    }
+
+    {
+        const int data[1]{ 0x01020304 };
+
+        Buffer<int, Null_allocator, 1> buff{ 1, data };
+        EXPECT_FALSE(buff.empty());
+        EXPECT_EQ(1, buff.size());
+        EXPECT_EQ(0x01020304, buff.data()[0]);
+
+        Buffer<int, Null_allocator, 1> copy1{ buff };
+        EXPECT_FALSE(copy1.empty());
+        EXPECT_EQ(1, copy1.size());
+        EXPECT_EQ(0x01020304, copy1.data()[0]);
+        EXPECT_NE(buff.data(), copy1.data());
+
+        Buffer<int, Null_allocator, 1> copy2;
+        copy2 = buff;
+        EXPECT_FALSE(copy2.empty());
+        EXPECT_EQ(1, copy2.size());
+        EXPECT_EQ(0x01020304, copy2.data()[0]);
+        EXPECT_NE(buff.data(), copy2.data());
+
+        Buffer<int, Null_allocator, 1> moved1{ std::move(copy1) };
+        EXPECT_FALSE(moved1.empty());
+        EXPECT_EQ(1, moved1.size());
+        EXPECT_EQ(0x01020304, moved1.data()[0]);
+        EXPECT_TRUE(copy1.empty());
+
+        Buffer<int, Null_allocator, 1> moved2;
+        moved2 = std::move(copy2);
+        EXPECT_FALSE(moved2.empty());
+        EXPECT_EQ(1, moved2.size());
+        EXPECT_EQ(0x01020304, moved2.data()[0]);
+        EXPECT_TRUE(copy2.empty());
+    }
+}
+
 // Buffer API tests
 
 TEST(Any_buffer_test, creation_via_create_function)
