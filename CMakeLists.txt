@@ -1,9 +1,9 @@
 cmake_minimum_required(VERSION 3.24.4)
 
-project(sample
+project(memoc
     VERSION 1.0.0
-    DESCRIPTION "A header-only C++ sample project"
-    HOMEPAGE_URL "https://github.com/oren12321/cpp-header-only-sample-library")
+    DESCRIPTION "Memory management utils"
+    HOMEPAGE_URL "https://github.com/oren12321/memoc")
 
 if (NOT WIN32)
     if (CMAKE_BUILD_TYPE STREQUAL "Debug")
@@ -12,6 +12,21 @@ if (NOT WIN32)
 endif()
 
 include(GNUInstallDirs)
+include(FetchContent)
+
+FetchContent_Declare(
+    genum
+    GIT_REPOSITORY https://github.com/oren12321/genum.git
+    GIT_TAG main
+    FIND_PACKAGE_ARGS)
+FetchContent_MakeAvailable(genum)
+
+FetchContent_Declare(
+    oc-err
+    GIT_REPOSITORY https://github.com/oren12321/oc-err.git
+    GIT_TAG main
+    FIND_PACKAGE_ARGS)
+FetchContent_MakeAvailable(oc-err)
 
 add_library(${PROJECT_NAME} INTERFACE)
 target_include_directories(${PROJECT_NAME} INTERFACE
@@ -19,6 +34,8 @@ target_include_directories(${PROJECT_NAME} INTERFACE
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 20)
 add_library(${PROJECT_NAME}::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
+target_include_directories(${PROJECT_NAME} INTERFACE $<BUILD_INTERFACE:${genum_SOURCE_DIR}/include>)
+target_include_directories(${PROJECT_NAME} INTERFACE $<BUILD_INTERFACE:${oc-err_SOURCE_DIR}/include>)
 
 if (WIN32)
     file(GLOB_RECURSE HEADER_SRCS CONFIGURE_DEPENDS "${PROJECT_SOURCE_DIR}/include/*.h")
@@ -55,8 +72,6 @@ install(
     DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/${PROJECT_NAME}/cmake)
 
 install(DIRECTORY ${PROJECT_SOURCE_DIR}/include/${PROJECT_NAME} DESTINATION include)
-
-include(FetchContent)
 
 FetchContent_Declare(
     googletest

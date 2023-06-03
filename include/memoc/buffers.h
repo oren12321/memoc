@@ -8,13 +8,13 @@
 #include <concepts>
 #include <stdexcept>
 
-#include <erroc/errors.h>
-#include <enumoc/enumoc.h>
+#include <oc/err.h>
+#include <genum/genum.h>
 #include <memoc/blocks.h>
 #include <memoc/allocators.h>
 #include <memoc/pointers.h>
 
-ENUMOC_GENERATE(memoc, Buffer_error,
+GENUM_GENERATE(memoc, Buffer_error,
     invalid_size,
     allocator_failure,
     unknown);
@@ -27,7 +27,7 @@ namespace memoc {
         public:
             constexpr Buffer(std::int64_t size = 0, const T* data = nullptr)
             {
-                ERROC_EXPECT(size >= 0, std::invalid_argument, "invalid buffer size");
+                OCERR_REQUIRE(size >= 0, std::invalid_argument, "invalid buffer size");
 
                 if (size <= Prioritized_stack_size) {
                     block_ = Block<T>(size, reinterpret_cast<T*>(stack_memory_));
@@ -190,7 +190,7 @@ namespace memoc {
         public:
             constexpr Buffer(std::int64_t size = 0, const void* data = nullptr)
             {
-                ERROC_EXPECT(size >= 0, std::invalid_argument, "invalid buffer size");
+                OCERR_REQUIRE(size >= 0, std::invalid_argument, "invalid buffer size");
 
                 if (size <= Prioritized_stack_size) {
                     block_ = Block<void>(size, stack_memory_);
@@ -318,19 +318,19 @@ namespace memoc {
         };
 
         template <typename T, Allocator Internal_allocator = Malloc_allocator, std::int64_t Prioritized_stack_size = 0>
-        [[nodiscard]] inline constexpr erroc::Expected<Buffer<T, Internal_allocator, Prioritized_stack_size>, Buffer_error> create_buffer(std::int64_t size = 0, const T* data = nullptr)
+        [[nodiscard]] inline constexpr oc::Expected<Buffer<T, Internal_allocator, Prioritized_stack_size>, Buffer_error> create_buffer(std::int64_t size = 0, const T* data = nullptr)
         {
             try {
                 return Buffer<T, Internal_allocator, Prioritized_stack_size>(size, data);
             }
             catch (const std::invalid_argument&) {
-                return erroc::Unexpected(Buffer_error::invalid_size);
+                return oc::Unexpected(Buffer_error::invalid_size);
             }
             catch (const std::runtime_error&) {
-                return erroc::Unexpected(Buffer_error::allocator_failure);
+                return oc::Unexpected(Buffer_error::allocator_failure);
             }
             catch (...) {
-                return erroc::Unexpected(Buffer_error::unknown);
+                return oc::Unexpected(Buffer_error::unknown);
             }
         }
     }

@@ -11,12 +11,12 @@
 #include <concepts>
 #include <memory>
 
-#include <erroc/errors.h>
-#include <enumoc/enumoc.h>
+#include <oc/err.h>
+#include <genum/genum.h>
 
 #include <memoc/blocks.h>
 
-ENUMOC_GENERATE(memoc, Allocator_error,
+GENUM_GENERATE(memoc, Allocator_error,
     invalid_size,
     out_of_memory,
     unknown);
@@ -36,7 +36,7 @@ namespace memoc {
         }&&
             requires (T t, Block<void>::Size_type s, Block<void> b)
         {
-            {t.allocate(s)} noexcept -> std::same_as<erroc::Expected<Block<void>, Allocator_error>>;
+            {t.allocate(s)} noexcept -> std::same_as<oc::Expected<Block<void>, Allocator_error>>;
             {t.deallocate(std::ref(b))} noexcept -> std::same_as<void>;
             {t.owns(std::cref(b))} noexcept -> std::same_as<bool>;
         };
@@ -44,9 +44,9 @@ namespace memoc {
         template <Allocator Primary, Allocator Fallback>
         class Fallback_allocator final {
         public:
-            [[nodiscard]] constexpr erroc::Expected<Block<void>, Allocator_error> allocate(Block<void>::Size_type s) noexcept
+            [[nodiscard]] constexpr oc::Expected<Block<void>, Allocator_error> allocate(Block<void>::Size_type s) noexcept
             {
-                if (erroc::Expected<Block<void>, Allocator_error> r = primary_.allocate(s)) {
+                if (oc::Expected<Block<void>, Allocator_error> r = primary_.allocate(s)) {
                     return r;
                 }
                 return fallback_.allocate(s);
@@ -85,17 +85,17 @@ namespace memoc {
 
         class Malloc_allocator final {
         public:
-            [[nodiscard]] constexpr erroc::Expected<Block<void>, Allocator_error> allocate(Block<void>::Size_type s) noexcept
+            [[nodiscard]] constexpr oc::Expected<Block<void>, Allocator_error> allocate(Block<void>::Size_type s) noexcept
             {
                 if (s < 0) {
-                    return erroc::Unexpected(Allocator_error::invalid_size);
+                    return oc::Unexpected(Allocator_error::invalid_size);
                 }
                 if (s == 0) {
                     return Block<void>();
                 }
                 Block<void> b(s, std::malloc(s), uuid_);
                 if (b.empty()) {
-                    return erroc::Unexpected(Allocator_error::unknown);
+                    return oc::Unexpected(Allocator_error::unknown);
                 }
                 return b;
             }
@@ -190,17 +190,17 @@ namespace memoc {
         template <Stack_memory Internal_stack_memory = Default_global_stack_memory<16, 128>>
         class Stack_allocator final {
         public:
-            [[nodiscard]] constexpr erroc::Expected<Block<void>, Allocator_error> allocate(Block<void>::Size_type s) noexcept
+            [[nodiscard]] constexpr oc::Expected<Block<void>, Allocator_error> allocate(Block<void>::Size_type s) noexcept
             {
                 if (s < 0) {
-                    return erroc::Unexpected(Allocator_error::invalid_size);
+                    return oc::Unexpected(Allocator_error::invalid_size);
                 }
                 if (s == 0) {
                     return Block<void>();
                 }
                 void* p = sm_.stack_malloc(align(s));
                 if (!p) {
-                    return erroc::Unexpected(Allocator_error::out_of_memory);
+                    return oc::Unexpected(Allocator_error::out_of_memory);
                 }
                 return Block<void>(s, p);
             }
@@ -277,7 +277,7 @@ namespace memoc {
                     }
                 }
 
-                [[nodiscard]] constexpr erroc::Expected<Block<void>, Allocator_error> allocate(Block<void>::Size_type s) noexcept
+                [[nodiscard]] constexpr oc::Expected<Block<void>, Allocator_error> allocate(Block<void>::Size_type s) noexcept
                 {
                     if (s >= Min_size && s <= Max_size && list_size_ > 0 && root_) {
                         Block<void> b(s, root_, root_->hint);
@@ -285,7 +285,7 @@ namespace memoc {
                         --list_size_;
                         return b;
                     }
-                    erroc::Expected<Block<void>, Allocator_error> r = internal_.allocate((s < Min_size || s > Max_size) ? s : Max_size);
+                    oc::Expected<Block<void>, Allocator_error> r = internal_.allocate((s < Min_size || s > Max_size) ? s : Max_size);
                     if (!r) {
                         return r;
                     }
@@ -358,7 +358,7 @@ namespace memoc {
 
             [[nodiscard]] constexpr T* allocate(std::size_t n)
             {
-                erroc::Expected<Block<void>, Allocator_error> r = internal_.allocate(n * MEMOC_SSIZEOF(T));
+                oc::Expected<Block<void>, Allocator_error> r = internal_.allocate(n * MEMOC_SSIZEOF(T));
                 if (!r) {
                     throw std::bad_alloc{};
                 }
@@ -436,9 +436,9 @@ namespace memoc {
                 }
             }
 
-            [[nodiscard]] constexpr erroc::Expected<Block<void>, Allocator_error> allocate(Block<void>::Size_type s) noexcept
+            [[nodiscard]] constexpr oc::Expected<Block<void>, Allocator_error> allocate(Block<void>::Size_type s) noexcept
             {
-                erroc::Expected<Block<void>, Allocator_error> r = internal_.allocate(s);
+                oc::Expected<Block<void>, Allocator_error> r = internal_.allocate(s);
                 if (!r) {
                     return r;
                 }
@@ -491,7 +491,7 @@ namespace memoc {
                     return;
                 }
 
-                erroc::Expected<Block<void>, Allocator_error> r = internal_.allocate(MEMOC_SSIZEOF(Record));
+                oc::Expected<Block<void>, Allocator_error> r = internal_.allocate(MEMOC_SSIZEOF(Record));
                 if (!r) {
                     return;
                 }
@@ -530,7 +530,7 @@ namespace memoc {
         template <Allocator Internal_allocator, std::int64_t id = -1>
         class Shared_allocator final {
         public:
-            [[nodiscard]] constexpr erroc::Expected<Block<void>, Allocator_error> allocate(Block<void>::Size_type s) noexcept
+            [[nodiscard]] constexpr oc::Expected<Block<void>, Allocator_error> allocate(Block<void>::Size_type s) noexcept
             {
                 return allocator_.allocate(s);
             }
@@ -550,7 +550,7 @@ namespace memoc {
 
         class Null_allocator final {
         public:
-            [[nodiscard]] constexpr erroc::Expected<Block<void>, Allocator_error> allocate(Block<void>::Size_type s) noexcept
+            [[nodiscard]] constexpr oc::Expected<Block<void>, Allocator_error> allocate(Block<void>::Size_type s) noexcept
             {
                 return Block<void>();
             }
