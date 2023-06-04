@@ -17,14 +17,14 @@ include(FetchContent)
 FetchContent_Declare(
     genum
     GIT_REPOSITORY https://github.com/oren12321/genum.git
-    GIT_TAG main
+    GIT_TAG v1.0.1
     FIND_PACKAGE_ARGS)
 FetchContent_MakeAvailable(genum)
 
 FetchContent_Declare(
     oc-err
     GIT_REPOSITORY https://github.com/oren12321/oc-err.git
-    GIT_TAG main
+    GIT_TAG v1.0.0
     FIND_PACKAGE_ARGS)
 FetchContent_MakeAvailable(oc-err)
 
